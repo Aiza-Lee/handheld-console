@@ -1,0 +1,22 @@
+# Local workspace settings
+/.theia/
+/.vscode/
+/.idea/
+*.code-workspace
+
+# OS and editor noise
+.DS_Store
+Thumbs.db
+*~
+*.swp
+*.swo
+
+# Tooling caches
+compile_commands.json
+.cache/
+
+# Code Composer Studio / TI generated build output
+/handheld-console/Debug/
+/handheld-console/Release/
+/handheld-console/**/Debug/
+/handheld-console/**/Release/
