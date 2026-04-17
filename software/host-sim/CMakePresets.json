@@ -1,0 +1,37 @@
+{
+	"version": 6,
+	"cmakeMinimumRequired": {
+		"major": 3,
+		"minor": 28,
+		"patch": 0
+	},
+	"configurePresets": [
+		{
+			"name": "clang-debug",
+			"displayName": "Clang Debug",
+			"description": "Default host simulator build with the system clang toolchain.",
+			"generator": "Unix Makefiles",
+			"binaryDir": "${sourceDir}/build/clang-debug",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Debug",
+				"CMAKE_CXX_COMPILER": "clang++",
+				"CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+			}
+		}
+	],
+	"buildPresets": [
+		{
+			"name": "clang-debug-build",
+			"configurePreset": "clang-debug"
+		}
+	],
+	"testPresets": [
+		{
+			"name": "clang-debug-test",
+			"configurePreset": "clang-debug",
+			"output": {
+				"outputOnFailure": true
+			}
+		}
+	]
+}

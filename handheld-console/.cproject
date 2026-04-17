@@ -29,13 +29,14 @@
                             </option>
                             <option id="com.ti.ccstudio.buildDefinitions.core.OPT_CODEGEN_VERSION.867990812" superClass="com.ti.ccstudio.buildDefinitions.core.OPT_CODEGEN_VERSION" value="TICLANG_4.0.4.LTS" valueType="string"/>
                             <targetPlatform id="com.ti.ccstudio.buildDefinitions.TMS470_TICLANG_4.0.exe.targetPlatformDebug.1260572668" name="Platform" superClass="com.ti.ccstudio.buildDefinitions.TMS470_TICLANG_4.0.exe.targetPlatformDebug"/>
-                            <builder buildPath="${BuildDirectory}" id="com.ti.ccstudio.buildDefinitions.TMS470_TICLANG_4.0.exe.builderDebug.1020384715" name="GNU Make.Debug" parallelBuildOn="true" parallelizationNumber="optimal" superClass="com.ti.ccstudio.buildDefinitions.TMS470_TICLANG_4.0.exe.builderDebug"/>
+                            <builder buildPath="${BuildDirectory}" id="com.ti.ccstudio.buildDefinitions.TMS470_TICLANG_4.0.exe.builderDebug.1020384715" keepEnvironmentInBuildfile="false" name="GNU Make" parallelBuildOn="true" parallelizationNumber="optimal" superClass="com.ti.ccstudio.buildDefinitions.TMS470_TICLANG_4.0.exe.builderDebug"/>
                             <tool id="com.ti.ccstudio.buildDefinitions.TMS470_TICLANG_4.0.exe.compilerDebug.1962456426" name="Arm Compiler" superClass="com.ti.ccstudio.buildDefinitions.TMS470_TICLANG_4.0.exe.compilerDebug">
                                 <option id="com.ti.ccstudio.buildDefinitions.TMS470_TICLANG_4.0.compilerID.GENERATE_DWARF_DEBUG.1823309935" superClass="com.ti.ccstudio.buildDefinitions.TMS470_TICLANG_4.0.compilerID.GENERATE_DWARF_DEBUG" value="com.ti.ccstudio.buildDefinitions.TMS470_TICLANG_4.0.compilerID.GENERATE_DWARF_DEBUG.GDWARF_3" valueType="enumerated"/>
                                 <option id="com.ti.ccstudio.buildDefinitions.TMS470_TICLANG_4.0.compilerID.ENDIAN_NESS__BIG_LITTLE.687885874" superClass="com.ti.ccstudio.buildDefinitions.TMS470_TICLANG_4.0.compilerID.ENDIAN_NESS__BIG_LITTLE" value="com.ti.ccstudio.buildDefinitions.TMS470_TICLANG_4.0.compilerID.ENDIAN_NESS__BIG_LITTLE.MLITTLE_ENDIAN" valueType="enumerated"/>
                                 <option id="com.ti.ccstudio.buildDefinitions.TMS470_TICLANG_4.0.compilerID.INCLUDE_PATH.2146849438" superClass="com.ti.ccstudio.buildDefinitions.TMS470_TICLANG_4.0.compilerID.INCLUDE_PATH" valueType="includePath">
                                     <listOptionValue value="${COM_TI_MSPM0_SDK_INCLUDE_PATH}"/>
                                     <listOptionValue value="${SYSCONFIG_TOOL_INCLUDE_PATH}"/>
+                                    <listOptionValue value="${PROJECT_ROOT}/../software/game-core/include"/>
                                     <listOptionValue value="${PROJECT_ROOT}"/>
                                     <listOptionValue value="${PROJECT_ROOT}/${ConfigName}"/>
                                     <listOptionValue value="${COM_TI_MSPM0_SDK_INSTALL_DIR}/source/third_party/CMSIS/Core/Include"/>
@@ -89,6 +90,14 @@
                             </tool>
                         </toolChain>
                     </folderInfo>
+                    <fileInfo id="com.ti.ccstudio.buildDefinitions.TMS470.Debug.681472351.app/main.cpp" name="main.cpp" rcbsApplicability="disable" resourcePath="app/main.cpp" toolsToInvoke="com.ti.ccstudio.buildDefinitions.TMS470_TICLANG_4.0.exe.compilerDebug.1962456426.428522421">
+                        <tool id="com.ti.ccstudio.buildDefinitions.TMS470_TICLANG_4.0.exe.compilerDebug.1962456426.428522421" name="Arm Compiler" superClass="com.ti.ccstudio.buildDefinitions.TMS470_TICLANG_4.0.exe.compilerDebug.1962456426">
+                            <option id="com.ti.ccstudio.buildDefinitions.TMS470_TICLANG_4.0.compilerID.STD_CPP.1898854935" superClass="com.ti.ccstudio.buildDefinitions.TMS470_TICLANG_4.0.compilerID.STD_CPP" value="com.ti.ccstudio.buildDefinitions.TMS470_TICLANG_4.0.compilerID.STD_CPP.c++17" valueType="enumerated"/>
+                        </tool>
+                    </fileInfo>
+                    <sourceEntries>
+                        <entry excluding="game-core/tests" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+                    </sourceEntries>
                 </configuration>
             </storageModule>
             <storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>

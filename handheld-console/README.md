@@ -1,28 +1,27 @@
-# Handheld Console Skeleton
+# Handheld Console Firmware
 
-This project is a clean MSPM0G3507 C++ skeleton for a small handheld game device.
+This directory is the CCS/TI firmware project for the MSPM0G3507 target board.
 
-## Directory Layout
+## Repository Layout
 
-- `app/`: application entry point and top-level wiring
-- `platform/interfaces/`: hardware abstraction interfaces used by game logic
-- `platform/mspm0/`: MSPM0-specific implementations
-- `drivers/`: low-level drivers for LCD, buttons, buzzer, and battery sensing
-- `core/`: reusable runtime and shared types
-- `games/`: menu and game modules
-- `assets/`: fonts and sprites
+- `app/main.cpp`: firmware entry point and top-level wiring
+- `board.syscfg`: clock and peripheral configuration source for SysConfig
+- `platform/mspm0/`: MSPM0-specific platform adapters
+- `drivers/`: low-level hardware drivers
+- `targetConfigs/`: CCS target configuration
+- `../software/game-core/`: shared runtime, interfaces, null platform, and game logic
+- `../software/host-sim/`: host-side CMake build for logic smoke tests in VS Code
+
+## Development Flow
+
+- Open only `handheld-console/` in CCS.
+- Use the linked `game-core` folder inside the CCS project for shared logic sources.
+- `game-core/tests/` is excluded from the CCS firmware build; keep host-side smoke tests under `software/host-sim/`.
+- Use `software/host-sim/` from VS Code to build and run headless logic checks without TI tools.
 
 ## Current Status
 
-- `app/main.cpp` boots the board and enters the app skeleton
-- `app/App.h` and `app/App.cpp` hold the top-level application shell
-- `board.syscfg` keeps the board clock configuration
-- interface headers are in place for display, input, audio, and power
-- a placeholder `MenuGame` is available as the first scene
-
-## Next Steps
-
-1. Configure the real board pins and peripherals in `board.syscfg`
-2. Implement `platform/mspm0/` adapters for the target hardware
-3. Add LCD drawing primitives and button scanning
-4. Replace the placeholder menu with a real scene manager
+- `app/main.cpp` remains the only firmware composition entry point.
+- Portable game logic lives in `../software/game-core/include` and `../software/game-core/src`.
+- `platform/null/NullPlatform.h` remains available for host-side simulation and tests.
+- `platform/mspm0/` is reserved for the real hardware adapter implementation.

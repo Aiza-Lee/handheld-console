@@ -1,6 +1,12 @@
 eclipse.preferences.version=1
 encoding//Debug/app/subdir_rules.mk=UTF-8
 encoding//Debug/app/subdir_vars.mk=UTF-8
+encoding//Debug/game-core/src/app/subdir_rules.mk=UTF-8
+encoding//Debug/game-core/src/app/subdir_vars.mk=UTF-8
+encoding//Debug/game-core/src/games/menu/subdir_rules.mk=UTF-8
+encoding//Debug/game-core/src/games/menu/subdir_vars.mk=UTF-8
+encoding//Debug/game-core/tests/subdir_rules.mk=UTF-8
+encoding//Debug/game-core/tests/subdir_vars.mk=UTF-8
 encoding//Debug/games/menu/subdir_rules.mk=UTF-8
 encoding//Debug/games/menu/subdir_vars.mk=UTF-8
 encoding//Debug/makefile=UTF-8

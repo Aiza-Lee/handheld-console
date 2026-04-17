@@ -11,6 +11,13 @@
 			</arguments>
 		</buildCommand>
 	</buildSpec>
+	<linkedResources>
+		<link>
+			<name>game-core</name>
+			<type>2</type>
+			<locationURI>PARENT-1-PROJECT_LOC/software/game-core</locationURI>
+		</link>
+	</linkedResources>
 	<natures>
 		<nature>com.ti.ccstudio.core.ccsNature</nature>
 		<nature>org.eclipse.cdt.core.cnature</nature>
