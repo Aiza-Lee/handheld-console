@@ -1,3 +1,3 @@
 # Graphics Core
 
-This directory will contain drawing helpers, frame buffers, fonts, and rendering utilities.
+This directory contains drawing helpers, geometry/color types, and the initial bitmap font/text rendering utilities.

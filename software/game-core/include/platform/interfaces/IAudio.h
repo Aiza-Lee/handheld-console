@@ -1,8 +1,8 @@
 #ifndef PLATFORM_INTERFACES_IAUDIO_H
 #define PLATFORM_INTERFACES_IAUDIO_H
 
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 
 namespace handheld {
 

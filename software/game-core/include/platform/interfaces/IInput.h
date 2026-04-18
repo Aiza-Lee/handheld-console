@@ -1,7 +1,7 @@
 #ifndef PLATFORM_INTERFACES_IINPUT_H
 #define PLATFORM_INTERFACES_IINPUT_H
 
-#include "core/common/Button.h"
+#include "core/common/ButtonBits.h"
 #include "core/common/ButtonState.h"
 
 namespace handheld {
@@ -29,17 +29,17 @@ public:
 		return current_buttons();
 	}
 
-	[[nodiscard]] bool is_down(Button button) const {
+	[[nodiscard]] bool is_down(ButtonBits button) const {
 		return current_buttons().test(button);
 	}
 
-	[[nodiscard]] bool was_pressed(Button button) const {
+	[[nodiscard]] bool was_pressed(ButtonBits button) const {
 		const ButtonState current = current_buttons();
 		const ButtonState previous = previous_buttons();
 		return current.test(button) && !previous.test(button);
 	}
 
-	[[nodiscard]] bool was_released(Button button) const {
+	[[nodiscard]] bool was_released(ButtonBits button) const {
 		const ButtonState current = current_buttons();
 		const ButtonState previous = previous_buttons();
 		return !current.test(button) && previous.test(button);
