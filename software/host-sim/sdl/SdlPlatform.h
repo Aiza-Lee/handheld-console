@@ -24,26 +24,6 @@ namespace handheld {
 
 class SdlPlatform final : public IPlatform {
 public:
-	explicit SdlPlatform(Size display_size = {240, 240}, int window_scale = 4, uint32_t frame_time_ms = 16);
-	~SdlPlatform() override;
-
-	SdlPlatform(const SdlPlatform&) = delete;
-	SdlPlatform(SdlPlatform&&) = delete;
-	SdlPlatform& operator=(const SdlPlatform&) = delete;
-	SdlPlatform& operator=(SdlPlatform&&) = delete;
-
-	[[nodiscard]] bool is_running() const;
-	void process_events();
-	void delay_to_next_frame();
-
-	IDisplay& display() override;
-	IInput& input() override;
-	IAudio& audio() override;
-	IPower& power() override;
-	ITime& time() override;
-	IStorage& storage() override;
-
-private:
 	class Display final : public IDisplay {
 	public:
 		explicit Display(Size size);
@@ -65,6 +45,26 @@ private:
 		SDL_Texture* _texture = nullptr;
 	};
 
+	explicit SdlPlatform(Size display_size = {240, 240}, int window_scale = 4, uint32_t frame_time_ms = 16);
+	~SdlPlatform() override;
+
+	SdlPlatform(const SdlPlatform&) = delete;
+	SdlPlatform(SdlPlatform&&) = delete;
+	SdlPlatform& operator=(const SdlPlatform&) = delete;
+	SdlPlatform& operator=(SdlPlatform&&) = delete;
+
+	[[nodiscard]] bool is_running() const;
+	void process_events();
+	void delay_to_next_frame();
+
+	IDisplay& display() override;
+	IInput& input() override;
+	IAudio& audio() override;
+	IPower& power() override;
+	ITime& time() override;
+	IStorage& storage() override;
+
+private:
 	class Input final : public IInput {
 	public:
 		void poll() override;

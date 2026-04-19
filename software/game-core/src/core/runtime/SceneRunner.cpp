@@ -43,6 +43,7 @@ void SceneRunner::tick() {
 	_platform.input().poll();
 	_current_scene->update(_platform, *this);
 	_current_scene->render(_platform, *this);
+
 	_platform.display().present();
 
 	_apply_pending_switch();

@@ -21,15 +21,31 @@ int main() {
 	assert(compact_size.width == 15);
 	assert(compact_size.height == 5);
 
+	const auto compact_plus = handheld::COMPACT_FONT_3X5.glyph_for('+');
+	assert(compact_plus[0] == 0x04);
+	assert(compact_plus[1] == 0x0E);
+	assert(compact_plus[2] == 0x04);
+	assert(compact_plus[3] == 0x00);
+	assert(compact_plus[4] == 0x00);
+
+	const auto compact_backslash = handheld::COMPACT_FONT_3X5.glyph_for('\\');
+	assert(compact_backslash[0] == 0x03);
+	assert(compact_backslash[1] == 0x04);
+	assert(compact_backslash[2] == 0x18);
+
+	const auto basic_quote = handheld::BASIC_FONT_5X7.glyph_for('"');
+	assert(basic_quote[1] == 0x03);
+	assert(basic_quote[3] == 0x03);
+
 	handheld::TextRenderer::draw_text(
 		platform.display(),
 		{10, 10},
-		"Ab!",
+		"Ab!+=_",
 		handheld::Color::WHITE);
 	handheld::TextRenderer::draw_text(
 		platform.display(),
 		{10, 20},
-		"HUD",
+		"HUD,;()",
 		handheld::Color::WHITE,
 		1,
 		handheld::COMPACT_FONT_3X5);

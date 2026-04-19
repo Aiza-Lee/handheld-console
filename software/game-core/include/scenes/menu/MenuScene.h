@@ -9,6 +9,7 @@ namespace handheld {
 // 菜单场景
 class MenuScene : public Scene {
 public:
+	void enter(IPlatform& platform, ISceneHost& host) override;
 	void update(IPlatform& platform, ISceneHost& host) override;
 	void render(IPlatform& platform, ISceneHost& host) override;
 

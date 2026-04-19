@@ -63,7 +63,6 @@ void SdlPlatform::Display::present() {
 		throw sdl_error("SDL_RenderPresent failed");
 	}
 }
-
 void SdlPlatform::Display::bind(SDL_Renderer& renderer, SDL_Texture& texture) {
 	_renderer = &renderer;
 	_texture = &texture;

@@ -6,6 +6,7 @@
 
 #include <cassert>
 #include <memory>
+#include <vector>
 
 namespace {
 
@@ -13,10 +14,16 @@ int menu_enter_count = 0;
 int menu_update_count = 0;
 int playground_enter_count = 0;
 int playground_update_count = 0;
+std::vector<int> render_log;
+
+enum RenderEvent {
+	MENU_RENDER = 1,
+	PLAYGROUND_RENDER = 2,
+};
 
 class MenuTrackingScene final : public handheld::Scene {
 public:
-	void enter(handheld::IPlatform&, handheld::ISceneHost&) override {
+	void enter(handheld::IPlatform& /*platform*/, handheld::ISceneHost& /*host*/) override {
 		++menu_enter_count;
 	}
 
@@ -29,24 +36,30 @@ public:
 		}
 	}
 
-	void render(handheld::IPlatform& platform, handheld::ISceneHost&) override {
-		platform.display().clear(handheld::Color::BLACK);
+	void render(handheld::IPlatform& platform, handheld::ISceneHost& /*host*/) override {
+		render_log.push_back(MENU_RENDER);
+		auto& display = platform.display();
+		display.clear(handheld::Color::BLACK);
+		display.draw_pixel(0, 0, handheld::Color::WHITE);
 	}
 };
 
 class PlaygroundTrackingScene final : public handheld::Scene {
 public:
-	void enter(handheld::IPlatform&, handheld::ISceneHost&) override {
+	void enter(handheld::IPlatform& /*platform*/, handheld::ISceneHost& /*host*/) override {
 		++playground_enter_count;
 	}
 
-	void update(handheld::IPlatform& platform, handheld::ISceneHost&) override {
+	void update(handheld::IPlatform& platform, handheld::ISceneHost& /*host*/) override {
 		++playground_update_count;
 		assert(platform.input().is_down(handheld::ButtonBits::A));
 	}
 
-	void render(handheld::IPlatform& platform, handheld::ISceneHost&) override {
-		platform.display().clear(handheld::Color::BLACK);
+	void render(handheld::IPlatform& platform, handheld::ISceneHost& /*host*/) override {
+		render_log.push_back(PLAYGROUND_RENDER);
+		auto& display = platform.display();
+		display.clear(handheld::Color::BLACK);
+		display.draw_pixel(1, 0, handheld::Color::WHITE);
 	}
 };
 
@@ -56,9 +69,8 @@ public:
 	std::unique_ptr<handheld::Scene> create(handheld::SceneType type) override {
 		if (type == handheld::SceneType::MENU) {
 			return std::make_unique<MenuTrackingScene>();
-		} else {
-			return std::make_unique<PlaygroundTrackingScene>();
-		}
+		}  			return std::make_unique<PlaygroundTrackingScene>();
+	
 	}
 };
 
@@ -77,6 +89,8 @@ int main() {
 	assert(menu_update_count == 1);
 	assert(playground_enter_count == 0);  // Not entered yet, just created
 	assert(playground_update_count == 0);
+	assert(render_log.size() == 1);
+	assert(render_log[0] == MENU_RENDER);
 
 	// Second tick: Menu exits, Playground enters, updates, renders
 	runner.tick();
@@ -84,8 +98,10 @@ int main() {
 	assert(menu_update_count == 1);     // Still 1
 	assert(playground_enter_count == 1); // Now entered
 	assert(playground_update_count == 1); // Now updated
+	assert(render_log.size() == 2);
+	assert(render_log[1] == PLAYGROUND_RENDER);
 
-	assert(platform.fake_display().last_clear_color() == handheld::Color::BLACK);
+	assert(platform.fake_display().present_count() == 2);
 
 	return 0;
 }

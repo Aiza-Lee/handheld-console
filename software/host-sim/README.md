@@ -4,7 +4,10 @@
 
 `host-sim-sdl` 是可选的 SDL3 宿主模拟器，只有在仓库根目录存在 `third_party/SDL` 子模块时才会构建。
 
-SDL 宿主实现集中在 `software/host-sim/sdl/`，根目录只保留构建文件和无图形 smoke 入口。
+目录约定：
+
+- `app/`: 无图形 smoke 入口
+- `sdl/`: SDL 宿主实现与 smoke
 
 推荐把 SDL3 放在固定位置：
 

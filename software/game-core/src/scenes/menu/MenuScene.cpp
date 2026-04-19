@@ -1,10 +1,9 @@
 #include "scenes/menu/MenuScene.h"
+#include "core/common/ButtonBits.h"
 #include "core/graphics/Color.h"
 #include "core/graphics/TextRenderer.h"
 #include "core/runtime/ISceneHost.h"
 #include "core/runtime/SceneType.h"
-#include "scenes/Playground/PlaygroundScene.h"
-#include <memory>
 
 namespace handheld {
 
@@ -19,6 +18,11 @@ Point _center_text(Point center, const char* text, int16_t scale = 1) {
 }
 
 } // namespace
+
+void MenuScene::enter(IPlatform& platform, ISceneHost& /*host*/) {
+	_scan_width = 0;
+	platform.display().clear(Color::BLACK);
+}
 
 void MenuScene::update(IPlatform& platform, ISceneHost& host) {
 	if (_scan_width < platform.display().width()) {

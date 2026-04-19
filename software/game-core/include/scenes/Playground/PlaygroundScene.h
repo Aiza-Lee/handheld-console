@@ -43,8 +43,8 @@ private:
 	void render_mode_starflow(IDisplay& display) const;
 	void render_mode_signal_scope(IDisplay& display) const;
 	void render_mode_aurora_bloom(IDisplay& display) const;
-	Rect stage_rect(const IDisplay& display) const;
-	Point stage_center(const IDisplay& display) const;
+	[[nodiscard]] Rect stage_rect(const IDisplay& display) const;
+	[[nodiscard]] Point stage_center(const IDisplay& display) const;
 	void render_stage_shell(IDisplay& display) const;
 	void render_hud(IDisplay& display) const;
 	void draw_crosshair(IDisplay& display, Point center, int16_t radius, Color color) const;

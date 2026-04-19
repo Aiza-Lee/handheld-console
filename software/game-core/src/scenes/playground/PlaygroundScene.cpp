@@ -19,7 +19,7 @@ constexpr Color ALERT = rgb565(255, 145, 190);
 constexpr Color MIST = rgb565(35, 45, 82);
 constexpr Color SOFT_WHITE = rgb565(220, 235, 255);
 
-int16_t clamp_i16(int16_t value, int16_t low, int16_t high) {
+int16_t _clamp_i16(int16_t value, int16_t low, int16_t high) {
 	if (value < low) {
 		return low;
 	}
@@ -29,7 +29,7 @@ int16_t clamp_i16(int16_t value, int16_t low, int16_t high) {
 	return value;
 }
 
-const char* mode_name(uint8_t mode) {
+const char* _mode_name(uint8_t mode) {
 	switch (mode) {
 	case 0:
 		return "GLASS GARDEN";
@@ -98,15 +98,15 @@ void PlaygroundScene::update(IPlatform& platform, ISceneHost& host) {
 	}
 
 	IDisplay& display = platform.display();
-	_x = clamp_i16(_x, 2, static_cast<int16_t>(display.width() - 3));
-	_y = clamp_i16(_y, 2, static_cast<int16_t>(display.height() - 3));
+	_x = _clamp_i16(_x, 2, static_cast<int16_t>(display.width() - 3));
+	_y = _clamp_i16(_y, 2, static_cast<int16_t>(display.height() - 3));
 
 	if (_auto_move) {
 		const double t = static_cast<double>(_frame) * 0.042;
-		const int16_t cx = static_cast<int16_t>(display.width() / 2);
-		const int16_t cy = static_cast<int16_t>(display.height() / 2);
-		const int16_t rx = static_cast<int16_t>((display.width() / 2) - 10);
-		const int16_t ry = static_cast<int16_t>((display.height() / 2) - 16);
+		const auto cx = static_cast<int16_t>(display.width() / 2);
+		const auto cy = static_cast<int16_t>(display.height() / 2);
+		const auto rx = static_cast<int16_t>((display.width() / 2) - 10);
+		const auto ry = static_cast<int16_t>((display.height() / 2) - 16);
 		_x = static_cast<int16_t>(cx + (std::cos(t) * rx));
 		_y = static_cast<int16_t>(cy + (std::sin(t * 1.37) * ry));
 	}
@@ -118,7 +118,6 @@ void PlaygroundScene::update(IPlatform& platform, ISceneHost& host) {
 
 void PlaygroundScene::render(IPlatform& platform, ISceneHost& /*host*/) {
 	IDisplay& display = platform.display();
-
 	if (!_stars_ready) {
 		init_stars(display);
 	}
@@ -148,14 +147,14 @@ void PlaygroundScene::render(IPlatform& platform, ISceneHost& /*host*/) {
 	default:
 		break;
 	}
-
 	render_hud(display);
+	display.draw_rect(Rect{1, 1, static_cast<int16_t>(display.width() - 2), static_cast<int16_t>(display.height() - 2)}, MIST);
 }
 
 Rect PlaygroundScene::stage_rect(const IDisplay& display) const {
 	const int16_t w = display.width();
 	const int16_t h = display.height();
-	const int16_t margin_x = static_cast<int16_t>(w < 180 ? 6 : 10);
+	const auto margin_x = static_cast<int16_t>(w < 180 ? 6 : 10);
 	const int16_t top = 16;
 	const int16_t bottom_reserved = 24;
 	return {
@@ -200,8 +199,9 @@ void PlaygroundScene::render_stage_shell(IDisplay& display) const {
 }
 
 void PlaygroundScene::init_stars(IDisplay& display) {
-	const int16_t w = display.width();
-	const int16_t h = display.height();
+	const Rect stage = stage_rect(display);
+	const int16_t w = stage.width;
+	const int16_t h = stage.height;
 
 	for (size_t i = 0; i < _stars.size(); ++i) {
 		const uint32_t a = hash_u32(static_cast<uint32_t>((i * 17) + 1));
@@ -209,8 +209,8 @@ void PlaygroundScene::init_stars(IDisplay& display) {
 		const uint32_t c = hash_u32(static_cast<uint32_t>((i * 43) + 11));
 		const uint32_t d = hash_u32(static_cast<uint32_t>((i * 71) + 19));
 
-		_stars[i].x = static_cast<int16_t>(a % static_cast<uint32_t>(w));
-		_stars[i].y = static_cast<int16_t>(b % static_cast<uint32_t>(h));
+		_stars[i].x = static_cast<int16_t>(stage.x + (a % static_cast<uint32_t>(w)));
+		_stars[i].y = static_cast<int16_t>(stage.y + (b % static_cast<uint32_t>(h)));
 		_stars[i].speed = static_cast<uint8_t>(1 + (c % 4));
 		_stars[i].layer = static_cast<uint8_t>(d % 3);
 	}
@@ -219,60 +219,60 @@ void PlaygroundScene::init_stars(IDisplay& display) {
 }
 
 void PlaygroundScene::update_starfield(IDisplay& display) {
-	const int16_t w = display.width();
-	const int16_t h = display.height();
+	const Rect stage = stage_rect(display);
+	const int16_t w = stage.width;
+	const int16_t h = stage.height;
 
 	for (size_t i = 0; i < _stars.size(); ++i) {
 		Star& s = _stars[i];
-		const int16_t vx = static_cast<int16_t>((s.layer == 2U) ? 1 : 0);
-		const int16_t vy = static_cast<int16_t>(_auto_move ? s.speed : 0);
+		const auto vx = static_cast<int16_t>((s.layer == 2U) ? 1 : 0);
+		const auto vy = static_cast<int16_t>(_auto_move ? s.speed : 0);
 		s.x = static_cast<int16_t>(s.x + vx);
 		s.y = static_cast<int16_t>(s.y + vy);
 
-		if (s.y >= h) {
-			s.y = 0;
-			s.x = static_cast<int16_t>(hash_u32(_frame + static_cast<uint32_t>(i * 31)) % static_cast<uint32_t>(w));
+		if (s.y >= stage.bottom()) {
+			s.y = stage.y;
+			s.x = static_cast<int16_t>(
+				stage.x + (hash_u32(_frame + static_cast<uint32_t>(i * 31)) % static_cast<uint32_t>(w)));
 		}
 
-		if (s.x >= w) {
-			s.x = 0;
+		if (s.x >= stage.right()) {
+			s.x = stage.x;
 		}
 	}
 }
 
 void PlaygroundScene::render_background(IDisplay& display) const {
-	const int16_t w = display.width();
-	const int16_t h = display.height();
+	const Rect stage = stage_rect(display);
+	const int16_t stage_right = stage.right();
+	const int16_t stage_bottom = stage.bottom();
 
-	for (int16_t y = 14; y < h; y += 18) {
-		int16_t previous_x = 0;
+	for (auto y = static_cast<int16_t>(stage.y + 8); y < stage_bottom; y += 18) {
+		int16_t previous_x = stage.x;
 		int16_t previous_y = y;
-		for (int16_t x = 3; x < w; x += 6) {
+		for (auto x = static_cast<int16_t>(stage.x + 3); x < stage_right; x += 6) {
 			const double t = (static_cast<double>(x) * 0.075) + (static_cast<double>(_frame) * 0.03);
-			const int16_t ny = static_cast<int16_t>(y + (std::sin(t) * 4.0));
+			const auto ny = static_cast<int16_t>(y + (std::sin(t) * 4.0));
 			display.draw_line(previous_x, previous_y, x, ny, (y % 36 == 14) ? MIST : SECONDARY);
 			previous_x = x;
 			previous_y = ny;
 		}
 	}
 
-	for (size_t i = 0; i < _stars.size(); ++i) {
-		const Star& s = _stars[i];
-		const Color star_color = (s.layer == 0U) ? MIST : SOFT_WHITE;
+	for (auto s : _stars) {
+			const Color star_color = (s.layer == 0U) ? MIST : SOFT_WHITE;
 		display.draw_pixel(s.x, s.y, star_color);
-		if (s.layer == 2U && s.x > 1) {
+		if (s.layer == 2U && s.x > stage.x) {
 			display.draw_pixel(static_cast<int16_t>(s.x - 1), s.y, MIST);
 		}
 	}
-
-	display.draw_rect(Rect{1, 1, static_cast<int16_t>(w - 2), static_cast<int16_t>(h - 2)}, MIST);
 }
 
 void PlaygroundScene::render_mode_grid_tunnel(IDisplay& display) const {
 	const Rect stage = stage_rect(display);
 	const Point center = {
-		clamp_i16(_x, static_cast<int16_t>(stage.x + 3), static_cast<int16_t>(stage.x + stage.width - 4)),
-		clamp_i16(_y, static_cast<int16_t>(stage.y + 3), static_cast<int16_t>(stage.y + stage.height - 4)),
+		_clamp_i16(_x, static_cast<int16_t>(stage.x + 3), static_cast<int16_t>(stage.x + stage.width - 4)),
+		_clamp_i16(_y, static_cast<int16_t>(stage.y + 3), static_cast<int16_t>(stage.y + stage.height - 4)),
 	};
 	render_stage_shell(display);
 
@@ -287,8 +287,8 @@ void PlaygroundScene::render_mode_grid_tunnel(IDisplay& display) const {
 	}
 
 	for (int16_t layer = 1; layer <= 4; ++layer) {
-		const int16_t pulse = static_cast<int16_t>((_frame + static_cast<uint32_t>(layer * 11)) % 24);
-		const int16_t inset = static_cast<int16_t>((layer * 11) + pulse);
+		const auto pulse = static_cast<int16_t>((_frame + static_cast<uint32_t>(layer * 11)) % 24);
+		const auto inset = static_cast<int16_t>((layer * 11) + pulse);
 		if (inset >= (stage.width / 2) || inset >= (stage.height / 2)) {
 			continue;
 		}
@@ -348,51 +348,53 @@ void PlaygroundScene::render_mode_orbit_lab(IDisplay& display) const {
 void PlaygroundScene::render_mode_starflow(IDisplay& display) const {
 	const Rect stage = stage_rect(display);
 	const int16_t w = display.width();
-	const int16_t horizon = static_cast<int16_t>(stage.y + stage.height - 15);
+	const auto horizon = static_cast<int16_t>(stage.y + stage.height - 15);
 	render_stage_shell(display);
 
 	for (int16_t x = stage.x; x < static_cast<int16_t>(stage.x + stage.width); x += 4) {
 		const double wave = std::sin((static_cast<double>(x) * 0.12) + (static_cast<double>(_frame) * 0.09));
-		const int16_t y = static_cast<int16_t>(horizon + (wave * 3.0));
+		const auto y = static_cast<int16_t>(horizon + (wave * 3.0));
 		display.draw_pixel(x, y, MIST);
 	}
 
-	for (int16_t lane = static_cast<int16_t>(stage.x + 6); lane < static_cast<int16_t>(stage.x + stage.width); lane += 28) {
+	for (auto lane = static_cast<int16_t>(stage.x + 6); lane < static_cast<int16_t>(stage.x + stage.width); lane += 28) {
 		display.draw_line(stage_center(display).x, static_cast<int16_t>(stage.y + stage.height - 1), lane, horizon, SECONDARY);
 	}
 
-	const int16_t ship_y = static_cast<int16_t>(stage.y + stage.height - 22);
-	const int16_t ship_x = clamp_i16(_x, static_cast<int16_t>(stage.x + 8), static_cast<int16_t>(stage.x + stage.width - 9));
+	const auto ship_y = static_cast<int16_t>(stage.y + stage.height - 22);
+	const int16_t ship_x = _clamp_i16(_x, static_cast<int16_t>(stage.x + 8), static_cast<int16_t>(stage.x + stage.width - 9));
 	display.draw_line(static_cast<int16_t>(ship_x - 8), ship_y, ship_x, static_cast<int16_t>(ship_y - 6), HIGHLIGHT);
 	display.draw_line(ship_x, static_cast<int16_t>(ship_y - 6), static_cast<int16_t>(ship_x + 8), ship_y, HIGHLIGHT);
 	display.draw_line(static_cast<int16_t>(ship_x - 8), ship_y, static_cast<int16_t>(ship_x + 8), ship_y, HIGHLIGHT);
 	display.draw_line(ship_x, static_cast<int16_t>(ship_y - 6), ship_x, static_cast<int16_t>(ship_y + 2), SOFT_WHITE);
 
-	const int16_t meteor_x = static_cast<int16_t>(stage.x + stage.width - 1 - ((_frame * 2U) % static_cast<uint32_t>(stage.width + 16)));
-	const int16_t meteor_y = static_cast<int16_t>(stage.y + 8 + ((_frame / 2U) % 20U));
-	display.draw_line(meteor_x, meteor_y, static_cast<int16_t>(meteor_x + 6), static_cast<int16_t>(meteor_y - 2), ALERT);
-	display.draw_pixel(meteor_x, meteor_y, SOFT_WHITE);
+	const auto meteor_x = static_cast<int16_t>(stage.x + stage.width - 1 - ((_frame * 2U) % static_cast<uint32_t>(stage.width + 16)));
+	const auto meteor_y = static_cast<int16_t>(stage.y + 8 + ((_frame / 2U) % 20U));
+	if (meteor_x >= stage.x && meteor_x < static_cast<int16_t>(stage.x + stage.width)) {
+		display.draw_line(meteor_x, meteor_y, static_cast<int16_t>(meteor_x + 6), static_cast<int16_t>(meteor_y - 2), ALERT);
+		display.draw_pixel(meteor_x, meteor_y, SOFT_WHITE);
+	}
 }
 
 void PlaygroundScene::render_mode_signal_scope(IDisplay& display) const {
 	const Rect stage = stage_rect(display);
-	const int16_t mid = static_cast<int16_t>(stage.y + (stage.height / 2));
+	const auto mid = static_cast<int16_t>(stage.y + (stage.height / 2));
 	render_stage_shell(display);
 
 	display.draw_rect(stage, MIST);
 
-	int16_t prev_x = static_cast<int16_t>(stage.x + 2);
+	auto prev_x = static_cast<int16_t>(stage.x + 2);
 	int16_t prev_y = mid;
-	for (int16_t x = static_cast<int16_t>(stage.x + 3); x < static_cast<int16_t>(stage.x + stage.width - 2); ++x) {
+	for (auto x = static_cast<int16_t>(stage.x + 3); x < static_cast<int16_t>(stage.x + stage.width - 2); ++x) {
 		const double t = (static_cast<double>(x) * 0.19) + (static_cast<double>(_frame) * 0.11);
 		const double wave = (std::sin(t) * 7.0) + (std::sin(t * 0.37) * 3.0);
-		const int16_t y = static_cast<int16_t>(mid + wave);
+		const auto y = static_cast<int16_t>(mid + wave);
 		display.draw_line(prev_x, prev_y, x, y, PRIMARY);
 		prev_x = x;
 		prev_y = y;
 	}
 
-	const int16_t scan_x = static_cast<int16_t>(stage.x + 2 + ((_frame / 2U) % static_cast<uint32_t>(stage.width - 4)));
+	const auto scan_x = static_cast<int16_t>(stage.x + 2 + ((_frame / 2U) % static_cast<uint32_t>(stage.width - 4)));
 	display.draw_v_line(scan_x, static_cast<int16_t>(stage.y + 2), static_cast<int16_t>(stage.height - 4), HIGHLIGHT);
 
 	draw_crosshair(display, {_x, _y}, 5, ALERT);
@@ -405,9 +407,9 @@ void PlaygroundScene::render_mode_aurora_bloom(IDisplay& display) const {
 
 	for (int16_t k = 0; k < 9; ++k) {
 		const double phase = (static_cast<double>(_frame) * 0.035) + (k * 0.62);
-		const int16_t len = static_cast<int16_t>(18 + (std::sin(phase * 1.2) * 9.0));
-		const int16_t dx = static_cast<int16_t>(std::cos(phase) * len);
-		const int16_t dy = static_cast<int16_t>(std::sin(phase) * len);
+		const auto len = static_cast<int16_t>(18 + (std::sin(phase * 1.2) * 9.0));
+		const auto dx = static_cast<int16_t>(std::cos(phase) * len);
+		const auto dy = static_cast<int16_t>(std::sin(phase) * len);
 		const Color petal = (k % 2 == 0) ? HIGHLIGHT : PRIMARY;
 		display.draw_line(center.x, center.y, static_cast<int16_t>(center.x + dx), static_cast<int16_t>(center.y + dy), petal);
 		display.draw_pixel(static_cast<int16_t>(center.x + dx), static_cast<int16_t>(center.y + dy), SOFT_WHITE);
@@ -416,8 +418,8 @@ void PlaygroundScene::render_mode_aurora_bloom(IDisplay& display) const {
 	for (int16_t ring = 8; ring <= 28; ring += 6) {
 		for (int16_t deg = 0; deg < 360; deg += 28) {
 			const double a = (static_cast<double>(deg) * 0.0174533) + (_frame * 0.006);
-			const int16_t px = static_cast<int16_t>(center.x + (std::cos(a) * ring));
-			const int16_t py = static_cast<int16_t>(center.y + (std::sin(a) * ring));
+			const auto px = static_cast<int16_t>(center.x + (std::cos(a) * ring));
+			const auto py = static_cast<int16_t>(center.y + (std::sin(a) * ring));
 			if (px <= stage.x || px >= static_cast<int16_t>(stage.x + stage.width - 1)) {
 				continue;
 			}
@@ -429,8 +431,8 @@ void PlaygroundScene::render_mode_aurora_bloom(IDisplay& display) const {
 	}
 
 	const Point focus = {
-		clamp_i16(_x, static_cast<int16_t>(stage.x + 4), static_cast<int16_t>(stage.x + stage.width - 5)),
-		clamp_i16(_y, static_cast<int16_t>(stage.y + 4), static_cast<int16_t>(stage.y + stage.height - 5)),
+		_clamp_i16(_x, static_cast<int16_t>(stage.x + 4), static_cast<int16_t>(stage.x + stage.width - 5)),
+		_clamp_i16(_y, static_cast<int16_t>(stage.y + 4), static_cast<int16_t>(stage.y + stage.height - 5)),
 	};
 	display.draw_line(center.x, center.y, focus.x, focus.y, ALERT);
 	draw_crosshair(display, focus, 6, HIGHLIGHT);
@@ -441,7 +443,7 @@ void PlaygroundScene::render_hud(IDisplay& display) const {
 	const Color bar = (_accent_phase < 8U) ? MIST : SECONDARY;
 	display.fill_rect(Rect{0, 0, display.width(), 12}, bar);
 	TextRenderer::draw_text(display, {3, 3}, "PLAYGROUND", SOFT_WHITE, 1, COMPACT_FONT_3X5);
-	TextRenderer::draw_text(display, {64, 3}, mode_name(_mode), SOFT_WHITE, 1, COMPACT_FONT_3X5);
+	TextRenderer::draw_text(display, {64, 3}, _mode_name(_mode), SOFT_WHITE, 1, COMPACT_FONT_3X5);
 
 	const Color auto_color = _auto_move ? rgb565(140, 230, 170) : rgb565(210, 140, 170);
 	const Color clear_color = _clear_each_frame ? rgb565(140, 230, 170) : rgb565(210, 140, 170);
