@@ -21,7 +21,3 @@ compile_commands.json
 /handheld-console/Release/
 /handheld-console/**/Debug/
 /handheld-console/**/Release/
-
-# Agents
-.codex
-CLAUDE.md

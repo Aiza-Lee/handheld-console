@@ -82,8 +82,6 @@ public:
 		_playing = true;
 	}
 
-	void set_master_volume(uint8_t volume) override { _volume = volume; }
-	[[nodiscard]] uint8_t master_volume() const override { return _volume; }
 	void set_muted(bool muted) override { _muted = muted; }
 	[[nodiscard]] bool is_muted() const override { return _muted; }
 
@@ -98,7 +96,6 @@ public:
 
 private:
 	Tone _last_tone{};
-	uint8_t _volume = 255;
 	bool _muted = false;
 	bool _playing = false;
 	bool _looping = false;
@@ -134,7 +131,7 @@ public:
 
 class FakePlatform final : public IPlatform {
 public:
-	explicit FakePlatform(Size display_size = {160, 128}) : _display(display_size) {}
+	explicit FakePlatform(Size display_size = {80, 80}) : _display(display_size) {}
 
 	IDisplay& display() override { return _display; }
 	IInput& input() override { return _input; }

@@ -13,7 +13,8 @@ class ISceneFactory;
 // 固定执行场景生命周期、输入采样和单帧提交流程。
 class SceneRunner : public ISceneHost {
 public:
-	SceneRunner(IPlatform& platform, ISceneFactory& factory, SceneType initial_scene);
+	SceneRunner(IPlatform& platform, ISceneFactory& factory, SceneType initial_scene,
+	            uint32_t frame_time_ms = 33);
 	SceneRunner(const SceneRunner&) = delete;
 	SceneRunner(SceneRunner&&) = delete;
 	SceneRunner& operator=(const SceneRunner&) = delete;
@@ -32,6 +33,8 @@ private:
 	ISceneFactory& _factory;
 	std::unique_ptr<Scene> _current_scene;
 	SceneType _pending_type;
+	uint32_t _frame_time_ms;
+	uint32_t _last_frame_tick = 0;
 	bool _has_pending_switch = false;
 	bool _entered = false;
 };

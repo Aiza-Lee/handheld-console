@@ -10,14 +10,6 @@ void SdlPlatform::Audio::play_sequence(const Tone* /*tones*/, size_t /*tone_coun
 	_playing = true;
 }
 
-void SdlPlatform::Audio::set_master_volume(uint8_t volume) {
-	_volume = volume;
-}
-
-uint8_t SdlPlatform::Audio::master_volume() const {
-	return _volume;
-}
-
 void SdlPlatform::Audio::set_muted(bool muted) {
 	_muted = muted;
 }

@@ -45,7 +45,7 @@ public:
 		SDL_Texture* _texture = nullptr;
 	};
 
-	explicit SdlPlatform(Size display_size = {240, 240}, int window_scale = 4, uint32_t frame_time_ms = 16);
+	explicit SdlPlatform(Size display_size = {80, 80}, int window_scale = 4, uint32_t frame_time_ms = 33);
 	~SdlPlatform() override;
 
 	SdlPlatform(const SdlPlatform&) = delete;
@@ -83,15 +83,12 @@ private:
 	public:
 		void play_tone(Tone tone) override;
 		void play_sequence(const Tone* tones, size_t tone_count, bool loop) override;
-		void set_master_volume(uint8_t volume) override;
-		[[nodiscard]] uint8_t master_volume() const override;
 		void set_muted(bool muted) override;
 		[[nodiscard]] bool is_muted() const override;
 		void stop() override;
 		[[nodiscard]] bool is_playing() const override;
 
 	private:
-		uint8_t _volume = 255;
 		bool _muted = false;
 		bool _playing = false;
 	};

@@ -9,7 +9,6 @@ namespace handheld {
 struct Tone {
 	uint16_t frequencyHz = 0;
 	uint16_t durationMs = 0;
-	uint8_t volume = 255;
 };
 
 // 音频接口
@@ -28,12 +27,6 @@ public:
 	// 播放音调序列
 	virtual void play_sequence(const Tone* tones, size_t tone_count, bool loop) = 0;
 
-	// 设置主音量
-	virtual void set_master_volume(uint8_t volume) = 0;
-
-	// 返回主音量
-	[[nodiscard]] virtual uint8_t master_volume() const = 0;
-
 	// 设置静音状态
 	virtual void set_muted(bool muted) = 0;
 
@@ -46,8 +39,8 @@ public:
 	// 返回播放状态
 	[[nodiscard]] virtual bool is_playing() const = 0;
 
-	void play_tone(uint16_t frequency_hz, uint16_t duration_ms, uint8_t volume = 255) {
-		play_tone(Tone{frequency_hz, duration_ms, volume});
+	void play_tone(uint16_t frequency_hz, uint16_t duration_ms) {
+		play_tone(Tone{frequency_hz, duration_ms});
 	}
 };
 

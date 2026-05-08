@@ -3,10 +3,12 @@
 
 namespace handheld {
 
-SceneRunner::SceneRunner(IPlatform& platform, ISceneFactory& factory, SceneType initial_scene)
+SceneRunner::SceneRunner(IPlatform& platform, ISceneFactory& factory, SceneType initial_scene,
+                         uint32_t frame_time_ms)
 	: _platform(platform),
 	  _factory(factory),
 	  _pending_type(initial_scene),
+	  _frame_time_ms(frame_time_ms),
 	  _has_pending_switch(true) {}
 
 void SceneRunner::switch_to(SceneType type) {
@@ -50,8 +52,18 @@ void SceneRunner::tick() {
 }
 
 void SceneRunner::run_forever() {
+	_last_frame_tick = _platform.time().ticks_ms();
 	for (;;) {
 		tick();
+
+		if (_frame_time_ms > 0) {
+			const uint32_t now = _platform.time().ticks_ms();
+			const uint32_t elapsed = now - _last_frame_tick;
+			if (elapsed < _frame_time_ms) {
+				_platform.time().delay_ms(_frame_time_ms - elapsed);
+			}
+			_last_frame_tick = _platform.time().ticks_ms();
+		}
 	}
 }
 
