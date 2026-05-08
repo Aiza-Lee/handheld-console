@@ -15,5 +15,5 @@ function(add_game_core_smoke_test target_name source_file)
 	)
 endfunction()
 
-add_game_core_smoke_test(game-core-smoke SceneRunnerSmoke.cpp)
+add_game_core_smoke_test(game-core-smoke ScreenRunnerSmoke.cpp)
 add_game_core_smoke_test(game-core-text-smoke TextRendererSmoke.cpp)

@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 A handheld game console project with three layers:
 
 - **`handheld-console/`** — CCS/TI firmware project targeting MSPM0G3507. Entry point at `app/main.cpp`. Platform adapters live under `platform/mspm0/` (currently stubbed with NullPlatform).
-- **`software/game-core/`** — Portable, header-heavy C++17 runtime library shared between firmware and host-side tools. Contains scene lifecycle, platform interfaces, graphics primitives, and bitmap font rendering.
+- **`software/game-core/`** — Portable, header-heavy C++17 runtime library shared between firmware and host-side tools. Contains screen lifecycle (stack-based), platform interfaces, graphics primitives, and bitmap font rendering.
 - **`software/host-sim/`** — CMake-based host-side build for running game-core logic without TI hardware. Two targets: `host-sim` (headless smoke test) and `host-sim-sdl` (SDL3 windowed simulator, only builds if `third_party/SDL` submodule exists).
 
 ## Build Commands (from `software/host-sim/`)
@@ -44,15 +44,20 @@ All hardware services are behind interfaces in `include/platform/interfaces/`. `
 | `SdlPlatform` | `host-sim/sdl/SdlPlatform.h` | SDL3 windowed simulator with framebuffer, keyboard-to-button mapping |
 | NullPlatform | Referenced by firmware `app/main.cpp` | Hardware placeholder |
 
-### Scene Lifecycle
+### Screen Lifecycle (Stack-Based)
 
-`SceneRunner` drives the game loop. On each `tick()`:
-1. Apply pending scene switch (if any): call `exit()` on the old scene, create the new one via `ISceneFactory`
-2. If newly entered scene, call `enter()`
-3. `IInput::poll()` → `Scene::update()` → `Scene::render()` → `IDisplay::present()`
-4. Check for pending switch again
+`ScreenRunner` drives the game loop. Screens are organized in a stack — only the top screen receives `update()` and `render()`. On each `tick()`:
+1. Apply pending stack operation (switch/push/pop) — see `IScreenHost`
+2. If newly entered screen, call `enter()`
+3. `IInput::poll()` → top `GameScreen::update()` → top `GameScreen::render()` → `IDisplay::present()`
+4. Apply pending stack operation again (for requests issued during `update()`)
 
-Scenes request transitions via `ISceneHost::switch_to(SceneType)`. `SceneType` is an enum (`MENU`, `PLAYGROUND`). `DefaultSceneFactory` maps types to concrete scene classes.
+Screens request transitions via `IScreenHost`:
+- `switch_to(ScreenType)` — replace entire stack (menu ↔ game)
+- `push_screen(ScreenType)` — push overlay, lower screen receives `suspend()`
+- `pop_screen()` — remove overlay, lower screen receives `resume()`
+
+`ScreenType` is an enum (`MENU`, `PLAYGROUND`). `DefaultScreenFactory` maps types to concrete screen classes.
 
 ### Input Model
 

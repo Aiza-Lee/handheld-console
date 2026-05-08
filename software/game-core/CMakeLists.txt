@@ -1,8 +1,8 @@
 set(GAME_CORE_SOURCES
-	src/core/runtime/SceneRunner.cpp
-	src/core/runtime/SceneFactory.cpp
-	src/scenes/menu/MenuScene.cpp
-	src/scenes/playground/PlaygroundScene.cpp
+	src/core/runtime/ScreenRunner.cpp
+	src/core/runtime/ScreenFactory.cpp
+	src/scenes/menu/MenuScreen.cpp
+	src/scenes/playground/PlaygroundScreen.cpp
 )
 
 add_library(game_core STATIC

@@ -1,17 +1,17 @@
-#ifndef SCENES_MENU_MENU_SCENE_H
-#define SCENES_MENU_MENU_SCENE_H
+#ifndef SCREENS_MENU_MENU_SCREEN_H
+#define SCREENS_MENU_MENU_SCREEN_H
 
 #include "core/graphics/Geometry.h"
-#include "core/runtime/Scene.h"
+#include "core/runtime/GameScreen.h"
 
 namespace handheld {
 
-// 菜单场景
-class MenuScene : public Scene {
+// 菜单屏幕
+class MenuScreen : public GameScreen {
 public:
-	void enter(IPlatform& platform, ISceneHost& host) override;
-	void update(IPlatform& platform, ISceneHost& host) override;
-	void render(IPlatform& platform, ISceneHost& host) override;
+	void enter(IPlatform& platform, IScreenHost& host) override;
+	void update(IPlatform& platform, IScreenHost& host) override;
+	void render(IPlatform& platform, IScreenHost& host) override;
 
 private:
 	int16_t _scan_width = 0;
@@ -26,4 +26,4 @@ private:
 
 }  // namespace handheld
 
-#endif // SCENES_MENU_MENU_SCENE_H
+#endif // SCREENS_MENU_MENU_SCREEN_H

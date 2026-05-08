@@ -1,10 +1,10 @@
-#include "scenes/Playground/PlaygroundScene.h"
+#include "scenes/playground/PlaygroundScreen.h"
 #include "core/common/ButtonBits.h"
 #include "core/graphics/Color.h"
 #include "core/graphics/Font.h"
 #include "core/graphics/TextRenderer.h"
-#include "core/runtime/ISceneHost.h"
-#include "core/runtime/SceneType.h"
+#include "core/runtime/IScreenHost.h"
+#include "core/runtime/ScreenType.h"
 #include <cmath>
 
 namespace handheld {
@@ -48,7 +48,7 @@ const char* _mode_name(uint8_t mode) {
 
 } // namespace
 
-void PlaygroundScene::enter(IPlatform& platform, ISceneHost& /*host*/) {
+void PlaygroundScreen::enter(IPlatform& platform, IScreenHost& /*host*/) {
 	IDisplay& display = platform.display();
 	_x = static_cast<int16_t>(display.width() / 2);
 	_y = static_cast<int16_t>(display.height() / 2);
@@ -59,14 +59,14 @@ void PlaygroundScene::enter(IPlatform& platform, ISceneHost& /*host*/) {
 	display.clear(BACKDROP);
 }
 
-void PlaygroundScene::update(IPlatform& platform, ISceneHost& host) {
+void PlaygroundScreen::update(IPlatform& platform, IScreenHost& host) {
 	++_frame;
 	_accent_phase = static_cast<uint8_t>((_accent_phase + 1U) & 0x0FU);
 
 	auto& input = platform.input();
 
 	if (input.was_pressed(ButtonBits::SELECT)) {
-		host.switch_to(SceneType::MENU);
+		host.switch_to(ScreenType::MENU);
 		return;
 	}
 
@@ -116,7 +116,7 @@ void PlaygroundScene::update(IPlatform& platform, ISceneHost& host) {
 	}
 }
 
-void PlaygroundScene::render(IPlatform& platform, ISceneHost& /*host*/) {
+void PlaygroundScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
 	IDisplay& display = platform.display();
 	if (!_stars_ready) {
 		init_stars(display);
@@ -151,7 +151,7 @@ void PlaygroundScene::render(IPlatform& platform, ISceneHost& /*host*/) {
 	display.draw_rect(Rect{1, 1, static_cast<int16_t>(display.width() - 2), static_cast<int16_t>(display.height() - 2)}, MIST);
 }
 
-Rect PlaygroundScene::stage_rect(const IDisplay& display) const {
+Rect PlaygroundScreen::stage_rect(const IDisplay& display) const {
 	const int16_t w = display.width();
 	const int16_t h = display.height();
 	const auto margin_x = static_cast<int16_t>(w < 180 ? 6 : 10);
@@ -165,7 +165,7 @@ Rect PlaygroundScene::stage_rect(const IDisplay& display) const {
 	};
 }
 
-Point PlaygroundScene::stage_center(const IDisplay& display) const {
+Point PlaygroundScreen::stage_center(const IDisplay& display) const {
 	const Rect stage = stage_rect(display);
 	return {
 		static_cast<int16_t>(stage.x + (stage.width / 2)),
@@ -173,7 +173,7 @@ Point PlaygroundScene::stage_center(const IDisplay& display) const {
 	};
 }
 
-void PlaygroundScene::render_stage_shell(IDisplay& display) const {
+void PlaygroundScreen::render_stage_shell(IDisplay& display) const {
 	const Rect stage = stage_rect(display);
 	display.draw_rect(stage, MIST);
 
@@ -198,7 +198,7 @@ void PlaygroundScene::render_stage_shell(IDisplay& display) const {
 		HIGHLIGHT);
 }
 
-void PlaygroundScene::init_stars(IDisplay& display) {
+void PlaygroundScreen::init_stars(IDisplay& display) {
 	const Rect stage = stage_rect(display);
 	const int16_t w = stage.width;
 	const int16_t h = stage.height;
@@ -218,7 +218,7 @@ void PlaygroundScene::init_stars(IDisplay& display) {
 	_stars_ready = true;
 }
 
-void PlaygroundScene::update_starfield(IDisplay& display) {
+void PlaygroundScreen::update_starfield(IDisplay& display) {
 	const Rect stage = stage_rect(display);
 	const int16_t w = stage.width;
 	const int16_t h = stage.height;
@@ -242,7 +242,7 @@ void PlaygroundScene::update_starfield(IDisplay& display) {
 	}
 }
 
-void PlaygroundScene::render_background(IDisplay& display) const {
+void PlaygroundScreen::render_background(IDisplay& display) const {
 	const Rect stage = stage_rect(display);
 	const int16_t stage_right = stage.right();
 	const int16_t stage_bottom = stage.bottom();
@@ -268,7 +268,7 @@ void PlaygroundScene::render_background(IDisplay& display) const {
 	}
 }
 
-void PlaygroundScene::render_mode_grid_tunnel(IDisplay& display) const {
+void PlaygroundScreen::render_mode_grid_tunnel(IDisplay& display) const {
 	const Rect stage = stage_rect(display);
 	const Point center = {
 		_clamp_i16(_x, static_cast<int16_t>(stage.x + 3), static_cast<int16_t>(stage.x + stage.width - 4)),
@@ -305,7 +305,7 @@ void PlaygroundScene::render_mode_grid_tunnel(IDisplay& display) const {
 	draw_crosshair(display, center, 6, HIGHLIGHT);
 }
 
-void PlaygroundScene::render_mode_orbit_lab(IDisplay& display) const {
+void PlaygroundScreen::render_mode_orbit_lab(IDisplay& display) const {
 	const Rect stage = stage_rect(display);
 	const Point center = stage_center(display);
 	render_stage_shell(display);
@@ -345,9 +345,8 @@ void PlaygroundScene::render_mode_orbit_lab(IDisplay& display) const {
 	draw_crosshair(display, {_x, _y}, 5, HIGHLIGHT);
 }
 
-void PlaygroundScene::render_mode_starflow(IDisplay& display) const {
+void PlaygroundScreen::render_mode_starflow(IDisplay& display) const {
 	const Rect stage = stage_rect(display);
-	const int16_t w = display.width();
 	const auto horizon = static_cast<int16_t>(stage.y + stage.height - 15);
 	render_stage_shell(display);
 
@@ -376,7 +375,7 @@ void PlaygroundScene::render_mode_starflow(IDisplay& display) const {
 	}
 }
 
-void PlaygroundScene::render_mode_signal_scope(IDisplay& display) const {
+void PlaygroundScreen::render_mode_signal_scope(IDisplay& display) const {
 	const Rect stage = stage_rect(display);
 	const auto mid = static_cast<int16_t>(stage.y + (stage.height / 2));
 	render_stage_shell(display);
@@ -400,7 +399,7 @@ void PlaygroundScene::render_mode_signal_scope(IDisplay& display) const {
 	draw_crosshair(display, {_x, _y}, 5, ALERT);
 }
 
-void PlaygroundScene::render_mode_aurora_bloom(IDisplay& display) const {
+void PlaygroundScreen::render_mode_aurora_bloom(IDisplay& display) const {
 	const Rect stage = stage_rect(display);
 	const Point center = stage_center(display);
 	render_stage_shell(display);
@@ -439,7 +438,7 @@ void PlaygroundScene::render_mode_aurora_bloom(IDisplay& display) const {
 	display.fill_rect(Rect{static_cast<int16_t>(center.x - 2), static_cast<int16_t>(center.y - 2), 5, 5}, ALERT);
 }
 
-void PlaygroundScene::render_hud(IDisplay& display) const {
+void PlaygroundScreen::render_hud(IDisplay& display) const {
 	const Color bar = (_accent_phase < 8U) ? MIST : SECONDARY;
 	display.fill_rect(Rect{0, 0, display.width(), 12}, bar);
 	TextRenderer::draw_text(display, {3, 3}, "PLAYGROUND", SOFT_WHITE, 1, COMPACT_FONT_3X5);
@@ -453,7 +452,7 @@ void PlaygroundScene::render_hud(IDisplay& display) const {
 	TextRenderer::draw_text(display, {114, 116}, "B TRACE", clear_color, 1, COMPACT_FONT_3X5);
 }
 
-void PlaygroundScene::draw_crosshair(IDisplay& display, Point center, int16_t radius, Color color) const {
+void PlaygroundScreen::draw_crosshair(IDisplay& display, Point center, int16_t radius, Color color) const {
 	display.draw_h_line(static_cast<int16_t>(center.x - radius), center.y, static_cast<int16_t>(radius - 1), color);
 	display.draw_h_line(static_cast<int16_t>(center.x + 2), center.y, static_cast<int16_t>(radius - 1), color);
 	display.draw_v_line(center.x, static_cast<int16_t>(center.y - radius), static_cast<int16_t>(radius - 1), color);
