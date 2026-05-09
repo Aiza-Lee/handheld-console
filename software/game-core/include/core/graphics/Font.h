@@ -279,7 +279,12 @@ struct BitmapFont {
 	}
 };
 
-inline constexpr BitmapFont BASIC_FONT_5X7{};
+inline constexpr BitmapFont BASIC_FONT_5X7 = {
+	{5, 7},
+	6,
+	8,
+	detail::basic_glyph_5x7,
+};
 inline constexpr BitmapFont COMPACT_FONT_3X5 = {
 	{3, 5},
 	4,

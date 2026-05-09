@@ -15,6 +15,17 @@ using handheld::ScreenType;
 
 // ---- 测试屏幕 ----
 
+class BootTestScreen final : public handheld::GameScreen {
+public:
+	void enter(IPlatform& /*p*/, IScreenHost& /*h*/) override {}
+	void update(IPlatform& platform, IScreenHost& host) override {
+		host.switch_to(ScreenType::MENU);
+	}
+	void render(IPlatform& platform, IScreenHost& /*h*/) override {
+		platform.display().clear(handheld::Color::BLACK);
+	}
+};
+
 class MenuTestScreen final : public handheld::GameScreen {
 public:
 	void enter(IPlatform& /*p*/, IScreenHost& /*h*/) override {}
@@ -70,8 +81,8 @@ private:
 class TestScreenFactory : public handheld::IScreenFactory {
 public:
 	enum Mode {
-		SWITCH_TEST,       // MenuTestScreen → GameTestScreen
-		PUSH_POP_TEST,     // GameTestScreen → push → OverlayScreen → pop
+		SWITCH_TEST,       // BOOT → BootTestScreen → MENU → MenuTestScreen → PLAYGROUND → GameTestScreen
+		PUSH_POP_TEST,     // PLAYGROUND → GameTestScreen → push → OverlayScreen → pop
 	};
 
 	explicit TestScreenFactory(Mode mode) : _mode(mode) {}
@@ -80,6 +91,7 @@ public:
 		_call_count++;
 		switch (_mode) {
 		case SWITCH_TEST:
+			if (type == ScreenType::BOOT) return std::make_unique<BootTestScreen>();
 			if (type == ScreenType::MENU) return std::make_unique<MenuTestScreen>();
 			return std::make_unique<GameTestScreen>();
 		case PUSH_POP_TEST:
@@ -106,18 +118,23 @@ private:
 
 int main() {
 	// ================================================================
-	// 测试 1: switch_to（原行为）
+	// 测试 1: switch_to — BOOT → MENU → PLAYGROUND 完整链
 	// ================================================================
 	{
 		handheld::FakePlatform platform({80, 80});
 		TestScreenFactory factory(TestScreenFactory::SWITCH_TEST);
-		handheld::ScreenRunner runner(platform, factory, ScreenType::MENU);
+		handheld::ScreenRunner runner(platform, factory, ScreenType::BOOT);
 
-		runner.tick();  // Menu update → switch_to(PLAYGROUND), render
-		assert(platform.fake_display().present_count() == 1);
+		// tick 1: Boot enters, update → switch_to(MENU), render, present
+		runner.tick();
 
-		runner.tick();  // ScreenRunner applies switch: creates GameTestScreen, enters, updates, renders
-		assert(platform.fake_display().present_count() == 2);
+		// tick 2: apply switch → Menu enters, update → switch_to(PLAYGROUND), render, present
+		runner.tick();
+
+		// tick 3: apply switch → Game enters, update, render, present
+		runner.tick();
+
+		assert(platform.fake_display().present_count() == 3);
 	}
 
 	// ================================================================
@@ -153,16 +170,18 @@ int main() {
 	{
 		TestScreenFactory factory(TestScreenFactory::SWITCH_TEST);
 		handheld::FakePlatform platform({80, 80});
-		handheld::ScreenRunner runner(platform, factory, ScreenType::MENU);
+		handheld::ScreenRunner runner(platform, factory, ScreenType::BOOT);
 
-		runner.tick();  // Menu update → switch_to(PLAYGROUND)
-
-		// tick 2: Game enters, no push/pop
+		// tick 1: Boot → switch_to(MENU)
+		runner.tick();
+		// tick 2: Menu → switch_to(PLAYGROUND)
+		runner.tick();
+		// tick 3: Game enters, no push/pop
 		runner.tick();
 
 		// 栈上只有一个屏幕，pop_screen 在 ScreenRunner::_apply_pending
 		// 中检查到 stack.size() <= 1 时不做任何操作
-		assert(platform.fake_display().present_count() == 2);
+		assert(platform.fake_display().present_count() == 3);
 	}
 
 	return 0;

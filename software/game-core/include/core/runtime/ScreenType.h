@@ -7,7 +7,9 @@ namespace handheld {
 // 屏幕类型枚举，用于工厂创建
 // 每个值对应一个具体的 GameScreen 子类
 enum class ScreenType : uint8_t {
+	BOOT,
 	MENU,
+	GUIDE,
 	PLAYGROUND,
 };
 

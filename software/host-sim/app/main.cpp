@@ -8,7 +8,7 @@
 int main() {
 	handheld::FakePlatform platform;
 	handheld::DefaultScreenFactory factory;
-	handheld::ScreenRunner runner(platform, factory, handheld::ScreenType::MENU);
+	handheld::ScreenRunner runner(platform, factory, handheld::ScreenType::BOOT);
 
 	runner.tick();
 

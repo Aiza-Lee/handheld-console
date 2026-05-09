@@ -1,12 +1,20 @@
-#ifndef SCREENS_MENU_MENU_SCREEN_H
-#define SCREENS_MENU_MENU_SCREEN_H
+#ifndef SCENES_MENU_MENU_SCREEN_H
+#define SCENES_MENU_MENU_SCREEN_H
 
 #include "core/graphics/Geometry.h"
 #include "core/runtime/GameScreen.h"
+#include "core/runtime/ScreenType.h"
+#include <cstddef>
 
 namespace handheld {
 
-// 菜单屏幕
+// 菜单项 — 游戏名称与对应屏幕类型
+struct MenuEntry {
+	const char* name;
+	ScreenType screen_type;
+};
+
+// 菜单屏幕 — 展示已注册游戏列表，光标选择后进入
 class MenuScreen : public GameScreen {
 public:
 	void enter(IPlatform& platform, IScreenHost& host) override;
@@ -14,16 +22,19 @@ public:
 	void render(IPlatform& platform, IScreenHost& host) override;
 
 private:
-	int16_t _scan_width = 0;
+	static constexpr MenuEntry _entries[] = {
+		{"Playground", ScreenType::PLAYGROUND},
+	};
+	static constexpr size_t _entry_count = 1;
+	static constexpr int16_t BOX_X = 5;
+	static constexpr int16_t BOX_W = 70;
+	static constexpr int16_t BOX_H = 16;
+	static constexpr int16_t BOX_START_Y = 24;
+	static constexpr int16_t BOX_GAP = 4;
 
-	static constexpr Point UP_KEY_POS = {40, 40};
-	static constexpr Point DOWN_KEY_POS = {40, 88};
-	static constexpr Point LEFT_KEY_POS = {20, 64};
-	static constexpr Point RIGHT_KEY_POS = {60, 64};
-	static constexpr Point START_KEY_POS = {100, 64};
-	static constexpr Point SELECT_KEY_POS = {140, 64};
+	size_t _cursor = 0;
 };
 
-}  // namespace handheld
+} // namespace handheld
 
-#endif // SCREENS_MENU_MENU_SCREEN_H
+#endif

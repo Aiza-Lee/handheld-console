@@ -66,7 +66,7 @@ void PlaygroundScreen::update(IPlatform& platform, IScreenHost& host) {
 	auto& input = platform.input();
 
 	if (input.was_pressed(ButtonBits::SELECT)) {
-		host.switch_to(ScreenType::MENU);
+		host.push_screen(ScreenType::GUIDE);
 		return;
 	}
 
@@ -154,9 +154,9 @@ void PlaygroundScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
 Rect PlaygroundScreen::stage_rect(const IDisplay& display) const {
 	const int16_t w = display.width();
 	const int16_t h = display.height();
-	const auto margin_x = static_cast<int16_t>(w < 180 ? 6 : 10);
-	const int16_t top = 16;
-	const int16_t bottom_reserved = 24;
+	const auto margin_x = static_cast<int16_t>(6);
+	const int16_t top = 12;
+	const int16_t bottom_reserved = 12;
 	return {
 		margin_x,
 		top,
@@ -310,10 +310,10 @@ void PlaygroundScreen::render_mode_orbit_lab(IDisplay& display) const {
 	const Point center = stage_center(display);
 	render_stage_shell(display);
 
-	for (int16_t r = 12; r < static_cast<int16_t>((stage.height / 2) - 8); r += 10) {
+	for (int16_t r = 6; r < static_cast<int16_t>((stage.height / 2) - 4); r += 8) {
 		display.draw_rect(
 			Rect{static_cast<int16_t>(center.x - r), static_cast<int16_t>(center.y - r), static_cast<int16_t>(r * 2), static_cast<int16_t>(r * 2)},
-			(r % 20 == 0) ? PRIMARY : MIST);
+			(r % 16 == 0) ? PRIMARY : MIST);
 	}
 
 	const double t = static_cast<double>(_frame) * 0.058;
@@ -440,16 +440,20 @@ void PlaygroundScreen::render_mode_aurora_bloom(IDisplay& display) const {
 
 void PlaygroundScreen::render_hud(IDisplay& display) const {
 	const Color bar = (_accent_phase < 8U) ? MIST : SECONDARY;
-	display.fill_rect(Rect{0, 0, display.width(), 12}, bar);
-	TextRenderer::draw_text(display, {3, 3}, "PLAYGROUND", SOFT_WHITE, 1, COMPACT_FONT_3X5);
-	TextRenderer::draw_text(display, {64, 3}, _mode_name(_mode), SOFT_WHITE, 1, COMPACT_FONT_3X5);
+	display.fill_rect(Rect{0, 0, display.width(), 10}, bar);
+
+	const char* mode_name = _mode_name(_mode);
+	const Size name_size = TextRenderer::measure_text(mode_name, 1, COMPACT_FONT_3X5);
+	const int16_t name_x = static_cast<int16_t>((display.width() - name_size.width) / 2);
+	TextRenderer::draw_text(display, {name_x, 2}, mode_name, SOFT_WHITE, 1, COMPACT_FONT_3X5);
 
 	const Color auto_color = _auto_move ? rgb565(140, 230, 170) : rgb565(210, 140, 170);
 	const Color clear_color = _clear_each_frame ? rgb565(140, 230, 170) : rgb565(210, 140, 170);
-	TextRenderer::draw_text(display, {3, 108}, "SHIFT MENU", HIGHLIGHT, 1, COMPACT_FONT_3X5);
-	TextRenderer::draw_text(display, {3, 116}, "START MODE", SOFT_WHITE, 1, COMPACT_FONT_3X5);
-	TextRenderer::draw_text(display, {74, 116}, "A AUTO", auto_color, 1, COMPACT_FONT_3X5);
-	TextRenderer::draw_text(display, {114, 116}, "B TRACE", clear_color, 1, COMPACT_FONT_3X5);
+	const int16_t hint_y = static_cast<int16_t>(display.height() - 9);
+	const int16_t cx = static_cast<int16_t>(display.width() / 2);
+
+	TextRenderer::draw_text(display, {static_cast<int16_t>(cx - 15), hint_y}, "AUTO", auto_color, 1, COMPACT_FONT_3X5);
+	TextRenderer::draw_text(display, {static_cast<int16_t>(display.width() - 34), hint_y}, "TRC", clear_color, 1, COMPACT_FONT_3X5);
 }
 
 void PlaygroundScreen::draw_crosshair(IDisplay& display, Point center, int16_t radius, Color color) const {

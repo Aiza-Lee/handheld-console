@@ -45,7 +45,7 @@ public:
 		SDL_Texture* _texture = nullptr;
 	};
 
-	explicit SdlPlatform(Size display_size = {80, 80}, int window_scale = 4, uint32_t frame_time_ms = 33);
+	explicit SdlPlatform(Size display_size = {80, 80}, int window_scale = 4, uint32_t frame_time_ms = 67);
 	~SdlPlatform() override;
 
 	SdlPlatform(const SdlPlatform&) = delete;

@@ -10,7 +10,7 @@ int main() {
 	try {
 		handheld::SdlPlatform platform;
 		handheld::DefaultScreenFactory factory;
-		handheld::ScreenRunner runner(platform, factory, handheld::ScreenType::MENU);
+		handheld::ScreenRunner runner(platform, factory, handheld::ScreenType::BOOT);
 
 		while (platform.is_running()) {
 			platform.process_events();

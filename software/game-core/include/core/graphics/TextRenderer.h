@@ -75,6 +75,21 @@ public:
 		}
 	}
 
+	static void draw_text_centered(IDisplay& display,
+		Point center,
+		const char* text,
+		Color color,
+		int16_t scale = 1,
+		const BitmapFont& font = BASIC_FONT_5X7
+	) {
+		const Size text_size = measure_text(text, scale, font);
+		const Point origin = {
+			static_cast<int16_t>(center.x - (text_size.width / 2)),
+			static_cast<int16_t>(center.y - (text_size.height / 2)),
+		};
+		draw_text(display, origin, text, color, scale, font);
+	}
+
 	static void draw_glyph(IDisplay& display,
 		Point origin,
 		char c,

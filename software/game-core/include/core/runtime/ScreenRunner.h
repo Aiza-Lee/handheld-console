@@ -17,7 +17,7 @@ class IScreenFactory;
 class ScreenRunner : public IScreenHost {
 public:
 	ScreenRunner(IPlatform& platform, IScreenFactory& factory, ScreenType initial_screen,
-	             uint32_t frame_time_ms = 33);
+	             uint32_t frame_time_ms = 67);
 	ScreenRunner(const ScreenRunner&) = delete;
 	ScreenRunner(ScreenRunner&&) = delete;
 	ScreenRunner& operator=(const ScreenRunner&) = delete;
