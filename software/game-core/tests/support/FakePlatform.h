@@ -10,6 +10,7 @@
 #include "platform/interfaces/IInput.h"
 #include "platform/interfaces/IPlatform.h"
 #include "platform/interfaces/IPower.h"
+#include "platform/interfaces/IAssetProvider.h"
 #include "platform/interfaces/IStorage.h"
 #include "platform/interfaces/ITime.h"
 
@@ -121,6 +122,16 @@ private:
 	uint32_t _ticks_ms = 0;
 };
 
+class FakeAssetProvider final : public IAssetProvider {
+public:
+	bool get(uint16_t /*asset_id*/, const void*& out_data, uint32_t& out_size) const override {
+		out_data = nullptr;
+		out_size = 0;
+		return false;
+	}
+	bool exists(uint16_t /*asset_id*/) const override { return false; }
+};
+
 class FakeStorage final : public IStorage {
 public:
 	bool exists(const char* /*key*/) const override { return false; }
@@ -139,6 +150,7 @@ public:
 	IPower& power() override { return _power; }
 	ITime& time() override { return _time; }
 	IStorage& storage() override { return _storage; }
+	IAssetProvider& assets() override { return _assets; }
 
 	FakeDisplay& fake_display() { return _display; }
 	FakeInput& fake_input() { return _input; }
@@ -150,6 +162,7 @@ private:
 	FakePower _power;
 	FakeTime _time;
 	FakeStorage _storage;
+	FakeAssetProvider _assets;
 };
 
 } // namespace handheld

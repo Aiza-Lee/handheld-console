@@ -11,6 +11,9 @@ enum class ScreenType : uint8_t {
 	MENU,
 	GUIDE,
 	PLAYGROUND,
+	SNAKE,
+	PACMAN,
+	BREAKOUT,
 };
 
 }  // namespace handheld

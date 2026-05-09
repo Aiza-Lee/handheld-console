@@ -53,7 +53,7 @@ SdlPlatform::SdlPlatform(Size display_size, int window_scale, uint32_t frame_tim
 	: _display(display_size),
 	  _frame_time_ms(frame_time_ms) {
 	// The simulator currently stubs audio, so it should not depend on a host audio device.
-	if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) {
+	if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS)) {
 		throw _sdl_error("SDL_Init failed");
 	}
 
@@ -115,6 +115,7 @@ SdlPlatform::SdlPlatform(Size display_size, int window_scale, uint32_t frame_tim
 }
 
 SdlPlatform::~SdlPlatform() {
+	_audio.close();
 	if (_texture != nullptr) {
 		SDL_DestroyTexture(_texture);
 	}
@@ -169,6 +170,14 @@ ITime& SdlPlatform::time() {
 
 IStorage& SdlPlatform::storage() {
 	return _storage;
+}
+
+IAssetProvider& SdlPlatform::assets() {
+	return _assets;
+}
+
+void SdlPlatform::init_assets(const AssetEntry* entries, size_t count) {
+	_assets.reset(entries, count);
 }
 
 void SdlPlatform::_handle_event(const SDL_Event& event) {

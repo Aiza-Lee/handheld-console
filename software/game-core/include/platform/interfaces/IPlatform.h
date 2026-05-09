@@ -5,6 +5,7 @@
 #include "platform/interfaces/IDisplay.h"
 #include "platform/interfaces/IInput.h"
 #include "platform/interfaces/IPower.h"
+#include "platform/interfaces/IAssetProvider.h"
 #include "platform/interfaces/IStorage.h"
 #include "platform/interfaces/ITime.h"
 
@@ -37,6 +38,9 @@ public:
 
 	// 返回存储服务
 	virtual IStorage& storage() = 0;
+
+	// 返回内置资产服务
+	virtual IAssetProvider& assets() = 0;
 };
 
 } // namespace handheld

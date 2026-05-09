@@ -4,6 +4,7 @@
 #include "core/common/ButtonState.h"
 #include "core/graphics/Color.h"
 #include "core/graphics/Geometry.h"
+#include "core/assets/BuiltinAssetProvider.h"
 #include "platform/interfaces/IAudio.h"
 #include "platform/interfaces/IDisplay.h"
 #include "platform/interfaces/IInput.h"
@@ -11,6 +12,8 @@
 #include "platform/interfaces/IPower.h"
 #include "platform/interfaces/IStorage.h"
 #include "platform/interfaces/ITime.h"
+
+#include <SDL3/SDL_audio.h>
 
 #include <cstdint>
 #include <vector>
@@ -57,12 +60,16 @@ public:
 	void process_events();
 	void delay_to_next_frame();
 
+	// 设置内置资产表（通常在 main() 中调用）
+	void init_assets(const AssetEntry* entries, size_t count);
+
 	IDisplay& display() override;
 	IInput& input() override;
 	IAudio& audio() override;
 	IPower& power() override;
 	ITime& time() override;
 	IStorage& storage() override;
+	IAssetProvider& assets() override;
 
 private:
 	class Input final : public IInput {
@@ -81,6 +88,11 @@ private:
 
 	class Audio final : public IAudio {
 	public:
+		Audio();
+		~Audio();
+
+		void close();
+
 		void play_tone(Tone tone) override;
 		void play_sequence(const Tone* tones, size_t tone_count, bool loop) override;
 		void set_muted(bool muted) override;
@@ -89,8 +101,12 @@ private:
 		[[nodiscard]] bool is_playing() const override;
 
 	private:
+		void _ensure_stream();
+		[[nodiscard]] static SDL_AudioSpec _spec();
+		void _queue_tone(Tone tone);
+
+		SDL_AudioStream* _stream = nullptr;
 		bool _muted = false;
-		bool _playing = false;
 	};
 
 	class Power final : public IPower {
@@ -127,6 +143,7 @@ private:
 	Power _power;
 	Time _time;
 	Storage _storage;
+	BuiltinAssetProvider _assets;
 	SDL_Window* _window = nullptr;
 	SDL_Renderer* _renderer = nullptr;
 	SDL_Texture* _texture = nullptr;

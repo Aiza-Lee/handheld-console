@@ -83,3 +83,120 @@ Screens request transitions via `IScreenHost`:
 ## Testing
 
 Smoke tests are standalone executables (no test framework), each with its own `main()` using `assert()`. Tests link `game_core` and use `FakePlatform` with configurable `FakeInput` (call `fake_input().set_button()` before `tick()`). Each test is registered with CTest via `add_game_core_smoke_test()` in `tests/CMakeLists.txt`.
+
+## Asset Pipeline
+
+二进制资产（精灵图、关卡数据、音效）通过编译时管线转为 C++ `const` 数组，直接链接进固件。
+
+### 目录约定
+
+```
+assets/
+  sprites/       ← 精灵数据 (.raw / .bin / 任意格式)
+  levels/        ← 关卡数据
+  gen/           ← CMake 生成的中间文件 (勿手动编辑)
+```
+
+### 注册资产
+
+在平台 CMakeLists 中调用 `add_assets()`：
+
+```cmake
+# software/host-sim/sdl/CMakeLists.txt
+set(REPO_ROOT "${HOST_SIM_ROOT_DIR}/../..")
+include(${REPO_ROOT}/cmake/AssetHelpers.cmake)
+
+add_assets(TARGET host-sim-sdl
+    ASSETS
+        SPRITE_ENEMY    1    ${REPO_ROOT}/assets/sprites/enemy.raw
+        MAZE_01         2    ${REPO_ROOT}/assets/levels/maze_01.map
+)
+```
+
+每个资产三元组 = `名称 数字ID 文件路径`。名称将成为 C++ 常量名，ID 用于运行时查找。
+
+### 构建时自动生成
+
+| 生成文件 | 说明 |
+|---|---|
+| `_assets/<NAME>.cpp` | `extern "C" alignas(4) const unsigned char` 数组 |
+| `_assets/AssetId.h` | `namespace handheld::asset { constexpr uint16_t NAME = ID; }` |
+| `_assets/asset_registry.cpp` | `extern const AssetEntry builtin_assets[]` 汇总表 |
+
+`<NAME>.cpp` 按需增量编译，只重做改过的资产。`alignas(4)` 保证 ARM 访问安全。
+
+### 在 C++ 中使用
+
+```cpp
+#include "AssetId.h"  // 由 add_assets() 生成
+
+void MyScreen::render(IPlatform& platform, IScreenHost&) {
+    const void* data;
+    uint32_t size;
+    if (platform.assets().get(handheld::asset::SPRITE_ENEMY, data, size)) {
+        auto* pixels = static_cast<const Color*>(data);
+        display.draw_bitmap({x, y}, pixels, 16, 16);
+    }
+}
+```
+
+### 背后工具
+
+- `tools/asset_convert.py` — 读取任意二进制文件，补齐到 4 字节，输出 `extern "C"` C++ 数组
+- `cmake/AssetHelpers.cmake` — CMake 函数 `add_assets()`，驱动转换 + 文件生成
+
+### 添加新资产步骤
+
+1. 将原始数据文件放入 `assets/` 下对应子目录（无需 `.bin` 后缀，任何格式均可）
+2. 在 `sdl/CMakeLists.txt` 的 `add_assets()` 中增加一行三元组
+3. 重新构建（`cmake --build`），CMake 会自动检测新文件并执行转换
+
+## Audio Tone Pipeline
+
+音效以 `.tone` 格式编写，用 `audio2tone.py` 转为 C++ `Tone` 数组。
+
+### 编写音效
+
+`assets/sounds/` 目录下创建 `.tone` 文件，例如 `pickup.tone`：
+
+```tone
+# 拾取道具音效
+C5 100
+E5 100
+G5 200
+```
+
+支持三种行格式：
+
+| 格式 | 示例 | 含义 |
+|---|---|---|
+| `音符名 八度 时长` | `C4 200` | 中央 C，200ms。音符: C, C#, D, D#, E, F, F#, G, G#, A, A#, B |
+| `REST 时长` | `REST 100` | 静音 100ms |
+| `频率 时长` | `440 200` | 原始频率 440Hz，200ms |
+
+### 注册音效
+
+```cmake
+# sdl/CMakeLists.txt
+add_sounds(TARGET host-sim-sdl
+    SOUNDS
+        SCALE  ${REPO_ROOT}/assets/sounds/scale.tone
+)
+```
+
+### 在游戏中使用
+
+```cpp
+// 由 add_sounds() 生成
+extern "C" const handheld::Tone _sound_SCALE[];
+extern "C" const uint32_t _sound_SCALE_count;
+
+// 在 screen 的某个时机触发
+platform.audio().play_sequence(_sound_SCALE, _sound_SCALE_count, false);
+// 第三个参数 loop=true 可循环播放
+```
+
+### 背后工具
+
+- `tools/audio2tone.py` — 读取 `.tone` 文件，计算音符频率，输出 `extern "C"` 的 Tone 数组
+- `cmake/AssetHelpers.cmake` 中的 `add_sounds()` — CMake 封装

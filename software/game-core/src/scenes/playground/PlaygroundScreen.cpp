@@ -444,13 +444,13 @@ void PlaygroundScreen::render_hud(IDisplay& display) const {
 
 	const char* mode_name = _mode_name(_mode);
 	const Size name_size = TextRenderer::measure_text(mode_name, 1, COMPACT_FONT_3X5);
-	const int16_t name_x = static_cast<int16_t>((display.width() - name_size.width) / 2);
+	const auto name_x = static_cast<int16_t>((display.width() - name_size.width) / 2);
 	TextRenderer::draw_text(display, {name_x, 2}, mode_name, SOFT_WHITE, 1, COMPACT_FONT_3X5);
 
 	const Color auto_color = _auto_move ? rgb565(140, 230, 170) : rgb565(210, 140, 170);
 	const Color clear_color = _clear_each_frame ? rgb565(140, 230, 170) : rgb565(210, 140, 170);
-	const int16_t hint_y = static_cast<int16_t>(display.height() - 9);
-	const int16_t cx = static_cast<int16_t>(display.width() / 2);
+	const auto hint_y = static_cast<int16_t>(display.height() - 9);
+	const auto cx = static_cast<int16_t>(display.width() / 2);
 
 	TextRenderer::draw_text(display, {static_cast<int16_t>(cx - 15), hint_y}, "AUTO", auto_color, 1, COMPACT_FONT_3X5);
 	TextRenderer::draw_text(display, {static_cast<int16_t>(display.width() - 34), hint_y}, "TRC", clear_color, 1, COMPACT_FONT_3X5);

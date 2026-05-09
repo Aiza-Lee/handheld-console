@@ -8,6 +8,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 enable_testing()
 
+# 仓库根路径（供 AssetHelpers.cmake 使用）
+set(REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+
 add_subdirectory(
 	${CMAKE_CURRENT_SOURCE_DIR}/../game-core
 	${CMAKE_CURRENT_BINARY_DIR}/game-core
@@ -32,6 +35,7 @@ if(EXISTS ${SDL_SUBMODULE_DIR}/CMakeLists.txt)
 		EXCLUDE_FROM_ALL
 	)
 	add_subdirectory(sdl)
+
 else()
 	message(STATUS "SDL submodule not found at ${SDL_SUBMODULE_DIR}; skipping host-sim-sdl target.")
 endif()

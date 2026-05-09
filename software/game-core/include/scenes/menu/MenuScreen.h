@@ -24,15 +24,20 @@ public:
 private:
 	static constexpr MenuEntry _entries[] = {
 		{"Playground", ScreenType::PLAYGROUND},
+		{"Snake", ScreenType::SNAKE},
+		{"Pac-Man", ScreenType::PACMAN},
+		{"Breakout", ScreenType::BREAKOUT},
 	};
-	static constexpr size_t _entry_count = 1;
+	static constexpr size_t _entry_count = 4;
 	static constexpr int16_t BOX_X = 5;
 	static constexpr int16_t BOX_W = 70;
-	static constexpr int16_t BOX_H = 16;
-	static constexpr int16_t BOX_START_Y = 24;
-	static constexpr int16_t BOX_GAP = 4;
+	static constexpr int16_t BOX_H = 10;
+	static constexpr int16_t BOX_START_Y = 18;
+	static constexpr int16_t BOX_GAP = 3;
+	static constexpr int16_t MAX_VISIBLE = 4;
 
 	size_t _cursor = 0;
+	size_t _scroll_offset = 0;
 };
 
 } // namespace handheld
