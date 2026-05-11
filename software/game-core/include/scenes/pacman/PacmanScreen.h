@@ -48,6 +48,7 @@ private:
     Dir _pac_next;
     int8_t _pac_x, _pac_y;
     State _state;
+    bool _paused = false;
     Ghost _ghosts[2];
     bool _dots[GRID][GRID];
     bool _power[GRID][GRID];
@@ -61,6 +62,17 @@ private:
     uint32_t _frame;
     uint32_t _rng;
 
+    // 动画状态
+    struct DeathParticle {
+        int8_t x, y;
+        int8_t vx, vy;
+        uint8_t life;
+    };
+    static constexpr int16_t MAX_DEATH_PARTICLES = 10;
+    DeathParticle _death_particles[MAX_DEATH_PARTICLES];
+    uint8_t _death_particle_count;
+    uint8_t _celebration_timer;
+
     void reset_game();
     [[nodiscard]] bool is_wall(int8_t x, int8_t y) const;
     [[nodiscard]] static bool is_valid_cell(int8_t x, int8_t y);
@@ -72,6 +84,7 @@ private:
     void move_ghosts();
     void check_ghost_collision();
     void die();
+    void update_particles();
     uint32_t next_rng();
 };
 

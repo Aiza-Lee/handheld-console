@@ -36,6 +36,7 @@ private:
     Direction _next_direction;
     bool _game_over;
     bool _won;
+    bool _paused = false;
     Segment _body[MAX_LENGTH];
     int16_t _body_length;
     int8_t _food_x, _food_y;
@@ -44,6 +45,12 @@ private:
     uint32_t _move_interval;
     uint32_t _frame;
     uint32_t _rng_state;
+
+    // 动画状态
+    uint8_t _eat_effect_timer;
+    int8_t _eat_effect_x, _eat_effect_y;
+    uint8_t _shake_timer;
+    int8_t _shake_offset_x, _shake_offset_y;
 
     void reset_game();
     void spawn_food();

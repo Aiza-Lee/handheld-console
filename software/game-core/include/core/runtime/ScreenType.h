@@ -14,6 +14,7 @@ enum class ScreenType : uint8_t {
 	SNAKE,
 	PACMAN,
 	BREAKOUT,
+	INVADERS,
 };
 
 }  // namespace handheld

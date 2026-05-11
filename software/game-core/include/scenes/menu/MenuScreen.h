@@ -1,18 +1,11 @@
 #ifndef SCENES_MENU_MENU_SCREEN_H
 #define SCENES_MENU_MENU_SCREEN_H
 
-#include "core/graphics/Geometry.h"
 #include "core/runtime/GameScreen.h"
-#include "core/runtime/ScreenType.h"
+#include "scenes/menu/MenuConfig.h"
 #include <cstddef>
 
 namespace handheld {
-
-// 菜单项 — 游戏名称与对应屏幕类型
-struct MenuEntry {
-	const char* name;
-	ScreenType screen_type;
-};
 
 // 菜单屏幕 — 展示已注册游戏列表，光标选择后进入
 class MenuScreen : public GameScreen {
@@ -22,22 +15,23 @@ public:
 	void render(IPlatform& platform, IScreenHost& host) override;
 
 private:
-	static constexpr MenuEntry _entries[] = {
-		{"Playground", ScreenType::PLAYGROUND},
-		{"Snake", ScreenType::SNAKE},
-		{"Pac-Man", ScreenType::PACMAN},
-		{"Breakout", ScreenType::BREAKOUT},
-	};
-	static constexpr size_t _entry_count = 4;
-	static constexpr int16_t BOX_X = 5;
-	static constexpr int16_t BOX_W = 70;
-	static constexpr int16_t BOX_H = 10;
-	static constexpr int16_t BOX_START_Y = 18;
-	static constexpr int16_t BOX_GAP = 3;
-	static constexpr int16_t MAX_VISIBLE = 4;
-
 	size_t _cursor = 0;
 	size_t _scroll_offset = 0;
+
+	// 背景星星动画
+	struct Star {
+		int16_t x, y;
+		uint8_t speed;
+		uint8_t layer;
+	};
+	Star _stars[menu::cfg::STAR_COUNT];
+	uint32_t _frame;
+	bool _stars_ready;
+	uint32_t _rng_state;
+
+	void init_stars();
+	void update_stars();
+	uint32_t next_rng();
 };
 
 } // namespace handheld
