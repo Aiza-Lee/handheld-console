@@ -41,7 +41,7 @@ constexpr int16_t BOX_W = 70;
 constexpr int16_t BOX_H = 10;
 constexpr int16_t BOX_START_Y = 18;
 constexpr int16_t BOX_GAP = 3;
-constexpr int16_t MAX_VISIBLE = 5;
+constexpr int16_t MAX_VISIBLE = 4;
 constexpr int16_t STAR_COUNT = 12;
 
 // 文本
