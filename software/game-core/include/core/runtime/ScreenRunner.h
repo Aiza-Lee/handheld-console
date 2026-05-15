@@ -1,6 +1,7 @@
 #ifndef CORE_RUNTIME_SCREEN_RUNNER_H
 #define CORE_RUNTIME_SCREEN_RUNNER_H
 
+#include "core/audio/AudioMixer.h"
 #include "core/runtime/IScreenHost.h"
 #include "core/runtime/GameScreen.h"
 #include "core/runtime/ScreenType.h"
@@ -29,6 +30,7 @@ public:
 	void switch_to(ScreenType type) override;
 	void push_screen(ScreenType type) override;
 	void pop_screen() override;
+	[[nodiscard]] AudioMixer& mixer() override { return _mixer; }
 
 private:
 	enum class PendingOp { NONE, SWITCH, PUSH, POP };
@@ -43,6 +45,7 @@ private:
 	uint32_t _frame_time_ms;
 	uint32_t _last_frame_tick = 0;
 	bool _entered = false;
+	AudioMixer _mixer;
 };
 
 } // namespace handheld

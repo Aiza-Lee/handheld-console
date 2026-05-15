@@ -6,8 +6,18 @@
 #include "core/graphics/Font.h"
 #include "core/graphics/TextRenderer.h"
 #include "core/runtime/IScreenHost.h"
+#include "core/audio/AudioMixer.h"
 #include "core/runtime/ScreenType.h"
 #include <cstdio>
+
+extern "C" [[gnu::weak]] const handheld::Tone _sound_BGM_PACMAN[];
+extern "C" [[gnu::weak]] const uint32_t _sound_BGM_PACMAN_count;
+extern "C" [[gnu::weak]] const handheld::Tone _sound_SFX_CHOMP[];
+extern "C" [[gnu::weak]] const uint32_t _sound_SFX_CHOMP_count;
+extern "C" [[gnu::weak]] const handheld::Tone _sound_SFX_DEATH_PACMAN[];
+extern "C" [[gnu::weak]] const uint32_t _sound_SFX_DEATH_PACMAN_count;
+extern "C" [[gnu::weak]] const handheld::Tone _sound_SFX_POWER_PELLET[];
+extern "C" [[gnu::weak]] const uint32_t _sound_SFX_POWER_PELLET_count;
 
 namespace handheld {
 
@@ -19,9 +29,10 @@ constexpr uint32_t RNG_SEED = 12345;
 
 }  // namespace
 
-void PacmanScreen::enter(IPlatform& platform, IScreenHost& /*host*/) {
+void PacmanScreen::enter(IPlatform& platform, IScreenHost& host) {
 	reset_game();
 	platform.display().clear(BG_COLOR);
+	if (_sound_BGM_PACMAN) host.mixer().set_bgm(_sound_BGM_PACMAN, _sound_BGM_PACMAN_count);
 }
 
 uint32_t PacmanScreen::next_rng() {
@@ -110,7 +121,7 @@ void PacmanScreen::reset_game() {
 	_ghosts[1] = {GHOST1_X, GHOST1_Y, Dir::UP, GhostState::CHASE};
 }
 
-void PacmanScreen::move_pacman() { /* unchanged logic, uses MAZE from config */
+void PacmanScreen::move_pacman(IScreenHost& host) {
 	Dir nd = _pac_next;
 	if ((nd == Dir::UP    && _pac_dir != Dir::DOWN) ||
 		(nd == Dir::DOWN  && _pac_dir != Dir::UP) ||
@@ -129,6 +140,7 @@ void PacmanScreen::move_pacman() { /* unchanged logic, uses MAZE from config */
 		_score += DOT_SCORE;
 		if (_power[_pac_y][_pac_x]) {
 			_power[_pac_y][_pac_x] = false; _power_timer = POWER_DURATION;
+			if (_sound_SFX_POWER_PELLET) host.mixer().play_sfx(_sound_SFX_POWER_PELLET, _sound_SFX_POWER_PELLET_count);
 			for (auto& g : _ghosts) {
 				if (g.state == GhostState::CHASE) {
 					g.state = GhostState::VULNERABLE;
@@ -141,6 +153,8 @@ void PacmanScreen::move_pacman() { /* unchanged logic, uses MAZE from config */
 					}
 				}
 			}
+		} else {
+			if (_sound_SFX_CHOMP) host.mixer().play_sfx(_sound_SFX_CHOMP, _sound_SFX_CHOMP_count);
 		}
 	}
 }
@@ -192,19 +206,20 @@ void PacmanScreen::move_ghosts() { /* unchanged logic */
 	}
 }
 
-void PacmanScreen::check_ghost_collision() {
+void PacmanScreen::check_ghost_collision(IScreenHost& host) {
 	for (auto& g : _ghosts) {
 		if (g.x == _pac_x && g.y == _pac_y) {
 			if (g.state == GhostState::VULNERABLE) {
 				g.state = GhostState::RETURNING; g.x = 4; g.y = 4; g.dir = Dir::UP;
 				_score += GHOST_SCORE;
-			} else if (g.state == GhostState::CHASE) { die(); return; }
+			} else if (g.state == GhostState::CHASE) { die(host); return; }
 		}
 	}
 }
 
-void PacmanScreen::die() {
+void PacmanScreen::die(IScreenHost& host) {
 	_state = State::DYING; _dying_timer = DYING_TIMER; --_lives; _power_timer = 0;
+	if (_sound_SFX_DEATH_PACMAN) host.mixer().play_sfx(_sound_SFX_DEATH_PACMAN, _sound_SFX_DEATH_PACMAN_count);
 	auto px = static_cast<int16_t>((_pac_x * CELL) + (CELL / 2));
 	auto py = static_cast<int16_t>((_pac_y * CELL) + (CELL / 2));
 	for (int16_t i = 0; i < 8 && _death_particle_count < MAX_DEATH_PARTICLES; ++i) {
@@ -260,7 +275,7 @@ void PacmanScreen::update(IPlatform& platform, IScreenHost& host) {
 	else if (input.was_pressed(ButtonBits::RIGHT)) _pac_next = Dir::RIGHT;
 
 	++_pac_move_counter;
-	if (_pac_move_counter >= PAC_MOVE_INTERVAL) { _pac_move_counter = 0; move_pacman(); }
+	if (_pac_move_counter >= PAC_MOVE_INTERVAL) { _pac_move_counter = 0; move_pacman(host); }
 	++_ghost_move_counter;
 	if (_ghost_move_counter >= GHOST_MOVE_INTERVAL) { _ghost_move_counter = 0; move_ghosts(); }
 
@@ -272,7 +287,7 @@ void PacmanScreen::update(IPlatform& platform, IScreenHost& host) {
 			}
 		}
 	}
-	check_ghost_collision();
+	check_ghost_collision(host);
 }
 
 void PacmanScreen::render(IPlatform& platform, IScreenHost& /*host*/) {

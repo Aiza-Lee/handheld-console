@@ -4,8 +4,12 @@
 #include "core/graphics/Font.h"
 #include "core/graphics/TextRenderer.h"
 #include "core/runtime/IScreenHost.h"
+#include "core/audio/AudioMixer.h"
 #include "core/runtime/ScreenType.h"
 #include <cmath>
+
+extern "C" [[gnu::weak]] const handheld::Tone _sound_BGM_PLAYGROUND[];
+extern "C" [[gnu::weak]] const uint32_t _sound_BGM_PLAYGROUND_count;
 
 namespace handheld {
 
@@ -48,7 +52,7 @@ const char* _mode_name(uint8_t mode) {
 
 } // namespace
 
-void PlaygroundScreen::enter(IPlatform& platform, IScreenHost& /*host*/) {
+void PlaygroundScreen::enter(IPlatform& platform, IScreenHost& host) {
 	IDisplay& display = platform.display();
 	_x = static_cast<int16_t>(display.width() / 2);
 	_y = static_cast<int16_t>(display.height() / 2);
@@ -57,6 +61,7 @@ void PlaygroundScreen::enter(IPlatform& platform, IScreenHost& /*host*/) {
 	_accent_phase = 0;
 	_stars_ready = false;
 	display.clear(BACKDROP);
+	if (_sound_BGM_PLAYGROUND) host.mixer().set_bgm(_sound_BGM_PLAYGROUND, _sound_BGM_PLAYGROUND_count);
 }
 
 void PlaygroundScreen::update(IPlatform& platform, IScreenHost& host) {

@@ -33,6 +33,7 @@ void ScreenRunner::_apply_pending() {
 	switch (_pending_op) {
 	case PendingOp::SWITCH: {
 		// 退出并销毁栈中所有屏幕
+		_mixer.stop_all();
 		if (!_stack.empty()) {
 			if (_entered) {
 				_stack.back()->exit(_platform, *this);
@@ -60,6 +61,7 @@ void ScreenRunner::_apply_pending() {
 			_pending_op = PendingOp::NONE;
 			break;
 		}
+		_mixer.stop_all();
 		if (_entered) {
 			_stack.back()->exit(_platform, *this);
 		}
@@ -87,6 +89,14 @@ void ScreenRunner::tick() {
 	_platform.input().poll();
 	top.update(_platform, *this);
 	top.render(_platform, *this);
+
+	// 驱动音频混音器：生成一帧的 PCM 数据并输出
+	if (_mixer.is_playing()) {
+		constexpr size_t samples_per_frame = AudioMixer::SAMPLES_PER_FRAME;
+		int16_t buf[samples_per_frame];
+		_mixer.fill_buffer(buf, samples_per_frame);
+		_platform.audio().write_samples(buf, samples_per_frame);
+	}
 
 	_platform.display().present();
 

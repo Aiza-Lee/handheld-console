@@ -6,19 +6,21 @@ audio2tone.py — 将人类可读的音符描述文件转换为 C++ Tone 数组�
   audio2tone.py <input.tone> <output.cpp> <array_name>
 
 输入格式 (.tone):
-  # 注释以 # 开头
-  # 支持三种行格式:
+  // 注释以 // 开头
+  // 支持三种行格式:
 
   440 200           → 原始频率 (Hz) + 持续时间 (ms)
   REST 100          → 静音 (等同于频率 0)
   C4 200            → 音符名称 + 八度 + 持续时间
+  D#4 150           → 升号用 # (C#, D#, F#, G#, A#)
+  Eb4 150           → 降号用 b (Db, Eb, Gb, Ab, Bb)
 
 音符名称: C, C#, D, D#, E, F, F#, G, G#, A, A#, B
 八度范围: 0-8 (C4 = 中央 C = 262 Hz)
 持续时间: 毫秒
 
 示例 (assets/sounds/jingle.tone):
-  # 简单音阶上行
+  // 简单音阶上行
   C4 200
   D4 200
   E4 200
@@ -66,7 +68,7 @@ def parse_tone_file(path: str) -> list[tuple[int, int]]:
     with open(path) as f:
         for raw in f:
             line_num += 1
-            line = raw.split("#")[0].strip()  # 去掉注释和首尾空白
+            line = raw.split("//")[0].strip()  # 去掉注释和首尾空白
             if not line:
                 continue
 

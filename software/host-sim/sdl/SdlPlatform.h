@@ -99,6 +99,7 @@ private:
 		[[nodiscard]] bool is_muted() const override;
 		void stop() override;
 		[[nodiscard]] bool is_playing() const override;
+		void write_samples(const int16_t* data, size_t count) override;
 
 	private:
 		void _ensure_stream();

@@ -6,6 +6,7 @@
 namespace handheld {
 
 class GameScreen;
+class AudioMixer;
 
 // GameScreen 通过此接口请求切换、压入或弹出屏幕。
 // 所有操作延迟到当前帧的 tick() 末尾执行，
@@ -27,6 +28,9 @@ public:
 
 	// 弹出栈顶屏幕，恢复下层屏幕（下层收到 resume()）
 	virtual void pop_screen() = 0;
+
+	// 返回音频混音器，供 Screen 设置 BGM / 播放 SFX
+	[[nodiscard]] virtual AudioMixer& mixer() = 0;
 };
 
 } // namespace handheld

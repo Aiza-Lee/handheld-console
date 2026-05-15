@@ -79,10 +79,10 @@ private:
 
     void reset_game();
     void respawn_player();
-    void player_shoot();
+    void player_shoot(IScreenHost& host);
     void enemy_shoot();
     void move_enemies();
-    void move_bullets();
+    void move_bullets(IScreenHost& host);
     void spawn_particles(int16_t x, int16_t y);
     void update_particles();
     void draw_enemy(IDisplay& display, int16_t px, int16_t py, int16_t row, uint32_t frame) const;

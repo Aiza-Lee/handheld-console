@@ -6,9 +6,17 @@
 #include "core/graphics/Font.h"
 #include "core/graphics/TextRenderer.h"
 #include "core/runtime/IScreenHost.h"
+#include "core/audio/AudioMixer.h"
 #include "core/runtime/ScreenType.h"
 #include <cmath>
 #include <cstdio>
+
+extern "C" [[gnu::weak]] const handheld::Tone _sound_BGM_SNAKE[];
+extern "C" [[gnu::weak]] const uint32_t _sound_BGM_SNAKE_count;
+extern "C" [[gnu::weak]] const handheld::Tone _sound_SFX_EAT[];
+extern "C" [[gnu::weak]] const uint32_t _sound_SFX_EAT_count;
+extern "C" [[gnu::weak]] const handheld::Tone _sound_SFX_DEATH_SNAKE[];
+extern "C" [[gnu::weak]] const uint32_t _sound_SFX_DEATH_SNAKE_count;
 
 namespace handheld {
 
@@ -27,9 +35,10 @@ Color body_gradient_color(int16_t i, int16_t body_length) {
 
 }  // namespace
 
-void SnakeScreen::enter(IPlatform& platform, IScreenHost& /*host*/) {
+void SnakeScreen::enter(IPlatform& platform, IScreenHost& host) {
 	reset_game();
 	platform.display().clear(BG_COLOR);
+	if (_sound_BGM_SNAKE) host.mixer().set_bgm(_sound_BGM_SNAKE, _sound_BGM_SNAKE_count);
 }
 
 void SnakeScreen::reset_game() {
@@ -79,7 +88,7 @@ void SnakeScreen::spawn_food() {
 	} while (is_occupied(_food_x, _food_y));
 }
 
-void SnakeScreen::move_snake() {
+void SnakeScreen::move_snake(IScreenHost& host) {
 	if (_next_direction == Direction::UP && _direction != Direction::DOWN) {
 		_direction = _next_direction;
 	} else if (_next_direction == Direction::DOWN && _direction != Direction::UP) {
@@ -102,6 +111,7 @@ void SnakeScreen::move_snake() {
 	if (new_x < 0 || new_x >= GRID_SIZE || new_y < 0 || new_y >= GRID_SIZE) {
 		_game_over = true;
 		_shake_timer = SHAKE_DURATION;
+		if (_sound_SFX_DEATH_SNAKE) host.mixer().play_sfx(_sound_SFX_DEATH_SNAKE, _sound_SFX_DEATH_SNAKE_count);
 		return;
 	}
 
@@ -112,6 +122,7 @@ void SnakeScreen::move_snake() {
 		if (_body[i].x == new_x && _body[i].y == new_y) {
 			_game_over = true;
 			_shake_timer = SHAKE_DURATION;
+			if (_sound_SFX_DEATH_SNAKE) host.mixer().play_sfx(_sound_SFX_DEATH_SNAKE, _sound_SFX_DEATH_SNAKE_count);
 			return;
 		}
 	}
@@ -129,6 +140,7 @@ void SnakeScreen::move_snake() {
 		_eat_effect_timer = EAT_EFFECT_DURATION;
 		_eat_effect_x = new_x;
 		_eat_effect_y = new_y;
+		if (_sound_SFX_EAT) host.mixer().play_sfx(_sound_SFX_EAT, _sound_SFX_EAT_count);
 
 		const uint32_t speed_down = static_cast<uint32_t>(_score) / 5;
 		_move_interval = (speed_down >= INITIAL_MOVE_INTERVAL - MIN_MOVE_INTERVAL)
@@ -197,7 +209,7 @@ void SnakeScreen::update(IPlatform& platform, IScreenHost& host) {
 	++_move_counter;
 	if (_move_counter >= _move_interval) {
 		_move_counter = 0;
-		move_snake();
+		move_snake(host);
 	}
 }
 

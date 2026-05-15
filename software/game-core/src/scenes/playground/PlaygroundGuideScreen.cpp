@@ -3,12 +3,17 @@
 #include "core/graphics/Color.h"
 #include "core/graphics/TextRenderer.h"
 #include "core/runtime/IScreenHost.h"
+#include "core/audio/AudioMixer.h"
 #include "core/runtime/ScreenType.h"
+
+extern "C" [[gnu::weak]] const handheld::Tone _sound_BGM_GUIDE[];
+extern "C" [[gnu::weak]] const uint32_t _sound_BGM_GUIDE_count;
 
 namespace handheld {
 
-void PlaygroundGuideScreen::enter(IPlatform& platform, IScreenHost& /*host*/) {
+void PlaygroundGuideScreen::enter(IPlatform& platform, IScreenHost& host) {
 	platform.display().clear(Color::BLACK);
+	if (_sound_BGM_GUIDE) host.mixer().set_bgm(_sound_BGM_GUIDE, _sound_BGM_GUIDE_count);
 }
 
 void PlaygroundGuideScreen::update(IPlatform& platform, IScreenHost& host) {

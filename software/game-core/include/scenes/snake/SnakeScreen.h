@@ -56,7 +56,7 @@ private:
     void spawn_food();
     [[nodiscard]] bool is_occupied(int8_t x, int8_t y) const;
     uint32_t next_rng();
-    void move_snake();
+    void move_snake(IScreenHost& host);
 };
 
 }  // namespace handheld

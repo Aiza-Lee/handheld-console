@@ -6,17 +6,28 @@
 #include "core/graphics/Font.h"
 #include "core/graphics/TextRenderer.h"
 #include "core/runtime/IScreenHost.h"
+#include "core/audio/AudioMixer.h"
 #include "core/runtime/ScreenType.h"
 #include <algorithm>
 #include <cstdio>
+
+extern "C" [[gnu::weak]] const handheld::Tone _sound_BGM_BREAKOUT[];
+extern "C" [[gnu::weak]] const uint32_t _sound_BGM_BREAKOUT_count;
+extern "C" [[gnu::weak]] const handheld::Tone _sound_SFX_BRICK[];
+extern "C" [[gnu::weak]] const uint32_t _sound_SFX_BRICK_count;
+extern "C" [[gnu::weak]] const handheld::Tone _sound_SFX_PADDLE[];
+extern "C" [[gnu::weak]] const uint32_t _sound_SFX_PADDLE_count;
+extern "C" [[gnu::weak]] const handheld::Tone _sound_SFX_DEATH_BREAKOUT[];
+extern "C" [[gnu::weak]] const uint32_t _sound_SFX_DEATH_BREAKOUT_count;
 
 namespace handheld {
 
 using namespace breakout::cfg;
 
-void BreakoutScreen::enter(IPlatform& platform, IScreenHost& /*host*/) {
+void BreakoutScreen::enter(IPlatform& platform, IScreenHost& host) {
     reset_game();
     platform.display().clear(BG_COLOR);
+    if (_sound_BGM_BREAKOUT) host.mixer().set_bgm(_sound_BGM_BREAKOUT, _sound_BGM_BREAKOUT_count);
 }
 
 uint32_t BreakoutScreen::next_rng() {
@@ -78,7 +89,7 @@ void BreakoutScreen::launch_ball() {
     _ball_vy = -2; _state = State::ACTIVE;
 }
 
-void BreakoutScreen::check_paddle_collision() {
+void BreakoutScreen::check_paddle_collision(IScreenHost& host) {
     if (_ball_y + BALL_H >= PADDLE_Y && _ball_y < PADDLE_Y + PADDLE_H) {
         if (_ball_x + BALL_W > _paddle_x && _ball_x < _paddle_x + PADDLE_W) {
             _ball_y = PADDLE_Y - BALL_H;
@@ -94,11 +105,12 @@ void BreakoutScreen::check_paddle_collision() {
             }
             _hit_spark_timer = HIT_SPARK_DURATION;
             _hit_spark_x = static_cast<int16_t>(_ball_x + BALL_W / 2);
+            if (_sound_SFX_PADDLE) host.mixer().play_sfx(_sound_SFX_PADDLE, _sound_SFX_PADDLE_count);
         }
     }
 }
 
-bool BreakoutScreen::check_brick_collision() {
+bool BreakoutScreen::check_brick_collision(IScreenHost& host) {
     for (int16_t row = 0; row < BRICK_ROWS; ++row) {
         uint8_t mask = _bricks[row];
         if (mask == 0) continue;
@@ -111,6 +123,7 @@ bool BreakoutScreen::check_brick_collision() {
                 --_bricks_remaining; _score += BRICK_POINTS[row];
                 _ball_vy = -_ball_vy;
                 spawn_brick_particles(row, col);
+                if (_sound_SFX_BRICK) host.mixer().play_sfx(_sound_SFX_BRICK, _sound_SFX_BRICK_count);
                 return true;
             }
         }
@@ -118,10 +131,11 @@ bool BreakoutScreen::check_brick_collision() {
     return false;
 }
 
-void BreakoutScreen::lose_life() {
+void BreakoutScreen::lose_life(IScreenHost& host) {
     --_lives;
     if (_lives <= 0) _state = State::GAME_OVER;
     else { _state = State::DYING; _dying_timer = DYING_TIMER; _shake_timer = SHAKE_DURATION; }
+    if (_sound_SFX_DEATH_BREAKOUT) host.mixer().play_sfx(_sound_SFX_DEATH_BREAKOUT, _sound_SFX_DEATH_BREAKOUT_count);
 }
 
 void BreakoutScreen::update(IPlatform& platform, IScreenHost& host) {
@@ -176,9 +190,9 @@ void BreakoutScreen::update(IPlatform& platform, IScreenHost& host) {
     if (_ball_x < 0) { _ball_x = 0; _ball_vx = -_ball_vx; }
     if (_ball_x + BALL_W > 80) { _ball_x = static_cast<int16_t>(80 - BALL_W); _ball_vx = -_ball_vx; }
     if (_ball_y < 0) { _ball_y = 0; _ball_vy = -_ball_vy; }
-    if (_ball_y >= 80) { lose_life(); return; }
-    check_paddle_collision();
-    if (_bricks_remaining > 0) check_brick_collision();
+    if (_ball_y >= 80) { lose_life(host); return; }
+    check_paddle_collision(host);
+    if (_bricks_remaining > 0) check_brick_collision(host);
     if (_bricks_remaining == 0) { _state = State::GAME_OVER; _celebration_timer = CELEBRATION_DURATION; }
 }
 

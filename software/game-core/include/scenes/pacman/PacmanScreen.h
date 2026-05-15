@@ -80,10 +80,10 @@ private:
     bool try_move(int8_t x, int8_t y, Dir dir, int8_t& nx, int8_t& ny) const;
     [[nodiscard]] int8_t ghost_target_x(const Ghost& g) const;
     [[nodiscard]] int8_t ghost_target_y(const Ghost& g) const;
-    void move_pacman();
+    void move_pacman(IScreenHost& host);
     void move_ghosts();
-    void check_ghost_collision();
-    void die();
+    void check_ghost_collision(IScreenHost& host);
+    void die(IScreenHost& host);
     void update_particles();
     uint32_t next_rng();
 };

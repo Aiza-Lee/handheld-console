@@ -95,11 +95,18 @@ public:
 	[[nodiscard]] Tone last_tone() const { return _last_tone; }
 	[[nodiscard]] bool is_looping() const { return _looping; }
 
+	void write_samples(const int16_t* /*data*/, size_t count) override {
+		_samples_written += count;
+	}
+
+	[[nodiscard]] size_t samples_written() const { return _samples_written; }
+
 private:
 	Tone _last_tone{};
 	bool _muted = false;
 	bool _playing = false;
 	bool _looping = false;
+	size_t _samples_written = 0;
 };
 
 class FakePower final : public IPower {

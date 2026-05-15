@@ -39,6 +39,9 @@ public:
 	// 返回播放状态
 	[[nodiscard]] virtual bool is_playing() const = 0;
 
+	// 直接输出 PCM 采样数据（S16LE, 44100Hz, mono）
+	virtual void write_samples(const int16_t* data, size_t count) = 0;
+
 	void play_tone(uint16_t frequency_hz, uint16_t duration_ms) {
 		play_tone(Tone{frequency_hz, duration_ms});
 	}

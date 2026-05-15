@@ -103,4 +103,11 @@ bool SdlPlatform::Audio::is_playing() const {
 	return _stream && SDL_GetAudioStreamQueued(_stream) > 0;
 }
 
+void SdlPlatform::Audio::write_samples(const int16_t* data, size_t count) {
+	_ensure_stream();
+	if (_muted || !_stream || count == 0) return;
+	SDL_PutAudioStreamData(_stream, data, static_cast<int>(count * sizeof(int16_t)));
+	SDL_ResumeAudioStreamDevice(_stream);
+}
+
 } // namespace handheld

@@ -5,8 +5,16 @@
 #include "core/graphics/Color.h"
 #include "core/graphics/TextRenderer.h"
 #include "core/runtime/IScreenHost.h"
+#include "core/audio/AudioMixer.h"
 #include "core/runtime/ScreenType.h"
 #include <cstdio>
+
+extern "C" [[gnu::weak]] const handheld::Tone _sound_BGM_INVADERS[];
+extern "C" [[gnu::weak]] const uint32_t _sound_BGM_INVADERS_count;
+extern "C" [[gnu::weak]] const handheld::Tone _sound_SFX_SHOOT[];
+extern "C" [[gnu::weak]] const uint32_t _sound_SFX_SHOOT_count;
+extern "C" [[gnu::weak]] const handheld::Tone _sound_SFX_EXPLOSION[];
+extern "C" [[gnu::weak]] const uint32_t _sound_SFX_EXPLOSION_count;
 
 namespace handheld {
 
@@ -29,10 +37,11 @@ int16_t enemy_row_score(int16_t row) {
 
 }  // namespace
 
-void InvadersScreen::enter(IPlatform& platform, IScreenHost& /*host*/) {
+void InvadersScreen::enter(IPlatform& platform, IScreenHost& host) {
     platform.display().clear(Color::BLACK);
     _high_score = 0;
     reset_game();
+    if (_sound_BGM_INVADERS) host.mixer().set_bgm(_sound_BGM_INVADERS, _sound_BGM_INVADERS_count);
 }
 
 void InvadersScreen::reset_game() {
@@ -56,8 +65,13 @@ void InvadersScreen::respawn_player() {
 
 uint32_t InvadersScreen::next_rng() { _rng = _rng * 1103515245 + 12345; return _rng; }
 
-void InvadersScreen::player_shoot() {
-    if (!_bullet_active) { _bullet_x = static_cast<int16_t>(_player_x + PLAYER_W / 2); _bullet_y = PLAYER_Y - 1; _bullet_active = true; }
+void InvadersScreen::player_shoot(IScreenHost& host) {
+    if (!_bullet_active) {
+        _bullet_x = static_cast<int16_t>(_player_x + PLAYER_W / 2);
+        _bullet_y = PLAYER_Y - 1;
+        _bullet_active = true;
+        if (_sound_SFX_SHOOT) host.mixer().play_sfx(_sound_SFX_SHOOT, _sound_SFX_SHOOT_count);
+    }
 }
 
 void InvadersScreen::enemy_shoot() {
@@ -107,7 +121,7 @@ void InvadersScreen::move_enemies() {
     }
 }
 
-void InvadersScreen::move_bullets() {
+void InvadersScreen::move_bullets(IScreenHost& host) {
     if (_bullet_active) { _bullet_y -= 2; if (_bullet_y < STATUS_H) _bullet_active = false; }
     if (_bullet_active) {
         for (int16_t row = 0; row < GRID_ROWS; ++row) {
@@ -120,6 +134,7 @@ void InvadersScreen::move_bullets() {
                     _score += enemy_row_score(row); if (_score > _high_score) _high_score = _score;
                     _bullet_active = false;
                     spawn_particles(static_cast<int16_t>(ex + ENEMY_W / 2), static_cast<int16_t>(ey + ENEMY_H / 2));
+                    if (_sound_SFX_EXPLOSION) host.mixer().play_sfx(_sound_SFX_EXPLOSION, _sound_SFX_EXPLOSION_count);
                     _move_interval = INIT_MOVE_INTERVAL - static_cast<uint32_t>((GRID_COLS * GRID_ROWS - _enemies_alive_count) / 4);
                     if (_move_interval < MIN_MOVE_INTERVAL) _move_interval = MIN_MOVE_INTERVAL;
                     break;
@@ -135,6 +150,7 @@ void InvadersScreen::move_bullets() {
             eb.y >= PLAYER_Y && eb.y < PLAYER_Y + PLAYER_H) {
             eb.active = false;
             spawn_particles(static_cast<int16_t>(_player_x + PLAYER_W / 2), static_cast<int16_t>(PLAYER_Y + PLAYER_H / 2));
+            if (_sound_SFX_EXPLOSION) host.mixer().play_sfx(_sound_SFX_EXPLOSION, _sound_SFX_EXPLOSION_count);
             --_lives;
             if (_lives <= 0) { _state = State::GAME_OVER; if (_score > _high_score) _high_score = _score; }
             else { _state = State::DYING; _dying_timer = DYING_TIMER; }
@@ -200,16 +216,16 @@ void InvadersScreen::update(IPlatform& platform, IScreenHost& host) {
         case State::PLAYING: {
             if (input.is_down(ButtonBits::LEFT))  { _player_x -= PLAYER_SPEED; if (_player_x < 0) _player_x = 0; }
             if (input.is_down(ButtonBits::RIGHT)) { _player_x += PLAYER_SPEED; if (_player_x + PLAYER_W > 80) _player_x = 80 - PLAYER_W; }
-            if (input.was_pressed(ButtonBits::A)) player_shoot();
+            if (input.was_pressed(ButtonBits::A)) player_shoot(host);
             if (input.was_pressed(ButtonBits::START)) { _paused = true; return; }
             move_enemies(); if (_state != State::PLAYING) break;
-            move_bullets(); update_particles();
+            move_bullets(host); update_particles();
             ++_shoot_timer;
             if (_shoot_timer >= static_cast<uint32_t>(30 + _enemies_alive_count * 2)) { _shoot_timer = 0; enemy_shoot(); }
             if (_enemies_alive_count == 0) { _state = State::GAME_OVER; if (_score > _high_score) _high_score = _score; }
             break;
         }
-        case State::DYING: { update_particles(); move_bullets(); if (_dying_timer > 0) --_dying_timer; else respawn_player(); break; }
+        case State::DYING: { update_particles(); move_bullets(host); if (_dying_timer > 0) --_dying_timer; else respawn_player(); break; }
         case State::GAME_OVER: {
             update_particles();
             if (input.was_pressed(ButtonBits::START)) reset_game();

@@ -68,9 +68,9 @@ private:
 
     void reset_game();
     void launch_ball();
-    void check_paddle_collision();
-    bool check_brick_collision();
-    void lose_life();
+    void check_paddle_collision(IScreenHost& host);
+    bool check_brick_collision(IScreenHost& host);
+    void lose_life(IScreenHost& host);
     [[nodiscard]] Rect brick_rect(int16_t row, int16_t col) const;
     void spawn_brick_particles(int16_t row, int16_t col);
     void update_particles();
