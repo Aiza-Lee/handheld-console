@@ -3,7 +3,7 @@ if(NOT TARGET SDL3::SDL3)
 endif()
 
 set(HOST_SIM_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
-set(REPO_ROOT "${HOST_SIM_ROOT_DIR}/../..")
+set(GAME_CORE_ROOT "${HOST_SIM_ROOT_DIR}/../game-core")
 
 set(HOST_SIM_SDL_SOURCES
 	main.cpp
@@ -21,36 +21,36 @@ add_executable(host-sim-sdl
 )
 
 # ── 资产管线 ──────────────────────────────────────
-include(${REPO_ROOT}/cmake/AssetHelpers.cmake)
+include(${GAME_CORE_ROOT}/cmake/AssetHelpers.cmake)
 
 add_assets(TARGET host-sim-sdl
 	ASSETS
-		TEST_RED_SPRITE   1   ${REPO_ROOT}/assets/sprites/test_red.raw
+		TEST_RED_SPRITE   1   ${GAME_CORE_ROOT}/assets/sprites/test_red.raw
 )
 
 add_sounds(TARGET host-sim-sdl
 	SOUNDS
-		BOOT             ${REPO_ROOT}/assets/sounds/boot.tone
-		BGM_MENU         ${REPO_ROOT}/assets/sounds/bgm_menu.tone
-		BGM_GUIDE        ${REPO_ROOT}/assets/sounds/bgm_guide.tone
-		BGM_PLAYGROUND   ${REPO_ROOT}/assets/sounds/bgm_playground.tone
-		BGM_SNAKE        ${REPO_ROOT}/assets/sounds/bgm_snake.tone
-		BGM_PACMAN       ${REPO_ROOT}/assets/sounds/bgm_pacman.tone
-		BGM_BREAKOUT     ${REPO_ROOT}/assets/sounds/bgm_breakout.tone
-		BGM_INVADERS     ${REPO_ROOT}/assets/sounds/bgm_invaders.tone
-		SFX_SELECT       ${REPO_ROOT}/assets/sounds/sfx_select.tone
-		SFX_CONFIRM      ${REPO_ROOT}/assets/sounds/sfx_confirm.tone
-		SFX_EAT          ${REPO_ROOT}/assets/sounds/sfx_eat.tone
-		SFX_DEATH_SNAKE  ${REPO_ROOT}/assets/sounds/sfx_death_snake.tone
-		SFX_CHOMP        ${REPO_ROOT}/assets/sounds/sfx_chomp.tone
-		SFX_DEATH_PACMAN ${REPO_ROOT}/assets/sounds/sfx_death_pacman.tone
-		SFX_POWER_PELLET ${REPO_ROOT}/assets/sounds/sfx_power_pellet.tone
-		SFX_BRICK        ${REPO_ROOT}/assets/sounds/sfx_brick.tone
-		SFX_PADDLE       ${REPO_ROOT}/assets/sounds/sfx_paddle.tone
-		SFX_DEATH_BREAKOUT ${REPO_ROOT}/assets/sounds/sfx_death_breakout.tone
-		SFX_SHOOT        ${REPO_ROOT}/assets/sounds/sfx_shoot.tone
-		SFX_EXPLOSION    ${REPO_ROOT}/assets/sounds/sfx_explosion.tone
-		SFX_UFO          ${REPO_ROOT}/assets/sounds/sfx_ufo.tone
+		BOOT             ${GAME_CORE_ROOT}/assets/sounds/boot.tone
+		BGM_MENU         ${GAME_CORE_ROOT}/assets/sounds/bgm_menu.tone
+		BGM_GUIDE        ${GAME_CORE_ROOT}/assets/sounds/bgm_guide.tone
+		BGM_PLAYGROUND   ${GAME_CORE_ROOT}/assets/sounds/bgm_playground.tone
+		BGM_SNAKE        ${GAME_CORE_ROOT}/assets/sounds/bgm_snake.tone
+		BGM_PACMAN       ${GAME_CORE_ROOT}/assets/sounds/bgm_pacman.tone
+		BGM_BREAKOUT     ${GAME_CORE_ROOT}/assets/sounds/bgm_breakout.tone
+		BGM_INVADERS     ${GAME_CORE_ROOT}/assets/sounds/bgm_invaders.tone
+		SFX_SELECT       ${GAME_CORE_ROOT}/assets/sounds/sfx_select.tone
+		SFX_CONFIRM      ${GAME_CORE_ROOT}/assets/sounds/sfx_confirm.tone
+		SFX_EAT          ${GAME_CORE_ROOT}/assets/sounds/sfx_eat.tone
+		SFX_DEATH_SNAKE  ${GAME_CORE_ROOT}/assets/sounds/sfx_death_snake.tone
+		SFX_CHOMP        ${GAME_CORE_ROOT}/assets/sounds/sfx_chomp.tone
+		SFX_DEATH_PACMAN ${GAME_CORE_ROOT}/assets/sounds/sfx_death_pacman.tone
+		SFX_POWER_PELLET ${GAME_CORE_ROOT}/assets/sounds/sfx_power_pellet.tone
+		SFX_BRICK        ${GAME_CORE_ROOT}/assets/sounds/sfx_brick.tone
+		SFX_PADDLE       ${GAME_CORE_ROOT}/assets/sounds/sfx_paddle.tone
+		SFX_DEATH_BREAKOUT ${GAME_CORE_ROOT}/assets/sounds/sfx_death_breakout.tone
+		SFX_SHOOT        ${GAME_CORE_ROOT}/assets/sounds/sfx_shoot.tone
+		SFX_EXPLOSION    ${GAME_CORE_ROOT}/assets/sounds/sfx_explosion.tone
+		SFX_UFO          ${GAME_CORE_ROOT}/assets/sounds/sfx_ufo.tone
 )
 
 target_include_directories(host-sim-sdl PRIVATE

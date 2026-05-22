@@ -8,7 +8,7 @@
 #include "scenes/pacman/PacmanScreen.h"
 #include "scenes/breakout/BreakoutScreen.h"
 #include "scenes/invaders/InvadersScreen.h"
-#include <stdexcept>
+#include "scenes/growball/GrowBallScreen.h"
 
 namespace handheld {
 
@@ -30,8 +30,11 @@ std::unique_ptr<GameScreen> DefaultScreenFactory::create(ScreenType type) {
 			return std::make_unique<BreakoutScreen>();
 		case ScreenType::INVADERS:
 			return std::make_unique<InvadersScreen>();
+		case ScreenType::GROW_BALL:
+			return std::make_unique<GrowBallScreen>();
 		default:
-			throw std::runtime_error("Unknown screen type");
+			;
+			// throw std::runtime_error("Unknown screen type");
 	}
 }
 

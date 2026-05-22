@@ -10,6 +10,7 @@ set(GAME_CORE_SOURCES
 		src/scenes/pacman/PacmanScreen.cpp
 		src/scenes/breakout/BreakoutScreen.cpp
 		src/scenes/invaders/InvadersScreen.cpp
+		src/scenes/growball/GrowBallScreen.cpp
 )
 
 add_library(game_core STATIC

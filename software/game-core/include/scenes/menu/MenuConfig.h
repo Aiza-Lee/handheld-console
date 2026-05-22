@@ -32,8 +32,9 @@ constexpr MenuEntry ENTRIES[] = {
     {"Pac-Man",   ScreenType::PACMAN},
     {"Breakout",  ScreenType::BREAKOUT},
     {"Invaders",  ScreenType::INVADERS},
+    {"Grow Ball", ScreenType::GROW_BALL},
 };
-constexpr std::size_t ENTRY_COUNT = 5;
+constexpr std::size_t ENTRY_COUNT = 6;
 
 // 布局
 constexpr int16_t BOX_X = 5;

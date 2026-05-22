@@ -1,13 +1,13 @@
 #ifndef SCENES_BREAKOUT_BREAKOUT_SCREEN_H
 #define SCENES_BREAKOUT_BREAKOUT_SCREEN_H
 
+#include "core/effects/ParticleSystem.h"
 #include "core/graphics/Geometry.h"
 #include "core/runtime/GameScreen.h"
 #include <cstdint>
 
 namespace handheld {
 
-// 弹砖块屏幕 — 经典打砖块游戏
 class BreakoutScreen : public GameScreen {
 public:
     void enter(IPlatform& platform, IScreenHost& host) override;
@@ -15,68 +15,74 @@ public:
     void render(IPlatform& platform, IScreenHost& host) override;
 
 private:
-    static constexpr int16_t PADDLE_W = 16;
-    static constexpr int16_t PADDLE_H = 4;
-    static constexpr int16_t PADDLE_Y = 74;
-    static constexpr int16_t BALL_W = 2;
-    static constexpr int16_t BALL_H = 2;
-    static constexpr int16_t BRICK_ROWS = 5;
-    static constexpr int16_t BRICKS_PER_ROW = 8;
-    static constexpr int16_t BRICK_W = 8;
-    static constexpr int16_t BRICK_H = 5;
-    static constexpr int16_t BRICK_GAP_X = 2;
-    static constexpr int16_t BRICK_GAP_Y = 1;
-    static constexpr int16_t BRICK_OY = 6;
+    static constexpr int16_t BRICK_COLS = 15;
+    static constexpr int16_t MAX_BRICK_ROWS = 11;
+    static constexpr int16_t TILE_W = 75;
+    static constexpr int16_t TILE_H = 55;
 
-    enum class State : uint8_t { ATTACHED, ACTIVE, DYING, GAME_OVER };
+    enum class State : uint8_t { ATTACHED, ACTIVE, GAME_OVER };
 
+    struct Ball {
+        int8_t x, y;
+        int8_t vx, vy;
+        int8_t px, py;
+        bool active;
+    };
+
+    struct PowerUp {
+        int8_t x, y;
+        uint8_t type;
+        bool active;
+    };
+
+    // ── 游戏状态 ──
     State _state;
     bool _paused = false;
     int16_t _paddle_x;
-    int16_t _ball_x, _ball_y;
-    int8_t _ball_vx, _ball_vy;
-    uint8_t _bricks[BRICK_ROWS];
-    int16_t _bricks_remaining;
     int16_t _score;
-    int8_t _lives;
-    uint32_t _dying_timer;
+    uint8_t _level;
     uint32_t _frame;
     uint32_t _rng;
 
-    // 动画状态
-    struct BrickParticle {
-        int8_t x, y;
-        int8_t vx, vy;
-        uint8_t life;
-        Color color;
-    };
-    static constexpr int16_t MAX_BRICK_PARTICLES = 16;
-    BrickParticle _brick_particles[MAX_BRICK_PARTICLES];
-    uint8_t _brick_particle_count;
+    // ── 瓦片缓存（仅砖块区域 75×55 = 4125 字节）──
+    uint8_t _tile[TILE_H][TILE_W];
 
-    struct Trail {
-        int16_t x, y;
-    };
-    Trail _ball_trail[3];
-    uint8_t _trail_index;
+    // ── 砖块网格 ──
+    uint8_t _bricks[MAX_BRICK_ROWS][BRICK_COLS];
+    int16_t _bricks_remaining;
 
-    uint8_t _hit_spark_timer;
-    int16_t _hit_spark_x;
-    uint8_t _shake_timer;
-    int8_t _shake_offset;
+    // ── 多球 ──
+    Ball _balls[16];
+    int16_t _ball_count;
+
+    // ── 粒子（复用组件，上限 12）──
+    ParticleSystem<12> _particles;
+
+    // ── 道具 ──
+    PowerUp _powerups[3];
+
+    // ── 庆祝 ──
     uint8_t _celebration_timer;
 
+    // ── 方法 ──
     void reset_game();
+    void load_level(uint8_t level);
+    void build_tile_cache();
+    [[nodiscard]] bool tile_at(int8_t x, int8_t y) const;
     void launch_ball();
-    void check_paddle_collision(IScreenHost& host);
-    bool check_brick_collision(IScreenHost& host);
-    void lose_life(IScreenHost& host);
-    [[nodiscard]] Rect brick_rect(int16_t row, int16_t col) const;
-    void spawn_brick_particles(int16_t row, int16_t col);
-    void update_particles();
+    void spawn_triple_balls(int8_t x, int8_t y);
+    void split_balls();
+    void move_balls(IScreenHost& host);
+    void move_powerups();
+    void check_paddle_collisions(IScreenHost& host);
+    bool check_tile_collision(int8_t test_x, int8_t test_y, Ball& ball, IScreenHost& host);
+    void destroy_brick(int16_t row, int16_t col, uint8_t brick_type, IScreenHost& host);
+    void spawn_brick_particles(int16_t row, int16_t col, uint8_t brick_type);
+    void check_powerup_collection();
+    void try_spawn_powerup(int16_t row, int16_t col);
     uint32_t next_rng();
 };
 
 }  // namespace handheld
 
-#endif  // SCENES_BREAKOUT_BREAKOUT_SCREEN_H
+#endif
