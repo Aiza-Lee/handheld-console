@@ -51,6 +51,10 @@ SOUNDS = [
     ("SFX_SHOOT",        "sounds/sfx_shoot.tone"),
     ("SFX_EXPLOSION",    "sounds/sfx_explosion.tone"),
     ("SFX_UFO",          "sounds/sfx_ufo.tone"),
+    ("BGM_GROWBALL",          "sounds/bgm_growball.tone"),
+    ("SFX_EAT_GROWBALL",      "sounds/sfx_eat_growball.tone"),
+    ("SFX_EAT_ENEMY_GROWBALL", "sounds/sfx_eat_enemy_growball.tone"),
+    ("SFX_DEATH_GROWBALL",    "sounds/sfx_death_growball.tone"),
 ]
 
 

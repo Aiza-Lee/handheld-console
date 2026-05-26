@@ -8,6 +8,9 @@
 
 namespace handheld::snake::cfg {
 
+// 音频
+constexpr bool ENABLE_BGM = true;
+
 // 颜色
 constexpr Color HEAD_COLOR = rgb565(60, 180, 80);
 constexpr Color TAIL_COLOR = rgb565(15, 60, 20);

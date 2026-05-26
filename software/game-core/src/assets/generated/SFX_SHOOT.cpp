@@ -1,4 +1,4 @@
-// Auto-generated from ../game-core/assets/sounds/sfx_shoot.tone
+// Auto-generated from assets/sounds/sfx_shoot.tone
 // 1 tone(s)
 #include "platform/interfaces/IAudio.h"
 

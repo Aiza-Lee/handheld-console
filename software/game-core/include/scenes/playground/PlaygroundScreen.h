@@ -9,7 +9,7 @@
 
 namespace handheld {
 
-struct IDisplay;
+class IDisplay;
 
 // Playground 屏幕 — 按键测试和视觉演示
 class PlaygroundScreen : public GameScreen {
@@ -20,6 +20,7 @@ public:
 
 private:
 	static constexpr uint8_t MODE_COUNT = 5;
+	static constexpr bool ENABLE_BGM = true;
 
 	struct Star {
 		int16_t x = 0;
@@ -51,7 +52,7 @@ private:
 	uint8_t _accent_phase = 0;
 	uint32_t _frame = 0;
 	bool _auto_move = true;
-	bool _clear_each_frame = false;
+	bool _clear_each_frame = true;
 	bool _stars_ready = false;
 
 	std::array<Star, 32> _stars{};

@@ -10,7 +10,7 @@
 			"name": "clang-debug",
 			"displayName": "Clang Debug",
 			"description": "Default host simulator build with the system clang toolchain.",
-			"generator": "Unix Makefiles",
+			"generator": "Ninja",
 			"binaryDir": "${sourceDir}/build/clang-debug",
 			"cacheVariables": {
 				"CMAKE_BUILD_TYPE": "Debug",
@@ -22,7 +22,8 @@
 	"buildPresets": [
 		{
 			"name": "clang-debug-build",
-			"configurePreset": "clang-debug"
+			"configurePreset": "clang-debug",
+			"jobs": 0
 		}
 	],
 	"testPresets": [

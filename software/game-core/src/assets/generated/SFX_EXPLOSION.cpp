@@ -1,4 +1,4 @@
-// Auto-generated from ../game-core/assets/sounds/sfx_explosion.tone
+// Auto-generated from assets/sounds/sfx_explosion.tone
 // 5 tone(s)
 #include "platform/interfaces/IAudio.h"
 

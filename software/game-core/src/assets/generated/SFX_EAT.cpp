@@ -1,4 +1,4 @@
-// Auto-generated from ../game-core/assets/sounds/sfx_eat.tone
+// Auto-generated from assets/sounds/sfx_eat.tone
 // 2 tone(s)
 #include "platform/interfaces/IAudio.h"
 

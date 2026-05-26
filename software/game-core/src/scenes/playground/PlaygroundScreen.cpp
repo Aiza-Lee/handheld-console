@@ -56,7 +56,7 @@ void PlaygroundScreen::enter(IPlatform& platform, IScreenHost& host) {
 	IDisplay& display = platform.display();
 	_x = static_cast<int16_t>(display.width() / 2);
 	_y = static_cast<int16_t>(display.height() / 2);
-	_mode = 0;
+	_mode = 1;
 	_frame = 0;
 	_accent_phase = 0;
 	_stars_ready = false;

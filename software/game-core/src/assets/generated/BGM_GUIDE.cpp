@@ -1,4 +1,4 @@
-// Auto-generated from ../game-core/assets/sounds/bgm_guide.tone
+// Auto-generated from assets/sounds/bgm_guide.tone
 // 19 tone(s)
 #include "platform/interfaces/IAudio.h"
 

@@ -1,4 +1,4 @@
-// Auto-generated from ../game-core/assets/sounds/sfx_ufo.tone
+// Auto-generated from assets/sounds/sfx_ufo.tone
 // 6 tone(s)
 #include "platform/interfaces/IAudio.h"
 

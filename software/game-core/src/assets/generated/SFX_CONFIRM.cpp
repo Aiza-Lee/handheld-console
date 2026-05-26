@@ -1,4 +1,4 @@
-// Auto-generated from ../game-core/assets/sounds/sfx_confirm.tone
+// Auto-generated from assets/sounds/sfx_confirm.tone
 // 3 tone(s)
 #include "platform/interfaces/IAudio.h"
 

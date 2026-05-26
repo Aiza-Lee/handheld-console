@@ -1,4 +1,4 @@
-// Auto-generated from ../game-core/assets/sprites/test_red.raw
+// Auto-generated from assets/sprites/test_red.raw
 // Source size: 32 bytes, padded: 32 bytes
 #include <cstdint>
 

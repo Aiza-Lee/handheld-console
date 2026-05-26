@@ -1,4 +1,4 @@
-// Auto-generated from ../game-core/assets/sounds/sfx_chomp.tone
+// Auto-generated from assets/sounds/sfx_chomp.tone
 // 8 tone(s)
 #include "platform/interfaces/IAudio.h"
 

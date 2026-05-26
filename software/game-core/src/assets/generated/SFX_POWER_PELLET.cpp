@@ -1,4 +1,4 @@
-// Auto-generated from ../game-core/assets/sounds/sfx_power_pellet.tone
+// Auto-generated from assets/sounds/sfx_power_pellet.tone
 // 7 tone(s)
 #include "platform/interfaces/IAudio.h"
 

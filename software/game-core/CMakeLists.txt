@@ -11,6 +11,7 @@ set(GAME_CORE_SOURCES
 		src/scenes/breakout/BreakoutScreen.cpp
 		src/scenes/invaders/InvadersScreen.cpp
 		src/scenes/growball/GrowBallScreen.cpp
+	src/scenes/growball/GrowBallWorld.cpp
 )
 
 add_library(game_core STATIC

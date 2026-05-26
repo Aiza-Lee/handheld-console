@@ -8,6 +8,9 @@
 
 namespace handheld::invaders::cfg {
 
+// 音频
+constexpr bool ENABLE_BGM = true;
+
 // 颜色
 constexpr Color INV_BG = rgb565(4, 8, 20);
 constexpr Color INV_PLAYER = rgb565(100, 200, 220);

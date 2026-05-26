@@ -1,4 +1,4 @@
-// Auto-generated from ../game-core/assets/sounds/sfx_death_pacman.tone
+// Auto-generated from assets/sounds/sfx_death_pacman.tone
 // 9 tone(s)
 #include "platform/interfaces/IAudio.h"
 

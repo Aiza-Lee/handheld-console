@@ -51,6 +51,10 @@ add_sounds(TARGET host-sim-sdl
 		SFX_SHOOT        ${GAME_CORE_ROOT}/assets/sounds/sfx_shoot.tone
 		SFX_EXPLOSION    ${GAME_CORE_ROOT}/assets/sounds/sfx_explosion.tone
 		SFX_UFO          ${GAME_CORE_ROOT}/assets/sounds/sfx_ufo.tone
+		BGM_GROWBALL          ${GAME_CORE_ROOT}/assets/sounds/bgm_growball.tone
+		SFX_EAT_GROWBALL      ${GAME_CORE_ROOT}/assets/sounds/sfx_eat_growball.tone
+		SFX_EAT_ENEMY_GROWBALL ${GAME_CORE_ROOT}/assets/sounds/sfx_eat_enemy_growball.tone
+		SFX_DEATH_GROWBALL    ${GAME_CORE_ROOT}/assets/sounds/sfx_death_growball.tone
 )
 
 target_include_directories(host-sim-sdl PRIVATE
