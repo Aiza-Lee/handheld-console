@@ -24,7 +24,6 @@ constexpr Color PADDLE_COLOR = rgb565(130, 160, 220);
 constexpr Color PADDLE_EDGE = rgb565(170, 200, 250);
 constexpr Color BALL_COLOR = rgb565(220, 240, 255);
 constexpr Color TRAIL_COLOR = rgb565(60, 80, 140);
-constexpr Color SPARK_COLOR = rgb565(255, 220, 150);
 constexpr Color BAR_COLOR = rgb565(6, 10, 18);
 constexpr Color WIN_COLOR = rgb565(120, 200, 220);
 constexpr Color HINT_COLOR = rgb565(120, 140, 120);
@@ -47,31 +46,14 @@ constexpr int16_t BRICK_OX = 2;  // (80 - 15*5) / 2 = 2
 constexpr int16_t BRICK_OY = 8;
 constexpr int16_t STATUS_H = 6;
 
-// ── 瓦片缓存尺寸（仅覆盖砖块区域）──
-constexpr int16_t TILE_W = BRICK_COLS * BRICK_CELL;        // 75
-constexpr int16_t TILE_H = MAX_BRICK_ROWS * BRICK_CELL;    // 55
-constexpr uint8_t TILE_EMPTY = 0;
-constexpr uint8_t TILE_INDESTRUCTIBLE = 9;
-
-// ── 球的限制 ──────────────────────────────────
-constexpr int16_t MAX_BALLS = 16;
-constexpr int16_t SPLIT_SOFT_CAP = 11;
-constexpr int16_t TRIPLE_RESERVE = 3;
-
 // ── 道具 ──────────────────────────────────────
-constexpr int16_t MAX_POWERUPS = 3;
-constexpr uint8_t POWERUP_DROP_CHANCE = 20;
+constexpr uint8_t POWERUP_DROP_CHANCE = 100;
 constexpr int16_t POWERUP_SIZE = 4;
 constexpr int8_t POWERUP_VY = 1;
 constexpr uint8_t POWERUP_TYPE_TRIPLE = 0;
 constexpr uint8_t POWERUP_TYPE_SPLIT = 1;
 
-// ── 粒子 ──────────────────────────────────────
-constexpr int16_t MAX_PARTICLES = 24;
-constexpr uint8_t PARTICLE_LIFE = 10;
-
 // ── 特效计时 ──────────────────────────────────
-constexpr uint8_t SPARK_DURATION = 4;
 constexpr uint32_t CELEBRATION_DURATION = 50;
 constexpr int8_t PADDLE_SPEED = 2;
 

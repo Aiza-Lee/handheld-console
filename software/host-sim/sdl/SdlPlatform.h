@@ -5,7 +5,6 @@
 #include "core/graphics/Color.h"
 #include "core/graphics/Geometry.h"
 #include "core/assets/BuiltinAssetProvider.h"
-#include "platform/interfaces/IAudio.h"
 #include "platform/interfaces/IDisplay.h"
 #include "platform/interfaces/IInput.h"
 #include "platform/interfaces/IPlatform.h"
@@ -13,11 +12,10 @@
 #include "platform/interfaces/IStorage.h"
 #include "platform/interfaces/ITime.h"
 
-#include <SDL3/SDL_audio.h>
-
 #include <cstdint>
 #include <vector>
 
+struct SDL_AudioStream;
 struct SDL_Renderer;
 struct SDL_Texture;
 struct SDL_Window;
@@ -35,6 +33,7 @@ public:
 		[[nodiscard]] int16_t height() const override;
 		void clear(Color color) override;
 		void draw_pixel(int16_t x, int16_t y, Color color) override;
+			void fill_rect(const Rect& rect, Color color) override;
 		void present() override;
 
 		void bind(SDL_Renderer& renderer, SDL_Texture& texture);
@@ -48,7 +47,7 @@ public:
 		SDL_Texture* _texture = nullptr;
 	};
 
-	explicit SdlPlatform(Size display_size = {80, 80}, int window_scale = 4, uint32_t frame_time_ms = 67);
+	explicit SdlPlatform(Size display_size = {80, 80}, int window_scale = 4);
 	~SdlPlatform() override;
 
 	SdlPlatform(const SdlPlatform&) = delete;
@@ -58,14 +57,14 @@ public:
 
 	[[nodiscard]] bool is_running() const;
 	void process_events();
-	void delay_to_next_frame();
+	void delay_to_next_frame(uint32_t frame_time_ms);
 
 	// 设置内置资产表（通常在 main() 中调用）
 	void init_assets(const AssetEntry* entries, size_t count);
 
 	IDisplay& display() override;
 	IInput& input() override;
-	IAudio& audio() override;
+	void write_audio_samples(const int16_t* data, size_t count) override;
 	IPower& power() override;
 	ITime& time() override;
 	IStorage& storage() override;
@@ -84,30 +83,6 @@ private:
 		ButtonState _current;
 		ButtonState _previous;
 		ButtonState _pending;
-	};
-
-	class Audio final : public IAudio {
-	public:
-		Audio();
-		~Audio();
-
-		void close();
-
-		void play_tone(Tone tone) override;
-		void play_sequence(const Tone* tones, size_t tone_count, bool loop) override;
-		void set_muted(bool muted) override;
-		[[nodiscard]] bool is_muted() const override;
-		void stop() override;
-		[[nodiscard]] bool is_playing() const override;
-		void write_samples(const int16_t* data, size_t count) override;
-
-	private:
-		void _ensure_stream();
-		[[nodiscard]] static SDL_AudioSpec _spec();
-		void _queue_tone(Tone tone);
-
-		SDL_AudioStream* _stream = nullptr;
-		bool _muted = false;
 	};
 
 	class Power final : public IPower {
@@ -140,7 +115,8 @@ private:
 
 	Display _display;
 	Input _input;
-	Audio _audio;
+	SDL_AudioStream* _audio_stream = nullptr;
+	bool _audio_muted = false;
 	Power _power;
 	Time _time;
 	Storage _storage;
@@ -148,7 +124,6 @@ private:
 	SDL_Window* _window = nullptr;
 	SDL_Renderer* _renderer = nullptr;
 	SDL_Texture* _texture = nullptr;
-	uint32_t _frame_time_ms = 16;
 	uint32_t _last_frame_tick = 0;
 	bool _running = true;
 };

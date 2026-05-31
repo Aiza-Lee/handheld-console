@@ -1,109 +1,35 @@
 #include "scenes/breakout/BreakoutScreen.h"
 #include "scenes/breakout/BreakoutConfig.h"
 
+#include "core/audio/Sounds.h"
 #include "core/common/ButtonBits.h"
 #include "core/graphics/Color.h"
 #include "core/graphics/Font.h"
 #include "core/graphics/TextRenderer.h"
 #include "core/runtime/IScreenHost.h"
-#include "core/audio/AudioMixer.h"
 #include "core/runtime/ScreenType.h"
 #include <algorithm>
 #include <cstdio>
 
-extern "C" [[gnu::weak]] const handheld::Tone _sound_BGM_BREAKOUT[];
-extern "C" [[gnu::weak]] const uint32_t _sound_BGM_BREAKOUT_count;
-extern "C" [[gnu::weak]] const handheld::Tone _sound_SFX_BRICK[];
-extern "C" [[gnu::weak]] const uint32_t _sound_SFX_BRICK_count;
-extern "C" [[gnu::weak]] const handheld::Tone _sound_SFX_PADDLE[];
-extern "C" [[gnu::weak]] const uint32_t _sound_SFX_PADDLE_count;
-extern "C" [[gnu::weak]] const handheld::Tone _sound_SFX_DEATH_BREAKOUT[];
-extern "C" [[gnu::weak]] const uint32_t _sound_SFX_DEATH_BREAKOUT_count;
-
 namespace handheld {
 
 using namespace breakout::cfg;
+namespace bg = breakout;
 
-// ── 瓦片缓存 ──────────────────────────────────
-
-bool BreakoutScreen::tile_at(int8_t x, int8_t y) const {
-    int16_t cx = static_cast<int16_t>(x) - BRICK_OX;
-    int16_t cy = static_cast<int16_t>(y) - BRICK_OY;
-    if (cx < 0 || cx >= TILE_W || cy < 0 || cy >= TILE_H) return false;
-    return _tile[cy][cx] != TILE_EMPTY;
-}
-
-void BreakoutScreen::build_tile_cache() {
-    for (int16_t y = 0; y < TILE_H; ++y)
-        for (int16_t x = 0; x < TILE_W; ++x)
-            _tile[y][x] = TILE_EMPTY;
-
-    for (int16_t r = 0; r < MAX_BRICK_ROWS; ++r) {
-        for (int16_t c = 0; c < BRICK_COLS; ++c) {
-            uint8_t t = _bricks[r][c];
-            if (t == 0) continue;
-            int16_t bx = c * BRICK_CELL;
-            int16_t by = r * BRICK_CELL;
-            for (int16_t dy = 0; dy < BRICK_SIZE; ++dy)
-                for (int16_t dx = 0; dx < BRICK_SIZE; ++dx)
-                    _tile[by + dy][bx + dx] = t;
-        }
-    }
-}
-
-static void pixel_to_brick(int16_t px, int16_t py, int16_t& row, int16_t& col) {
-    col = (px - BRICK_OX) / BRICK_CELL;
-    row = (py - BRICK_OY) / BRICK_CELL;
-    if (col < 0) col = 0;
-    if (col >= BRICK_COLS) col = BRICK_COLS - 1;
-    if (row < 0) row = 0;
-    if (row >= MAX_BRICK_ROWS) row = MAX_BRICK_ROWS - 1;
-}
-
-// ── 生命周期 ──────────────────────────────────
-
-void BreakoutScreen::enter(IPlatform& platform, IScreenHost& host) {
-    platform.display().clear(BG_COLOR);
-    _level = 0;
-    reset_game();
-    if (_sound_BGM_BREAKOUT) host.mixer().set_bgm(_sound_BGM_BREAKOUT, _sound_BGM_BREAKOUT_count);
-}
+// ── RNG ─────────────────────────────────────────
 
 uint32_t BreakoutScreen::next_rng() {
     _rng ^= _rng << 13U; _rng ^= _rng >> 17U; _rng ^= _rng << 5U;
     return _rng;
 }
 
-// ── 关卡加载 ──────────────────────────────────
+// ── 生命周期 ────────────────────────────────────
 
-void BreakoutScreen::load_level(uint8_t level) {
-    if (level >= LEVEL_COUNT) level = 0;
-    const auto& src = *LEVELS[level];
-
-    _bricks_remaining = 0;
-    for (int16_t r = 0; r < MAX_BRICK_ROWS; ++r) {
-        for (int16_t c = 0; c < BRICK_COLS; ++c) {
-            uint8_t t = src[r][c];
-            _bricks[r][c] = t;
-            if (t >= 1 && t <= 5) ++_bricks_remaining;
-        }
-    }
-
-    build_tile_cache();
-
-    for (auto& b : _balls) b.active = false;
-    _ball_count = 1;
-    _balls[0].active = true;
-    _balls[0].x = static_cast<int8_t>(_paddle_x + PADDLE_W / 2);
-    _balls[0].y = static_cast<int8_t>(PADDLE_Y - 1);
-    _balls[0].vx = 0;
-    _balls[0].vy = 0;
-    _balls[0].px = _balls[0].x;
-    _balls[0].py = _balls[0].y;
-
-    for (auto& p : _powerups) p.active = false;
-    _particles.clear();
-    _state = State::ATTACHED;
+void BreakoutScreen::enter(IPlatform& platform, IScreenHost& host) {
+    platform.display().clear(BG_COLOR);
+    _level = 0;
+    reset_game();
+    host.audio().set_bgm(sounds::BGM_BREAKOUT, sounds::BGM_BREAKOUT_COUNT);
 }
 
 void BreakoutScreen::reset_game() {
@@ -111,7 +37,8 @@ void BreakoutScreen::reset_game() {
     _score = 0;
     _frame = 0;
     _rng = 12345;
-    _celebration_timer = 0;
+    _celebration = 0;
+    _paused = false;
     for (auto& b : _balls) b.active = false;
     _ball_count = 0;
     for (auto& p : _powerups) p.active = false;
@@ -119,16 +46,30 @@ void BreakoutScreen::reset_game() {
     load_level(_level);
 }
 
-// ── 球的操作 ──────────────────────────────────
+void BreakoutScreen::load_level(uint8_t level) {
+    if (level >= LEVEL_COUNT) level = 0;
+    _grid.load(*LEVELS[level]);
+
+    for (auto& b : _balls) b.active = false;
+    _ball_count = 1;
+    _balls[0] = {static_cast<int8_t>(_paddle_x + PADDLE_W / 2),
+                 static_cast<int8_t>(PADDLE_Y - 1), 0, 0, 0, 0, true};
+
+    for (auto& p : _powerups) p.active = false;
+    _particles.clear();
+    _state = State::ATTACHED;
+}
+
+// ── 球 ──────────────────────────────────────────
 
 void BreakoutScreen::launch_ball() {
     auto& b = _balls[0];
-    b.vx = (next_rng() % 2 == 0) ? static_cast<int8_t>(1) : static_cast<int8_t>(-1);
+    b.vx = (next_rng() & 1U) ? static_cast<int8_t>(1) : static_cast<int8_t>(-1);
     b.vy = -2;
     _state = State::ACTIVE;
 }
 
-void BreakoutScreen::spawn_triple_balls(int8_t x, int8_t y) {
+void BreakoutScreen::spawn_triple(int8_t x, int8_t y) {
     int16_t slots[3] = {-1, -1, -1};
     int16_t found = 0;
     for (int16_t i = 0; i < MAX_BALLS && found < 3; ++i)
@@ -138,182 +79,89 @@ void BreakoutScreen::spawn_triple_balls(int8_t x, int8_t y) {
     const int8_t vx_list[3] = {-1, 0, 1};
     for (int i = 0; i < 3; ++i) {
         auto& b = _balls[slots[i]];
-        b.active = true;
-        b.x = x; b.px = x;
-        b.y = y; b.py = y;
-        b.vx = vx_list[i];
-        b.vy = -2;
+        b = {x, y, vx_list[i], -2, x, y, true};
     }
     _ball_count += 3;
 }
 
 void BreakoutScreen::split_balls() {
-    int16_t active_indices[MAX_BALLS];
-    int16_t active_count = 0;
-    for (int16_t i = 0; i < MAX_BALLS; ++i)
-        if (_balls[i].active) active_indices[active_count++] = i;
+    for (int16_t i = 0; i < MAX_BALLS; ++i) {
+        if (!_balls[i].active) continue;
+        if (_ball_count >= MAX_BALLS) break;
 
-    for (int16_t i = 0; i < active_count - 1; ++i)
-        for (int16_t j = i + 1; j < active_count; ++j)
-            if (_balls[active_indices[i]].y > _balls[active_indices[j]].y) {
-                int16_t tmp = active_indices[i];
-                active_indices[i] = active_indices[j];
-                active_indices[j] = tmp;
-            }
-
-    int16_t can_add = MAX_BALLS - _ball_count;
-    for (int16_t i = 0; i < active_count && can_add > 0; ++i) {
-        int16_t idx = active_indices[i];
-        if (!_balls[idx].active) continue;
-        if (_ball_count >= SPLIT_SOFT_CAP && _balls[idx].y > 26) continue;
-
+        // 找一个空闲槽位
         int16_t slot = -1;
         for (int16_t s = 0; s < MAX_BALLS; ++s)
             if (!_balls[s].active) { slot = s; break; }
         if (slot < 0) break;
 
-        auto& orig = _balls[idx];
+        auto& orig = _balls[i];
         auto& clone = _balls[slot];
-        clone.active = true;
-        clone.x = orig.x; clone.px = orig.x;
-        clone.y = orig.y; clone.py = orig.y;
-        clone.vy = orig.vy;
-        clone.vx = static_cast<int8_t>(-orig.vx);
+        clone = {orig.x, orig.y, static_cast<int8_t>(-orig.vx), orig.vy, orig.x, orig.y, true};
         ++_ball_count;
-        --can_add;
     }
 }
 
-// ── 碰撞检测 ──────────────────────────────────
+// ── 碰撞：单步移动球，处理墙体 / 砖块 / 挡板 ────
 
-bool BreakoutScreen::check_tile_collision(int8_t test_x, int8_t test_y, Ball& ball, IScreenHost& host) {
-    if (!tile_at(test_x, test_y)) return false;
+bool BreakoutScreen::step_ball(Ball& b, IScreenHost& host) {
+    int8_t abs_vx = (b.vx > 0) ? b.vx : static_cast<int8_t>(-b.vx);
+    int8_t abs_vy = (b.vy > 0) ? b.vy : static_cast<int8_t>(-b.vy);
 
-    int16_t row, col;
-    pixel_to_brick(test_x, test_y, row, col);
-    int16_t brx = BRICK_OX + col * BRICK_CELL;
-    int16_t bry = BRICK_OY + row * BRICK_CELL;
-    int16_t br_right = brx + BRICK_SIZE - 1;
-    int16_t br_bottom = bry + BRICK_SIZE - 1;
+    // X 方向逐像素移动
+    int8_t sx = (b.vx > 0) ? 1 : -1;
+    for (int8_t s = 0; s < abs_vx; ++s) {
+        int8_t nx = b.x + sx;
+        if (nx < 0 || nx >= 80) { b.vx = -b.vx; break; }
 
-    int16_t ov_left = test_x - brx;
-    int16_t ov_right = br_right - test_x;
-    int16_t ov_top = test_y - bry;
-    int16_t ov_bottom = br_bottom - test_y;
-
-    int16_t min_ov = ov_left;
-    bool hit_x = true;
-    if (ov_right < min_ov) { min_ov = ov_right; hit_x = true; }
-    if (ov_top < min_ov)    { min_ov = ov_top;    hit_x = false; }
-    if (ov_bottom < min_ov) { min_ov = ov_bottom; hit_x = false; }
-
-    uint8_t t = _tile[test_y - BRICK_OY][test_x - BRICK_OX];
-
-    if (hit_x) {
-        ball.vx = static_cast<int8_t>(-ball.vx);
-        if (ov_left < ov_right) ball.x = static_cast<int8_t>(brx - 1);
-        else                    ball.x = static_cast<int8_t>(br_right + 1);
-    } else {
-        ball.vy = static_cast<int8_t>(-ball.vy);
-        if (ov_top < ov_bottom) ball.y = static_cast<int8_t>(bry - 1);
-        else                    ball.y = static_cast<int8_t>(br_bottom + 1);
-    }
-
-    // 墙角修复
-    if (tile_at(ball.x, ball.y)) {
-        if (hit_x) {
-            if (ov_top < ov_bottom) ball.y = static_cast<int8_t>(bry - 1);
-            else                    ball.y = static_cast<int8_t>(br_bottom + 1);
-        } else {
-            if (ov_left < ov_right) ball.x = static_cast<int8_t>(brx - 1);
-            else                    ball.x = static_cast<int8_t>(br_right + 1);
+        uint8_t tile = _grid.hit_test(nx, b.y);
+        if (tile != 0) {
+            b.vx = -b.vx;
+            // 将球推到砖块外侧
+            int16_t col = (nx - bg::BrickGrid::OX) / bg::BrickGrid::CELL;
+            int16_t row = (b.y - bg::BrickGrid::OY) / bg::BrickGrid::CELL;
+            auto br = bg::BrickGrid::brick_rect(row, col);
+            b.x = (sx > 0) ? static_cast<int8_t>(br.x - 1) : static_cast<int8_t>(br.x + br.width);
+            // 摧毁砖块
+            if (tile >= 1 && tile <= 5) {
+                _score += _grid.destroy(row, col);
+                spawn_particles(row, col, tile);
+                host.audio().play_sfx(sounds::SFX_BRICK, sounds::SFX_BRICK_COUNT);
+                spawn_powerup(row, col);
+            }
+            break;
         }
+        b.x = nx;
     }
 
-    if (t != TILE_INDESTRUCTIBLE) destroy_brick(row, col, t, host);
-    return true;
-}
+    // Y 方向逐像素移动
+    int8_t sy = (b.vy > 0) ? 1 : -1;
+    for (int8_t s = 0; s < abs_vy; ++s) {
+        int8_t ny = b.y + sy;
+        if (ny < 0) { b.vy = -b.vy; break; }
+        if (ny >= 80) { b.active = false; return true; }  // 掉出屏幕
 
-void BreakoutScreen::destroy_brick(int16_t row, int16_t col, uint8_t brick_type, IScreenHost& host) {
-    if (brick_type < 1 || brick_type > 5) return;
-    _bricks[row][col] = 0;
-    --_bricks_remaining;
-    _score += (6 - brick_type) * 10;
-
-    int16_t bx = col * BRICK_CELL;
-    int16_t by = row * BRICK_CELL;
-    for (int16_t dy = 0; dy < BRICK_SIZE; ++dy)
-        for (int16_t dx = 0; dx < BRICK_SIZE; ++dx)
-            _tile[by + dy][bx + dx] = TILE_EMPTY;
-
-    spawn_brick_particles(row, col, brick_type);
-    if (_sound_SFX_BRICK) host.mixer().play_sfx(_sound_SFX_BRICK, _sound_SFX_BRICK_count);
-    try_spawn_powerup(row, col);
-}
-
-// ── 粒子 ── 限制数量 + 缩小范围 ──────────────
-
-void BreakoutScreen::spawn_brick_particles(int16_t row, int16_t col, uint8_t brick_type) {
-    int16_t cx = BRICK_OX + col * BRICK_CELL + BRICK_SIZE / 2;
-    int16_t cy = BRICK_OY + row * BRICK_CELL + BRICK_SIZE / 2;
-    Color color = BRICK_COLORS[brick_type - 1];
-
-    // 仅 3 颗粒子，小速度，短生命
-    for (int16_t i = 0; i < 3; ++i) {
-        int8_t vx = static_cast<int8_t>((static_cast<int16_t>(next_rng() % 3) - 1));
-        int8_t vy = static_cast<int8_t>(-1 - static_cast<int16_t>(next_rng() % 2));
-        _particles.emit(static_cast<int8_t>(cx), static_cast<int8_t>(cy), vx, vy, 6, color);
-    }
-}
-
-// ── 移动 ──────────────────────────────────────
-
-void BreakoutScreen::move_balls(IScreenHost& host) {
-    for (int16_t i = 0; i < MAX_BALLS; ++i) {
-        if (!_balls[i].active) continue;
-        auto& b = _balls[i];
-        b.px = b.x;
-        b.py = b.y;
-
-        int8_t sx = (b.vx > 0) ? 1 : -1;
-        int8_t steps_x = (b.vx > 0) ? b.vx : static_cast<int8_t>(-b.vx);
-        for (int8_t s = 0; s < steps_x; ++s) {
-            int8_t nx = static_cast<int8_t>(b.x + sx);
-            if (nx < 0 || nx >= 80) { b.vx = static_cast<int8_t>(-b.vx); break; }
-            if (tile_at(nx, b.y)) { check_tile_collision(nx, b.y, b, host); break; }
-            b.x = nx;
+        uint8_t tile = _grid.hit_test(b.x, ny);
+        if (tile != 0) {
+            b.vy = -b.vy;
+            int16_t col = (b.x - bg::BrickGrid::OX) / bg::BrickGrid::CELL;
+            int16_t row = (ny - bg::BrickGrid::OY) / bg::BrickGrid::CELL;
+            auto br = bg::BrickGrid::brick_rect(row, col);
+            b.y = (sy > 0) ? static_cast<int8_t>(br.y - 1) : static_cast<int8_t>(br.y + br.height);
+            if (tile >= 1 && tile <= 5) {
+                _score += _grid.destroy(row, col);
+                spawn_particles(row, col, tile);
+                host.audio().play_sfx(sounds::SFX_BRICK, sounds::SFX_BRICK_COUNT);
+                spawn_powerup(row, col);
+            }
+            break;
         }
 
-        int8_t sy = (b.vy > 0) ? 1 : -1;
-        int8_t steps_y = (b.vy > 0) ? b.vy : static_cast<int8_t>(-b.vy);
-        for (int8_t s = 0; s < steps_y; ++s) {
-            int8_t ny = static_cast<int8_t>(b.y + sy);
-            if (ny < 0) { b.vy = static_cast<int8_t>(-b.vy); break; }
-            if (ny >= 80) { b.active = false; --_ball_count; break; }
-            if (tile_at(b.x, ny)) { check_tile_collision(b.x, ny, b, host); break; }
-            b.y = ny;
-        }
-    }
-}
-
-void BreakoutScreen::move_powerups() {
-    for (auto& p : _powerups) {
-        if (!p.active) continue;
-        p.y = static_cast<int8_t>(p.y + POWERUP_VY);
-        if (p.y >= 80) p.active = false;
-    }
-}
-
-// ── 挡板碰撞 ──────────────────────────────────
-
-void BreakoutScreen::check_paddle_collisions(IScreenHost& host) {
-    for (int16_t i = 0; i < MAX_BALLS; ++i) {
-        if (!_balls[i].active) continue;
-        auto& b = _balls[i];
-        if (b.y >= PADDLE_Y && b.y < PADDLE_Y + PADDLE_H &&
+        // 挡板碰撞（仅下降时检测）
+        if (ny >= PADDLE_Y && sy > 0 &&
             b.x >= _paddle_x && b.x < _paddle_x + PADDLE_W) {
-            b.y = static_cast<int8_t>(PADDLE_Y - 1);
-            int16_t off = static_cast<int16_t>(b.x) - (_paddle_x + PADDLE_W / 2);
+            b.y = PADDLE_Y - 1;
+            int16_t off = b.x - (_paddle_x + PADDLE_W / 2);
             for (int z = 0; z < 5; ++z) {
                 if (off <= PADDLE_ZONES[z][0]) {
                     b.vx = static_cast<int8_t>(PADDLE_ZONES[z][1]);
@@ -321,49 +169,136 @@ void BreakoutScreen::check_paddle_collisions(IScreenHost& host) {
                     break;
                 }
             }
-            if (_sound_SFX_PADDLE) host.mixer().play_sfx(_sound_SFX_PADDLE, _sound_SFX_PADDLE_count);
+            host.audio().play_sfx(sounds::SFX_PADDLE, sounds::SFX_PADDLE_COUNT);
+            break;
         }
+        b.y = ny;
+    }
+    return false;
+}
+
+void BreakoutScreen::move_balls(IScreenHost& host) {
+    for (int16_t i = 0; i < MAX_BALLS; ++i) {
+        if (!_balls[i].active) continue;
+        auto& b = _balls[i];
+        b.px = b.x; b.py = b.y;
+        if (step_ball(b, host)) --_ball_count;
     }
 }
 
-// ── 道具 ──────────────────────────────────────
+// ── 道具 ────────────────────────────────────────
 
-void BreakoutScreen::try_spawn_powerup(int16_t row, int16_t col) {
+void BreakoutScreen::spawn_powerup(int16_t row, int16_t col) {
     if ((next_rng() & 0xFF) >= POWERUP_DROP_CHANCE) return;
     for (auto& p : _powerups) {
         if (!p.active) {
-            int16_t px = BRICK_OX + col * BRICK_CELL + BRICK_SIZE / 2;
-            int16_t py = BRICK_OY + row * BRICK_CELL + BRICK_SIZE / 2;
+            p.x = static_cast<int8_t>(bg::BrickGrid::OX + col * bg::BrickGrid::CELL + bg::BrickGrid::SIZE / 2);
+            p.y = static_cast<int8_t>(bg::BrickGrid::OY + row * bg::BrickGrid::CELL + bg::BrickGrid::SIZE / 2);
+            p.type = (next_rng() & 1U) ? POWERUP_TYPE_SPLIT : POWERUP_TYPE_TRIPLE;
             p.active = true;
-            p.x = static_cast<int8_t>(px);
-            p.y = static_cast<int8_t>(py);
-            p.type = (next_rng() % 2 == 0) ? POWERUP_TYPE_TRIPLE : POWERUP_TYPE_SPLIT;
             return;
         }
     }
 }
 
-void BreakoutScreen::check_powerup_collection() {
+void BreakoutScreen::move_powerups() {
     for (auto& p : _powerups) {
         if (!p.active) continue;
-        if (p.y + POWERUP_SIZE >= PADDLE_Y && p.y < PADDLE_Y + PADDLE_H &&
-            p.x + POWERUP_SIZE > _paddle_x && p.x < _paddle_x + PADDLE_W) {
+        p.y += POWERUP_VY;
+        if (p.y >= 80) p.active = false;
+    }
+}
+
+void BreakoutScreen::collect_powerups() {
+    for (auto& p : _powerups) {
+        if (!p.active) continue;
+        if (p.y + POWERUP_SIZE >= PADDLE_Y &&
+            p.y < PADDLE_Y + PADDLE_H &&
+            p.x + POWERUP_SIZE > _paddle_x &&
+            p.x < _paddle_x + PADDLE_W) {
             p.active = false;
-            if (p.type == POWERUP_TYPE_TRIPLE)
-                spawn_triple_balls(static_cast<int8_t>(_paddle_x + PADDLE_W / 2), static_cast<int8_t>(PADDLE_Y - 5));
-            else
-                split_balls();
+            int8_t cx = static_cast<int8_t>(_paddle_x + PADDLE_W / 2);
+            int8_t cy = static_cast<int8_t>(PADDLE_Y - 5);
+            if (p.type == POWERUP_TYPE_TRIPLE) spawn_triple(cx, cy);
+            else split_balls();
         }
     }
 }
 
-// ── 主循环 ────────────────────────────────────
+// ── 粒子 ────────────────────────────────────────
+
+void BreakoutScreen::spawn_particles(int16_t row, int16_t col, uint8_t brick_type) {
+    int16_t cx = bg::BrickGrid::OX + col * bg::BrickGrid::CELL + bg::BrickGrid::SIZE / 2;
+    int16_t cy = bg::BrickGrid::OY + row * bg::BrickGrid::CELL + bg::BrickGrid::SIZE / 2;
+    Color color = BRICK_COLORS[brick_type - 1];
+    for (int16_t i = 0; i < 3; ++i) {
+        int8_t vx = static_cast<int8_t>((next_rng() % 3) - 1);
+        int8_t vy = static_cast<int8_t>(-1 - static_cast<int16_t>(next_rng() % 2));
+        _particles.emit(static_cast<int8_t>(cx), static_cast<int8_t>(cy), vx, vy, 6, color);
+    }
+}
+
+// ── 渲染：砖块 ──────────────────────────────────
+
+void BreakoutScreen::draw_bricks(IDisplay& display) const {
+    for (int16_t r = 0; r < bg::BrickGrid::ROWS; ++r) {
+        for (int16_t c = 0; c < bg::BrickGrid::COLS; ++c) {
+            uint8_t t = _grid.row_data(r)[c];
+            if (t == 0) continue;
+            auto br = bg::BrickGrid::brick_rect(r, c);
+            if (t == bg::BrickGrid::INDESTRUCTIBLE) {
+                display.fill_rect(br, INDESTRUCTIBLE_COLOR);
+                display.draw_pixel(br.x, br.y, INDESTRUCTIBLE_EDGE);
+                display.draw_pixel(static_cast<int16_t>(br.x + br.width - 1), br.y, INDESTRUCTIBLE_EDGE);
+            } else {
+                display.fill_rect(br, BRICK_COLORS[t - 1]);
+            }
+        }
+    }
+}
+
+// ── 渲染：状态栏 ────────────────────────────────
+
+void BreakoutScreen::draw_status_bar(IDisplay& display) const {
+    char buf[20];
+    std::snprintf(buf, sizeof(buf), "LV%d %d", _level + 1, _score);
+    TextRenderer::draw_text(display, {2, 0}, buf, Color::WHITE, 1, COMPACT_FONT_3X5);
+    std::snprintf(buf, sizeof(buf), "%d", _ball_count);
+    Color ball_color = (_ball_count > 3) ? TRIPLE_COLOR : Color::WHITE;
+    TextRenderer::draw_text(display, {72, 0}, buf, ball_color, 1, COMPACT_FONT_3X5);
+}
+
+// ── 渲染：覆盖层（最后绘制，盖住所有游戏元素）───
+
+void BreakoutScreen::draw_overlay(IDisplay& display) const {
+    char buf[20];
+    if (_state == State::GAME_OVER) {
+        bool won = (_celebration > 0);
+        Color c = won ? WIN_COLOR : BRICK_COLORS[0];
+        display.fill_rect(Rect{8, 24, 64, 32}, BG_COLOR);
+        display.draw_rect(Rect{8, 24, 64, 32}, c);
+        TextRenderer::draw_text_centered(display, {40, 30}, won ? "YOU WIN!" : "GAME OVER", c, 1, BASIC_FONT_5X7);
+        std::snprintf(buf, sizeof(buf), "SC:%d", _score);
+        TextRenderer::draw_text_centered(display, {40, 44}, buf, Color::WHITE, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(display, {40, 54}, "START=AGAIN", HINT_COLOR, 1, COMPACT_FONT_3X5);
+    }
+
+    if (_paused) {
+        display.fill_rect({10, 22, 60, 36}, PAUSE_BG);
+        display.draw_rect({10, 22, 60, 36}, PADDLE_COLOR);
+        TextRenderer::draw_text_centered(display, {40, 30}, "PAUSED", PAUSE_TEXT, 1, BASIC_FONT_5X7);
+        TextRenderer::draw_text_centered(display, {40, 44}, "A: Resume", PAUSE_TEXT, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(display, {40, 54}, "B: Menu", HINT_COLOR, 1, COMPACT_FONT_3X5);
+    }
+}
+
+// ── 主循环 ──────────────────────────────────────
 
 void BreakoutScreen::update(IPlatform& platform, IScreenHost& host) {
     ++_frame;
     auto& input = platform.input();
     _particles.update();
-    if (_celebration_timer > 0) --_celebration_timer;
+    if (_celebration > 0) --_celebration;
 
     if (_paused) {
         if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) _paused = false;
@@ -377,10 +312,9 @@ void BreakoutScreen::update(IPlatform& platform, IScreenHost& host) {
         return;
     }
 
-    if ((_state == State::ATTACHED || _state == State::ACTIVE) && input.was_pressed(ButtonBits::START)) {
-        _paused = true; return;
-    }
+    if (input.was_pressed(ButtonBits::START)) { _paused = true; return; }
 
+    // 挡板移动
     if (input.is_down(ButtonBits::LEFT))  _paddle_x -= PADDLE_SPEED;
     if (input.is_down(ButtonBits::RIGHT)) _paddle_x += PADDLE_SPEED;
     _paddle_x = std::max<int16_t>(_paddle_x, 0);
@@ -400,21 +334,23 @@ void BreakoutScreen::update(IPlatform& platform, IScreenHost& host) {
 
     if (_ball_count == 0) {
         _state = State::GAME_OVER;
-        if (_sound_SFX_DEATH_BREAKOUT) host.mixer().play_sfx(_sound_SFX_DEATH_BREAKOUT, _sound_SFX_DEATH_BREAKOUT_count);
+        host.audio().play_sfx(sounds::SFX_DEATH_BREAKOUT, sounds::SFX_DEATH_BREAKOUT_COUNT);
         return;
     }
 
-    check_paddle_collisions(host);
-    check_powerup_collection();
+    collect_powerups();
 
-    if (_bricks_remaining == 0) {
+    if (_grid.remaining() == 0) {
         ++_level;
-        if (_level >= LEVEL_COUNT) { _state = State::GAME_OVER; _celebration_timer = CELEBRATION_DURATION; _level = 0; }
-        else load_level(_level);
+        if (_level >= LEVEL_COUNT) {
+            _state = State::GAME_OVER;
+            _celebration = CELEBRATION_DURATION;
+            _level = 0;
+        } else {
+            load_level(_level);
+        }
     }
 }
-
-// ── 渲染 ──────────────────────────────────────
 
 void BreakoutScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
     IDisplay& display = platform.display();
@@ -422,30 +358,12 @@ void BreakoutScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
 
     // 状态栏
     display.fill_rect(Rect{0, 0, 80, STATUS_H}, BAR_COLOR);
-    char buf[20];
-    std::snprintf(buf, sizeof(buf), "LV%d %d", _level + 1, _score);
-    TextRenderer::draw_text(display, {2, 0}, buf, Color::WHITE, 1, COMPACT_FONT_3X5);
-    std::snprintf(buf, sizeof(buf), "%d", _ball_count);
-    TextRenderer::draw_text(display, {72, 0}, buf, _ball_count > 3 ? TRIPLE_COLOR : Color::WHITE, 1, COMPACT_FONT_3X5);
+    draw_status_bar(display);
 
     // 砖块
-    for (int16_t r = 0; r < MAX_BRICK_ROWS; ++r) {
-        for (int16_t c = 0; c < BRICK_COLS; ++c) {
-            uint8_t t = _bricks[r][c];
-            if (t == 0) continue;
-            int16_t bx = BRICK_OX + c * BRICK_CELL;
-            int16_t by = BRICK_OY + r * BRICK_CELL;
-            if (t == 9) {
-                display.fill_rect(Rect{bx, by, BRICK_SIZE, BRICK_SIZE}, INDESTRUCTIBLE_COLOR);
-                display.draw_pixel(bx, by, INDESTRUCTIBLE_EDGE);
-                display.draw_pixel(static_cast<int16_t>(bx + BRICK_SIZE - 1), by, INDESTRUCTIBLE_EDGE);
-            } else if (t >= 1 && t <= 5) {
-                display.fill_rect(Rect{bx, by, BRICK_SIZE, BRICK_SIZE}, BRICK_COLORS[t - 1]);
-            }
-        }
-    }
+    draw_bricks(display);
 
-    // 粒子（砖块碎片）
+    // 粒子
     _particles.render(display);
 
     // 道具
@@ -453,14 +371,9 @@ void BreakoutScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
         if (!p.active) continue;
         Color pc = (p.type == POWERUP_TYPE_TRIPLE) ? TRIPLE_COLOR : SPLIT_COLOR;
         display.fill_rect(Rect{p.x, p.y, POWERUP_SIZE, POWERUP_SIZE}, pc);
-        if (p.type == POWERUP_TYPE_TRIPLE) {
-            display.draw_pixel(static_cast<int16_t>(p.x + 1), static_cast<int16_t>(p.y + 1), BG_COLOR);
-            display.draw_pixel(static_cast<int16_t>(p.x + 2), static_cast<int16_t>(p.y + 1), BG_COLOR);
-            display.draw_pixel(static_cast<int16_t>(p.x + 1), static_cast<int16_t>(p.y + 2), BG_COLOR);
-        } else {
-            display.draw_pixel(static_cast<int16_t>(p.x + 1), static_cast<int16_t>(p.y + 1), BG_COLOR);
-            display.draw_pixel(static_cast<int16_t>(p.x + 2), static_cast<int16_t>(p.y + 2), BG_COLOR);
-        }
+        display.draw_pixel(static_cast<int16_t>(p.x + 1), static_cast<int16_t>(p.y + 1), BG_COLOR);
+        display.draw_pixel(static_cast<int16_t>(p.x + 2), static_cast<int16_t>(p.y + 1), BG_COLOR);
+        display.draw_pixel(static_cast<int16_t>(p.x + 1), static_cast<int16_t>(p.y + 2), BG_COLOR);
     }
 
     // 球 + 拖尾
@@ -475,31 +388,16 @@ void BreakoutScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
     display.fill_rect(Rect{_paddle_x, PADDLE_Y, PADDLE_W, PADDLE_H}, PADDLE_COLOR);
     display.draw_h_line(_paddle_x, PADDLE_Y, PADDLE_W, PADDLE_EDGE);
 
-    // 庆祝
-    if (_celebration_timer > 0) {
+    // 庆祝粒子
+    if (_celebration > 0) {
         for (uint8_t i = 0; i < 8; ++i)
-            display.draw_pixel(static_cast<int16_t>(next_rng() % 80), static_cast<int16_t>(next_rng() % 80), BRICK_COLORS[next_rng() % 5]);
+            display.draw_pixel(static_cast<int16_t>(next_rng() % 80),
+                               static_cast<int16_t>(next_rng() % 80),
+                               BRICK_COLORS[next_rng() % 5]);
     }
 
-    // 游戏结束 UI
-    if (_state == State::GAME_OVER) {
-        bool won = (_celebration_timer > 0);
-        display.fill_rect(Rect{8, 24, 64, 32}, BG_COLOR);
-        display.draw_rect(Rect{8, 24, 64, 32}, won ? WIN_COLOR : BRICK_COLORS[0]);
-        TextRenderer::draw_text_centered(display, {40, 30}, won ? "YOU WIN!" : "GAME OVER",
-                                         won ? WIN_COLOR : BRICK_COLORS[0], 1, BASIC_FONT_5X7);
-        std::snprintf(buf, sizeof(buf), "SC:%d", _score);
-        TextRenderer::draw_text_centered(display, {40, 44}, buf, Color::WHITE, 1, COMPACT_FONT_3X5);
-        TextRenderer::draw_text_centered(display, {40, 54}, "START=AGAIN", HINT_COLOR, 1, COMPACT_FONT_3X5);
-    }
-
-    if (_paused) {
-        display.fill_rect({10, 22, 60, 36}, PAUSE_BG);
-        display.draw_rect({10, 22, 60, 36}, PADDLE_COLOR);
-        TextRenderer::draw_text_centered(display, {40, 30}, "PAUSED", PAUSE_TEXT, 1, BASIC_FONT_5X7);
-        TextRenderer::draw_text_centered(display, {40, 44}, "A: Resume", PAUSE_TEXT, 1, COMPACT_FONT_3X5);
-        TextRenderer::draw_text_centered(display, {40, 54}, "B: Menu", HINT_COLOR, 1, COMPACT_FONT_3X5);
-    }
+    // 覆盖层（最后绘制，盖住所有游戏元素）
+    draw_overlay(display);
 }
 
 }  // namespace handheld

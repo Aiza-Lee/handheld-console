@@ -4,6 +4,7 @@
 #include "SDL3/SDL_scancode.h"
 #include "SDL3/SDL_surface.h"
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_audio.h>
 
 #include <stdexcept>
 #include <string>
@@ -49,9 +50,8 @@ ButtonBits _button_from_scancode(SDL_Scancode scancode, bool& recognized) {
 
 } // namespace
 
-SdlPlatform::SdlPlatform(Size display_size, int window_scale, uint32_t frame_time_ms)
-	: _display(display_size),
-	  _frame_time_ms(frame_time_ms) {
+SdlPlatform::SdlPlatform(Size display_size, int window_scale)
+	: _display(display_size) {
 	// The simulator currently stubs audio, so it should not depend on a host audio device.
 	if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS)) {
 		throw _sdl_error("SDL_Init failed");
@@ -115,7 +115,10 @@ SdlPlatform::SdlPlatform(Size display_size, int window_scale, uint32_t frame_tim
 }
 
 SdlPlatform::~SdlPlatform() {
-	_audio.close();
+	if (_audio_stream) {
+		SDL_DestroyAudioStream(_audio_stream);
+		_audio_stream = nullptr;
+	}
 	if (_texture != nullptr) {
 		SDL_DestroyTexture(_texture);
 	}
@@ -139,11 +142,11 @@ void SdlPlatform::process_events() {
 	}
 }
 
-void SdlPlatform::delay_to_next_frame() {
+void SdlPlatform::delay_to_next_frame(uint32_t frame_time_ms) {
 	const uint32_t now = _time.ticks_ms();
 	const uint32_t elapsed = now - _last_frame_tick;
-	if (elapsed < _frame_time_ms) {
-		_time.delay_ms(_frame_time_ms - elapsed);
+	if (elapsed < frame_time_ms) {
+		_time.delay_ms(frame_time_ms - elapsed);
 	}
 	_last_frame_tick = _time.ticks_ms();
 }
@@ -156,8 +159,19 @@ IInput& SdlPlatform::input() {
 	return _input;
 }
 
-IAudio& SdlPlatform::audio() {
-	return _audio;
+void SdlPlatform::write_audio_samples(const int16_t* data, size_t count) {
+	if (_audio_muted || count == 0) return;
+	if (!_audio_stream) {
+		SDL_AudioSpec spec{};
+		spec.format = SDL_AUDIO_S16LE;
+		spec.channels = 1;
+		spec.freq = 44100;
+		_audio_stream = SDL_OpenAudioDeviceStream(
+			SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, nullptr, nullptr);
+		if (!_audio_stream) return;
+	}
+	SDL_PutAudioStreamData(_audio_stream, data, static_cast<int>(count * sizeof(int16_t)));
+	SDL_ResumeAudioStreamDevice(_audio_stream);
 }
 
 IPower& SdlPlatform::power() {

@@ -6,14 +6,7 @@
 #include "core/graphics/Color.h"
 #include "core/graphics/TextRenderer.h"
 #include "core/runtime/IScreenHost.h"
-#include "core/audio/AudioMixer.h"
-
-extern "C" [[gnu::weak]] const handheld::Tone _sound_BGM_MENU[];
-extern "C" [[gnu::weak]] const uint32_t _sound_BGM_MENU_count;
-extern "C" [[gnu::weak]] const handheld::Tone _sound_SFX_SELECT[];
-extern "C" [[gnu::weak]] const uint32_t _sound_SFX_SELECT_count;
-extern "C" [[gnu::weak]] const handheld::Tone _sound_SFX_CONFIRM[];
-extern "C" [[gnu::weak]] const uint32_t _sound_SFX_CONFIRM_count;
+#include "core/audio/Sounds.h"
 
 namespace handheld {
 
@@ -38,7 +31,7 @@ void draw_scroll_arrow(IDisplay& display, int16_t x, int16_t y, bool up, Color c
 void MenuScreen::enter(IPlatform& platform, IScreenHost& host) {
 	platform.display().clear(Color::BLACK);
 	init_stars();
-	if (_sound_BGM_MENU) host.mixer().set_bgm(_sound_BGM_MENU, _sound_BGM_MENU_count);
+	host.audio().set_bgm(sounds::BGM_MENU, sounds::BGM_MENU_COUNT);
 }
 
 void MenuScreen::init_stars() {
@@ -67,14 +60,14 @@ void MenuScreen::update(IPlatform& platform, IScreenHost& host) {
 
 	if (input.was_pressed(ButtonBits::UP)) {
 		_cursor = (_cursor == 0) ? ENTRY_COUNT - 1 : _cursor - 1;
-		if (_sound_SFX_SELECT) host.mixer().play_sfx(_sound_SFX_SELECT, _sound_SFX_SELECT_count);
+		host.audio().play_sfx(sounds::SFX_SELECT, sounds::SFX_SELECT_COUNT);
 	}
 	if (input.was_pressed(ButtonBits::DOWN)) {
 		_cursor = (_cursor + 1 >= ENTRY_COUNT) ? 0 : _cursor + 1;
-		if (_sound_SFX_SELECT) host.mixer().play_sfx(_sound_SFX_SELECT, _sound_SFX_SELECT_count);
+		host.audio().play_sfx(sounds::SFX_SELECT, sounds::SFX_SELECT_COUNT);
 	}
 	if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
-		if (_sound_SFX_CONFIRM) host.mixer().play_sfx(_sound_SFX_CONFIRM, _sound_SFX_CONFIRM_count);
+		host.audio().play_sfx(sounds::SFX_CONFIRM, sounds::SFX_CONFIRM_COUNT);
 		host.switch_to(ENTRIES[_cursor].screen_type);
 	}
 

@@ -41,6 +41,16 @@ void SdlPlatform::Display::draw_pixel(int16_t x, int16_t y, Color color) {
 	_framebuffer[index] = _to_argb8888(color);
 }
 
+void SdlPlatform::Display::fill_rect(const Rect& rect, Color color) {
+	if (rect.empty()) return;
+	const uint32_t c = _to_argb8888(color);
+	const auto w = static_cast<size_t>(_size.width);
+	for (int16_t row = 0; row < rect.height; ++row) {
+		const auto start = (static_cast<size_t>(rect.y + row) * w) + static_cast<size_t>(rect.x);
+		std::fill_n(_framebuffer.begin() + static_cast<long>(start), rect.width, c);
+	}
+}
+
 void SdlPlatform::Display::present() {
 	if (_renderer == nullptr || _texture == nullptr) {
 		return;
@@ -63,6 +73,7 @@ void SdlPlatform::Display::present() {
 		throw sdl_error("SDL_RenderPresent failed");
 	}
 }
+
 void SdlPlatform::Display::bind(SDL_Renderer& renderer, SDL_Texture& texture) {
 	_renderer = &renderer;
 	_texture = &texture;

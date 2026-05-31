@@ -5,7 +5,6 @@
 #include "core/common/ButtonState.h"
 #include "core/graphics/Color.h"
 #include "core/graphics/Geometry.h"
-#include "platform/interfaces/IAudio.h"
 #include "platform/interfaces/IDisplay.h"
 #include "platform/interfaces/IInput.h"
 #include "platform/interfaces/IPlatform.h"
@@ -39,6 +38,7 @@ public:
 	[[nodiscard]] uint32_t clear_count() const { return _clear_count; }
 	[[nodiscard]] uint32_t draw_pixel_count() const { return _draw_pixel_count; }
 	[[nodiscard]] uint32_t present_count() const { return _present_count; }
+		[[nodiscard]] uint32_t fill_rect_count() const { return _fill_rect_count; }
 
 private:
 	Size _size;
@@ -46,6 +46,7 @@ private:
 	uint32_t _clear_count = 0;
 	uint32_t _draw_pixel_count = 0;
 	uint32_t _present_count = 0;
+		uint32_t _fill_rect_count = 0;
 };
 
 class FakeInput final : public IInput {
@@ -71,43 +72,6 @@ private:
 	uint32_t _poll_count = 0;
 };
 
-class FakeAudio final : public IAudio {
-public:
-	void play_tone(Tone tone) override {
-		_last_tone = tone;
-		_playing = true;
-	}
-
-	void play_sequence(const Tone* /*tones*/, size_t /*tone_count*/, bool loop) override {
-		_looping = loop;
-		_playing = true;
-	}
-
-	void set_muted(bool muted) override { _muted = muted; }
-	[[nodiscard]] bool is_muted() const override { return _muted; }
-
-	void stop() override {
-		_playing = false;
-		_looping = false;
-	}
-
-	[[nodiscard]] bool is_playing() const override { return _playing; }
-	[[nodiscard]] Tone last_tone() const { return _last_tone; }
-	[[nodiscard]] bool is_looping() const { return _looping; }
-
-	void write_samples(const int16_t* /*data*/, size_t count) override {
-		_samples_written += count;
-	}
-
-	[[nodiscard]] size_t samples_written() const { return _samples_written; }
-
-private:
-	Tone _last_tone{};
-	bool _muted = false;
-	bool _playing = false;
-	bool _looping = false;
-	size_t _samples_written = 0;
-};
 
 class FakePower final : public IPower {
 public:
@@ -153,7 +117,8 @@ public:
 
 	IDisplay& display() override { return _display; }
 	IInput& input() override { return _input; }
-	IAudio& audio() override { return _audio; }
+	void write_audio_samples(const int16_t*, size_t count) override { _samples_written += count; }
+	[[nodiscard]] size_t samples_written() const { return _samples_written; }
 	IPower& power() override { return _power; }
 	ITime& time() override { return _time; }
 	IStorage& storage() override { return _storage; }
@@ -165,7 +130,7 @@ public:
 private:
 	FakeDisplay _display;
 	FakeInput _input;
-	FakeAudio _audio;
+	size_t _samples_written = 0;
 	FakePower _power;
 	FakeTime _time;
 	FakeStorage _storage;

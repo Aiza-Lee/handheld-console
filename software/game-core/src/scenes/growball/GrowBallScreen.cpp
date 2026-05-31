@@ -5,20 +5,11 @@
 #include "core/runtime/IScreenHost.h"
 #include "platform/interfaces/IPlatform.h"
 #include "platform/interfaces/IInput.h"
-#include "core/audio/AudioMixer.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
-
-extern "C" [[gnu::weak]] const handheld::Tone _sound_BGM_GROWBALL[];
-extern "C" [[gnu::weak]] const uint32_t _sound_BGM_GROWBALL_count;
-extern "C" [[gnu::weak]] const handheld::Tone _sound_SFX_EAT_GROWBALL[];
-extern "C" [[gnu::weak]] const uint32_t _sound_SFX_EAT_GROWBALL_count;
-extern "C" [[gnu::weak]] const handheld::Tone _sound_SFX_EAT_ENEMY_GROWBALL[];
-extern "C" [[gnu::weak]] const uint32_t _sound_SFX_EAT_ENEMY_GROWBALL_count;
-extern "C" [[gnu::weak]] const handheld::Tone _sound_SFX_DEATH_GROWBALL[];
-extern "C" [[gnu::weak]] const uint32_t _sound_SFX_DEATH_GROWBALL_count;
+#include "core/audio/Sounds.h"
 
 namespace handheld {
 
@@ -74,7 +65,7 @@ void GrowBallScreen::draw_circle_outline(IDisplay& display, int16_t cx, int16_t 
 // --- lifecycle ---
 
 void GrowBallScreen::enter(IPlatform& platform, IScreenHost& host) {
-	if (ENABLE_BGM && _sound_BGM_GROWBALL) host.mixer().set_bgm(_sound_BGM_GROWBALL, _sound_BGM_GROWBALL_count);
+	if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_GROWBALL, sounds::BGM_GROWBALL_COUNT);
 	_start_ms = platform.time().ticks_ms();
 	_world.init(_start_ms);
 	_paused = false;
@@ -119,13 +110,13 @@ void GrowBallScreen::update(IPlatform& platform, IScreenHost& host) {
 	_world.simulate(input_vx, input_vy, now_ms, _victory, _game_over);
 
 	if (_game_over) {
-		if (_sound_SFX_DEATH_GROWBALL) host.mixer().play_sfx(_sound_SFX_DEATH_GROWBALL, _sound_SFX_DEATH_GROWBALL_count);
+		host.audio().play_sfx(sounds::SFX_DEATH_GROWBALL, sounds::SFX_DEATH_GROWBALL_COUNT);
 	} else if (!_victory) {
 		float const growth = _world.player().radius - radius_before;
 		if (growth > 2.0f) {
-			if (_sound_SFX_EAT_ENEMY_GROWBALL) host.mixer().play_sfx(_sound_SFX_EAT_ENEMY_GROWBALL, _sound_SFX_EAT_ENEMY_GROWBALL_count);
+			host.audio().play_sfx(sounds::SFX_EAT_ENEMY_GROWBALL, sounds::SFX_EAT_ENEMY_GROWBALL_COUNT);
 		} else if (growth > 0.01f) {
-			if (_sound_SFX_EAT_GROWBALL) host.mixer().play_sfx(_sound_SFX_EAT_GROWBALL, _sound_SFX_EAT_GROWBALL_count);
+			host.audio().play_sfx(sounds::SFX_EAT_GROWBALL, sounds::SFX_EAT_GROWBALL_COUNT);
 		}
 	}
 

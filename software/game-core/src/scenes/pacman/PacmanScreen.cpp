@@ -6,18 +6,9 @@
 #include "core/graphics/Font.h"
 #include "core/graphics/TextRenderer.h"
 #include "core/runtime/IScreenHost.h"
-#include "core/audio/AudioMixer.h"
 #include "core/runtime/ScreenType.h"
 #include <cstdio>
-
-extern "C" [[gnu::weak]] const handheld::Tone _sound_BGM_PACMAN[];
-extern "C" [[gnu::weak]] const uint32_t _sound_BGM_PACMAN_count;
-extern "C" [[gnu::weak]] const handheld::Tone _sound_SFX_CHOMP[];
-extern "C" [[gnu::weak]] const uint32_t _sound_SFX_CHOMP_count;
-extern "C" [[gnu::weak]] const handheld::Tone _sound_SFX_DEATH_PACMAN[];
-extern "C" [[gnu::weak]] const uint32_t _sound_SFX_DEATH_PACMAN_count;
-extern "C" [[gnu::weak]] const handheld::Tone _sound_SFX_POWER_PELLET[];
-extern "C" [[gnu::weak]] const uint32_t _sound_SFX_POWER_PELLET_count;
+#include "core/audio/Sounds.h"
 
 namespace handheld {
 
@@ -32,7 +23,7 @@ constexpr uint32_t RNG_SEED = 12345;
 void PacmanScreen::enter(IPlatform& platform, IScreenHost& host) {
 	reset_game();
 	platform.display().clear(BG_COLOR);
-	if (_sound_BGM_PACMAN) host.mixer().set_bgm(_sound_BGM_PACMAN, _sound_BGM_PACMAN_count);
+	host.audio().set_bgm(sounds::BGM_PACMAN, sounds::BGM_PACMAN_COUNT);
 }
 
 uint32_t PacmanScreen::next_rng() {
@@ -140,7 +131,7 @@ void PacmanScreen::move_pacman(IScreenHost& host) {
 		_score += DOT_SCORE;
 		if (_power[_pac_y][_pac_x]) {
 			_power[_pac_y][_pac_x] = false; _power_timer = POWER_DURATION;
-			if (_sound_SFX_POWER_PELLET) host.mixer().play_sfx(_sound_SFX_POWER_PELLET, _sound_SFX_POWER_PELLET_count);
+			host.audio().play_sfx(sounds::SFX_POWER_PELLET, sounds::SFX_POWER_PELLET_COUNT);
 			for (auto& g : _ghosts) {
 				if (g.state == GhostState::CHASE) {
 					g.state = GhostState::VULNERABLE;
@@ -154,7 +145,7 @@ void PacmanScreen::move_pacman(IScreenHost& host) {
 				}
 			}
 		} else {
-			if (_sound_SFX_CHOMP) host.mixer().play_sfx(_sound_SFX_CHOMP, _sound_SFX_CHOMP_count);
+			host.audio().play_sfx(sounds::SFX_CHOMP, sounds::SFX_CHOMP_COUNT);
 		}
 	}
 }
@@ -219,7 +210,7 @@ void PacmanScreen::check_ghost_collision(IScreenHost& host) {
 
 void PacmanScreen::die(IScreenHost& host) {
 	_state = State::DYING; _dying_timer = DYING_TIMER; --_lives; _power_timer = 0;
-	if (_sound_SFX_DEATH_PACMAN) host.mixer().play_sfx(_sound_SFX_DEATH_PACMAN, _sound_SFX_DEATH_PACMAN_count);
+	host.audio().play_sfx(sounds::SFX_DEATH_PACMAN, sounds::SFX_DEATH_PACMAN_COUNT);
 	auto px = static_cast<int16_t>((_pac_x * CELL) + (CELL / 2));
 	auto py = static_cast<int16_t>((_pac_y * CELL) + (CELL / 2));
 	for (int16_t i = 0; i < 8 && _death_particle_count < MAX_DEATH_PARTICLES; ++i) {
@@ -236,7 +227,10 @@ void PacmanScreen::update(IPlatform& platform, IScreenHost& host) {
 	++_frame;
 	auto& input = platform.input();
 	update_particles();
-	if (_celebration_timer > 0) --_celebration_timer;
+	if (_celebration_timer > 0) {
+		--_celebration_timer;
+		if (_celebration_timer == 0) _state = State::GAME_OVER;
+	}
 
 	if (_paused) {
 		if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) _paused = false;

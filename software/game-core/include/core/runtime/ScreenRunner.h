@@ -1,12 +1,13 @@
 #ifndef CORE_RUNTIME_SCREEN_RUNNER_H
 #define CORE_RUNTIME_SCREEN_RUNNER_H
 
-#include "core/audio/AudioMixer.h"
+#include "core/audio/AudioEngine.h"
 #include "core/runtime/IScreenHost.h"
 #include "core/runtime/GameScreen.h"
 #include "core/runtime/ScreenType.h"
+#include <array>
+#include <cstdint>
 #include <memory>
-#include <vector>
 
 namespace handheld {
 
@@ -30,22 +31,28 @@ public:
 	void switch_to(ScreenType type) override;
 	void push_screen(ScreenType type) override;
 	void pop_screen() override;
-	[[nodiscard]] AudioMixer& mixer() override { return _mixer; }
+	[[nodiscard]] AudioEngine& audio() override { return _audio_engine; }
+	[[nodiscard]] uint32_t frame_time_ms() const { return _frame_time_ms; }
 
 private:
 	enum class PendingOp { NONE, SWITCH, PUSH, POP };
 
 	void _apply_pending();
 
+	static constexpr size_t K_MAX_SCREENS = 4;
+	static constexpr size_t K_MAX_AUDIO_SAMPLES = AudioEngine::SAMPLE_RATE * 100 / 1000;
+
 	IPlatform& _platform;
 	IScreenFactory& _factory;
-	std::vector<std::unique_ptr<GameScreen>> _stack;
+	std::array<std::unique_ptr<GameScreen>, K_MAX_SCREENS> _stack{};
+	uint8_t _stack_size = 0;
 	ScreenType _pending_type;
 	PendingOp _pending_op = PendingOp::NONE;
 	uint32_t _frame_time_ms;
 	uint32_t _last_frame_tick = 0;
 	bool _entered = false;
-	AudioMixer _mixer;
+	AudioEngine _audio_engine;
+	std::array<int16_t, K_MAX_AUDIO_SAMPLES> _audio_buf{};
 };
 
 } // namespace handheld

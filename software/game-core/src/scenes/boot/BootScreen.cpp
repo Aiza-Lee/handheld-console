@@ -6,10 +6,7 @@
 #include "core/graphics/TextRenderer.h"
 #include "core/runtime/IScreenHost.h"
 #include "core/runtime/ScreenType.h"
-#include "platform/interfaces/IAudio.h"
-
-extern "C" [[gnu::weak]] const handheld::Tone _sound_BOOT[];
-extern "C" [[gnu::weak]] const uint32_t _sound_BOOT_count;
+#include "core/audio/Sounds.h"
 
 namespace handheld {
 
@@ -31,10 +28,10 @@ void BootScreen::update_stars() {
 	for (auto& s : _stars) { s.y += s.speed; if (s.y >= 80) { s.y = 0; s.x = static_cast<int16_t>(next_rng() % 80); } }
 }
 
-void BootScreen::enter(IPlatform& platform, IScreenHost& /*host*/) {
+void BootScreen::enter(IPlatform& platform, IScreenHost& host) {
 	platform.display().clear(Color::BLACK);
 	init_stars(); _stars_ready = true; _frame = 0;
-	if (_sound_BOOT) platform.audio().play_sequence(_sound_BOOT, _sound_BOOT_count, false);
+	host.audio().play_sfx(sounds::BOOT, sounds::BOOT_COUNT);
 }
 
 void BootScreen::update(IPlatform& platform, IScreenHost& host) {

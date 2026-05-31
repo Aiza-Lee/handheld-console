@@ -1,7 +1,6 @@
 #ifndef PLATFORM_INTERFACES_IPLATFORM_H
 #define PLATFORM_INTERFACES_IPLATFORM_H
 
-#include "platform/interfaces/IAudio.h"
 #include "platform/interfaces/IDisplay.h"
 #include "platform/interfaces/IInput.h"
 #include "platform/interfaces/IPower.h"
@@ -27,8 +26,8 @@ public:
 	// 返回输入服务
 	virtual IInput& input() = 0;
 
-	// 返回音频服务
-	virtual IAudio& audio() = 0;
+	// 输出 PCM 音频采样（S16LE, 44100Hz, mono）
+	virtual void write_audio_samples(const int16_t* data, size_t count) = 0;
 
 	// 返回电源服务
 	virtual IPower& power() = 0;

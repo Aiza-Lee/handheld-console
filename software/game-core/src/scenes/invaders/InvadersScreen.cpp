@@ -5,16 +5,9 @@
 #include "core/graphics/Color.h"
 #include "core/graphics/TextRenderer.h"
 #include "core/runtime/IScreenHost.h"
-#include "core/audio/AudioMixer.h"
 #include "core/runtime/ScreenType.h"
 #include <cstdio>
-
-extern "C" [[gnu::weak]] const handheld::Tone _sound_BGM_INVADERS[];
-extern "C" [[gnu::weak]] const uint32_t _sound_BGM_INVADERS_count;
-extern "C" [[gnu::weak]] const handheld::Tone _sound_SFX_SHOOT[];
-extern "C" [[gnu::weak]] const uint32_t _sound_SFX_SHOOT_count;
-extern "C" [[gnu::weak]] const handheld::Tone _sound_SFX_EXPLOSION[];
-extern "C" [[gnu::weak]] const uint32_t _sound_SFX_EXPLOSION_count;
+#include "core/audio/Sounds.h"
 
 namespace handheld {
 
@@ -41,7 +34,7 @@ void InvadersScreen::enter(IPlatform& platform, IScreenHost& host) {
     platform.display().clear(Color::BLACK);
     _high_score = 0;
     reset_game();
-    if (_sound_BGM_INVADERS) host.mixer().set_bgm(_sound_BGM_INVADERS, _sound_BGM_INVADERS_count);
+    host.audio().set_bgm(sounds::BGM_INVADERS, sounds::BGM_INVADERS_COUNT);
 }
 
 void InvadersScreen::reset_game() {
@@ -70,7 +63,7 @@ void InvadersScreen::player_shoot(IScreenHost& host) {
         _bullet_x = static_cast<int16_t>(_player_x + PLAYER_W / 2);
         _bullet_y = PLAYER_Y - 1;
         _bullet_active = true;
-        if (_sound_SFX_SHOOT) host.mixer().play_sfx(_sound_SFX_SHOOT, _sound_SFX_SHOOT_count);
+        host.audio().play_sfx(sounds::SFX_SHOOT, sounds::SFX_SHOOT_COUNT);
     }
 }
 
@@ -134,7 +127,7 @@ void InvadersScreen::move_bullets(IScreenHost& host) {
                     _score += enemy_row_score(row); if (_score > _high_score) _high_score = _score;
                     _bullet_active = false;
                     spawn_particles(static_cast<int16_t>(ex + ENEMY_W / 2), static_cast<int16_t>(ey + ENEMY_H / 2));
-                    if (_sound_SFX_EXPLOSION) host.mixer().play_sfx(_sound_SFX_EXPLOSION, _sound_SFX_EXPLOSION_count);
+                    host.audio().play_sfx(sounds::SFX_EXPLOSION, sounds::SFX_EXPLOSION_COUNT);
                     _move_interval = INIT_MOVE_INTERVAL - static_cast<uint32_t>((GRID_COLS * GRID_ROWS - _enemies_alive_count) / 4);
                     if (_move_interval < MIN_MOVE_INTERVAL) _move_interval = MIN_MOVE_INTERVAL;
                     break;
@@ -150,7 +143,7 @@ void InvadersScreen::move_bullets(IScreenHost& host) {
             eb.y >= PLAYER_Y && eb.y < PLAYER_Y + PLAYER_H) {
             eb.active = false;
             spawn_particles(static_cast<int16_t>(_player_x + PLAYER_W / 2), static_cast<int16_t>(PLAYER_Y + PLAYER_H / 2));
-            if (_sound_SFX_EXPLOSION) host.mixer().play_sfx(_sound_SFX_EXPLOSION, _sound_SFX_EXPLOSION_count);
+            host.audio().play_sfx(sounds::SFX_EXPLOSION, sounds::SFX_EXPLOSION_COUNT);
             --_lives;
             if (_lives <= 0) { _state = State::GAME_OVER; if (_score > _high_score) _high_score = _score; }
             else { _state = State::DYING; _dying_timer = DYING_TIMER; }

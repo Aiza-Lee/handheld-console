@@ -33,42 +33,58 @@ void ScreenRunner::_apply_pending() {
 	switch (_pending_op) {
 	case PendingOp::SWITCH: {
 		// 退出并销毁栈中所有屏幕
-		_mixer.stop_all();
-		if (!_stack.empty()) {
-			if (_entered) {
-				_stack.back()->exit(_platform, *this);
-			}
-			_stack.clear();
+		_audio_engine.stop_all();
+		if (_stack_size > 0 && _entered) {
+			_stack[_stack_size - 1]->exit(_platform, *this);
 		}
-		_stack.push_back(_factory.create(_pending_type));
+		for (uint8_t i = 0; i < _stack_size; ++i) {
+			_stack[i].reset();
+		}
+		_stack_size = 0;
+
+		auto screen = _factory.create(_pending_type);
+		if (!screen) return;
+		_stack[0] = std::move(screen);
+		_stack_size = 1;
 		_pending_op = PendingOp::NONE;
 		_entered = false;
 		break;
 	}
 	case PendingOp::PUSH: {
 		// 挂起当前栈顶，压入新屏幕
-		if (!_stack.empty() && _entered) {
-			_stack.back()->suspend(_platform, *this);
+		if (_stack_size >= K_MAX_SCREENS) {
+			_pending_op = PendingOp::NONE;
+			break;
 		}
-		_stack.push_back(_factory.create(_pending_type));
+		if (_stack_size > 0 && _entered) {
+			_stack[_stack_size - 1]->suspend(_platform, *this);
+		}
+		auto screen = _factory.create(_pending_type);
+		if (!screen) {
+			_pending_op = PendingOp::NONE;
+			break;
+		}
+		_stack[_stack_size] = std::move(screen);
+		++_stack_size;
 		_pending_op = PendingOp::NONE;
 		_entered = false;
 		break;
 	}
 	case PendingOp::POP: {
 		// 弹出栈顶，恢复下层屏幕
-		if (_stack.size() <= 1) {
+		if (_stack_size <= 1) {
 			_pending_op = PendingOp::NONE;
 			break;
 		}
-		_mixer.stop_all();
+		_audio_engine.stop_all();
 		if (_entered) {
-			_stack.back()->exit(_platform, *this);
+			_stack[_stack_size - 1]->exit(_platform, *this);
 		}
-		_stack.pop_back();
+		_stack[_stack_size - 1].reset();
+		--_stack_size;
 		_pending_op = PendingOp::NONE;
 		// 恢复刚回到栈顶的屏幕
-		_stack.back()->resume(_platform, *this);
+		_stack[_stack_size - 1]->resume(_platform, *this);
 		// _entered 保持 true：resume 相当于重新 enter
 		break;
 	}
@@ -80,7 +96,9 @@ void ScreenRunner::_apply_pending() {
 void ScreenRunner::tick() {
 	_apply_pending();
 
-	GameScreen& top = *_stack.back();
+	if (_stack_size == 0) return;
+
+	GameScreen& top = *_stack[_stack_size - 1];
 	if (!_entered) {
 		top.enter(_platform, *this);
 		_entered = true;
@@ -90,12 +108,11 @@ void ScreenRunner::tick() {
 	top.update(_platform, *this);
 	top.render(_platform, *this);
 
-	// 驱动音频混音器：生成一帧的 PCM 数据并输出
-	if (_mixer.is_playing()) {
-		constexpr size_t samples_per_frame = AudioMixer::SAMPLES_PER_FRAME;
-		int16_t buf[samples_per_frame];
-		_mixer.fill_buffer(buf, samples_per_frame);
-		_platform.audio().write_samples(buf, samples_per_frame);
+	// 驱动音频引擎：根据帧间隔生成对应长度的 PCM 采样
+	if (_audio_engine.is_playing()) {
+		const size_t count = (AudioEngine::SAMPLE_RATE * _frame_time_ms) / 1000;
+		_audio_engine.fill_buffer(_audio_buf.data(), count);
+		_platform.write_audio_samples(_audio_buf.data(), count);
 	}
 
 	_platform.display().present();

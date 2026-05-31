@@ -1,7 +1,6 @@
 # AssetHelpers.cmake
 #
 # add_assets() — 注册二进制资产文件，自动生成 C++ 代码并加入目标。
-# add_sounds() — 将 .tone 音效文件转为 C++ Tone 数组并加入目标。
 #
 # 此文件位于 game-core/cmake/ 中，通过 CMAKE_CURRENT_LIST_DIR 定位转换脚本，
 # 不依赖外部 REPO_ROOT 变量。
@@ -9,7 +8,6 @@
 # 在 include 时捕获本文件所在目录（函数内部 CMAKE_CURRENT_LIST_DIR 会反映调用者目录）
 set(_ASSET_HELPERS_DIR "${CMAKE_CURRENT_LIST_DIR}")
 set(_ASSET_CONVERTER "${_ASSET_HELPERS_DIR}/../tools/asset_convert.py")
-set(_SOUND_CONVERTER "${_ASSET_HELPERS_DIR}/../tools/audio2tone.py")
 
 find_program(_PYTHON python3)
 if(NOT _PYTHON)
@@ -131,41 +129,4 @@ function(add_assets)
 
 	target_sources(${AR_TARGET} PRIVATE ${ALL_SOURCES})
 	target_include_directories(${AR_TARGET} PRIVATE "${GEN_DIR}")
-endfunction()
-
-# ── add_sounds ──────────────────────────────────────────────────
-function(add_sounds)
-	cmake_parse_arguments(AR "" "TARGET" "SOUNDS" ${ARGN})
-	if(NOT AR_TARGET)
-		message(FATAL_ERROR "add_sounds: TARGET is required")
-	endif()
-	if(NOT AR_SOUNDS)
-		return()
-	endif()
-
-	set(GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/_sounds")
-	file(MAKE_DIRECTORY "${GEN_DIR}")
-
-	list(LENGTH AR_SOUNDS SND_LEN)
-	foreach(OFF RANGE 0 ${SND_LEN} 2)
-		math(EXPR NEXT "${OFF} + 1")
-		if(NEXT GREATER_EQUAL ${SND_LEN})
-			break()
-		endif()
-		list(GET AR_SOUNDS ${OFF} NAME)
-		list(GET AR_SOUNDS ${NEXT} FILE_PATH)
-		if(NOT EXISTS "${FILE_PATH}")
-			message(FATAL_ERROR "add_sounds: file not found: ${FILE_PATH}")
-		endif()
-		set(CPP_FILE "${GEN_DIR}/${NAME}.cpp")
-		add_custom_command(
-			OUTPUT "${CPP_FILE}"
-			COMMAND "${_PYTHON}" "${_SOUND_CONVERTER}"
-				"${FILE_PATH}" "${CPP_FILE}" "_sound_${NAME}"
-			DEPENDS "${FILE_PATH}" "${_SOUND_CONVERTER}"
-			COMMENT "Generating sound: ${NAME}"
-			VERBATIM
-		)
-		target_sources(${AR_TARGET} PRIVATE "${CPP_FILE}")
-	endforeach()
 endfunction()

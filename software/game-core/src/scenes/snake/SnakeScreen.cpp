@@ -1,327 +1,235 @@
 #include "scenes/snake/SnakeScreen.h"
-#include "scenes/snake/SnakeConfig.h"
 
+#include "core/audio/Sounds.h"
 #include "core/common/ButtonBits.h"
 #include "core/graphics/Color.h"
 #include "core/graphics/Font.h"
+#include "core/graphics/NumberRenderer.h"
 #include "core/graphics/TextRenderer.h"
 #include "core/runtime/IScreenHost.h"
-#include "core/audio/AudioMixer.h"
 #include "core/runtime/ScreenType.h"
-#include <cmath>
-#include <cstdio>
-
-extern "C" [[gnu::weak]] const handheld::Tone _sound_BGM_SNAKE[];
-extern "C" [[gnu::weak]] const uint32_t _sound_BGM_SNAKE_count;
-extern "C" [[gnu::weak]] const handheld::Tone _sound_SFX_EAT[];
-extern "C" [[gnu::weak]] const uint32_t _sound_SFX_EAT_count;
-extern "C" [[gnu::weak]] const handheld::Tone _sound_SFX_DEATH_SNAKE[];
-extern "C" [[gnu::weak]] const uint32_t _sound_SFX_DEATH_SNAKE_count;
 
 namespace handheld {
 
-using namespace snake::cfg;
-
 namespace {
 
-Color body_gradient_color(int16_t i, int16_t body_length) {
-	if (body_length <= 1) return HEAD_COLOR;
-	float t = static_cast<float>(i) / static_cast<float>(body_length - 1);
-	auto r = static_cast<uint8_t>(static_cast<float>(HEAD_R) + (static_cast<float>(TAIL_R - HEAD_R) * t));
-	auto g = static_cast<uint8_t>(static_cast<float>(HEAD_G) + (static_cast<float>(TAIL_G - HEAD_G) * t));
-	auto b = static_cast<uint8_t>(static_cast<float>(HEAD_B) + (static_cast<float>(TAIL_B - HEAD_B) * t));
-	return rgb565(r, g, b);
+namespace C = snake::cfg;
+
+Color body_color(int16_t i, int16_t len) {
+    if (len <= 1) return C::HEAD_COLOR;
+    auto r = static_cast<uint8_t>(C::HEAD_R + ((C::TAIL_R - C::HEAD_R) * i) / (len - 1));
+    auto g = static_cast<uint8_t>(C::HEAD_G + ((C::TAIL_G - C::HEAD_G) * i) / (len - 1));
+    auto b = static_cast<uint8_t>(C::HEAD_B + ((C::TAIL_B - C::HEAD_B) * i) / (len - 1));
+    return rgb565(r, g, b);
 }
 
 }  // namespace
 
+// ── 方向 ────────────────────────────────────────
+
+bool SnakeScreen::opposite_dir(Direction a, Direction b) {
+    return (a == Direction::UP    && b == Direction::DOWN)  ||
+           (a == Direction::DOWN  && b == Direction::UP)    ||
+           (a == Direction::LEFT  && b == Direction::RIGHT) ||
+           (a == Direction::RIGHT && b == Direction::LEFT);
+}
+
+SnakeScreen::Direction SnakeScreen::dequeue_dir() {
+    if (_q_head == _q_tail) return Direction::NONE;
+    Direction d = _dir_q[_q_tail];
+    _q_tail = (_q_tail + 1U) % Q_SIZE;
+    return d;
+}
+
+void SnakeScreen::enqueue_dir(Direction d) {
+    uint8_t n = (_q_head + 1U) % Q_SIZE;
+    if (n == _q_tail) return;
+    _dir_q[_q_head] = d;
+    _q_head = n;
+}
+
+// ── 生命周期 ────────────────────────────────────
+
 void SnakeScreen::enter(IPlatform& platform, IScreenHost& host) {
-	reset_game();
-	platform.display().clear(BG_COLOR);
-	if (_sound_BGM_SNAKE) host.mixer().set_bgm(_sound_BGM_SNAKE, _sound_BGM_SNAKE_count);
+    reset_game();
+    platform.display().clear(C::BG_COLOR);
+    host.audio().set_bgm(sounds::BGM_SNAKE, sounds::BGM_SNAKE_COUNT);
 }
 
 void SnakeScreen::reset_game() {
-	_direction = Direction::RIGHT;
-	_next_direction = Direction::RIGHT;
-	_game_over = false;
-	_won = false;
-	_paused = false;
-	_body_length = INITIAL_BODY_LENGTH;
-	_body[0] = {INIT_HEAD_X, INIT_HEAD_Y};
-	_body[1] = {INIT_SEG2_X, INIT_SEG2_Y};
-	_body[2] = {INIT_SEG3_X, INIT_SEG3_Y};
-	_score = 0;
-	_move_counter = 0;
-	_move_interval = INITIAL_MOVE_INTERVAL;
-	_frame = 0;
-	_rng_state = 12345;
-
-	_eat_effect_timer = 0;
-	_shake_timer = 0;
-	_shake_offset_x = 0;
-	_shake_offset_y = 0;
-
-	spawn_food();
+    _dir = Direction::RIGHT;
+    _q_head = 0; _q_tail = 0;
+    _game_over = false; _won = false; _paused = false;
+    _len = C::INITIAL_BODY_LENGTH;
+    // 头在右，身体向左延伸（初始方向 RIGHT，头不会撞到自己）
+    int8_t hx = static_cast<int8_t>(C::GRID_W / 2);
+    int8_t hy = static_cast<int8_t>(C::GRID_H / 2);
+    for (int16_t i = 0; i < _len; ++i)
+        _body[i] = {static_cast<int8_t>(hx - i), hy};
+    _score = 0; _speed = 0;
+    _move_ctr = 0; _interval = C::INITIAL_INTERVAL;
+    _rng = 12345;
+    spawn_food();
 }
 
 uint32_t SnakeScreen::next_rng() {
-	_rng_state ^= _rng_state << 13U;
-	_rng_state ^= _rng_state >> 17U;
-	_rng_state ^= _rng_state << 5U;
-	return _rng_state;
+    _rng ^= _rng << 13U; _rng ^= _rng >> 17U; _rng ^= _rng << 5U;
+    return _rng;
 }
 
-bool SnakeScreen::is_occupied(int8_t x, int8_t y) const {
-	for (int16_t i = 0; i < _body_length; ++i) {
-		if (_body[i].x == x && _body[i].y == y) {
-			return true;
-		}
-	}
-	return false;
+bool SnakeScreen::occupied(int8_t x, int8_t y) const {
+    for (int16_t i = 0; i < _len; ++i)
+        if (_body[i].x == x && _body[i].y == y) return true;
+    return false;
 }
 
 void SnakeScreen::spawn_food() {
-	do {
-		_food_x = static_cast<int8_t>(next_rng() % GRID_SIZE);
-		_food_y = static_cast<int8_t>(next_rng() % GRID_SIZE);
-	} while (is_occupied(_food_x, _food_y));
+    int16_t n = 0;
+    do { _food_x = static_cast<int8_t>(next_rng() % C::GRID_W);
+         _food_y = static_cast<int8_t>(next_rng() % C::GRID_H);
+    } while (occupied(_food_x, _food_y) && ++n < C::MAX_LENGTH);
 }
+
+// ── 移动 ────────────────────────────────────────
 
 void SnakeScreen::move_snake(IScreenHost& host) {
-	if (_next_direction == Direction::UP && _direction != Direction::DOWN) {
-		_direction = _next_direction;
-	} else if (_next_direction == Direction::DOWN && _direction != Direction::UP) {
-		_direction = _next_direction;
-	} else if (_next_direction == Direction::LEFT && _direction != Direction::RIGHT) {
-		_direction = _next_direction;
-	} else if (_next_direction == Direction::RIGHT && _direction != Direction::LEFT) {
-		_direction = _next_direction;
-	}
+    Direction next = dequeue_dir();
+    if (next == Direction::NONE || opposite_dir(next, _dir)) next = _dir;
+    _dir = next;
 
-	int8_t new_x = _body[0].x;
-	int8_t new_y = _body[0].y;
-	switch (_direction) {
-		case Direction::UP:    new_y = static_cast<int8_t>(new_y - 1); break;
-		case Direction::DOWN:  new_y = static_cast<int8_t>(new_y + 1); break;
-		case Direction::LEFT:  new_x = static_cast<int8_t>(new_x - 1); break;
-		case Direction::RIGHT: new_x = static_cast<int8_t>(new_x + 1); break;
-	}
+    int8_t nx = _body[0].x, ny = _body[0].y;
+    switch (_dir) {
+        case Direction::UP:    --ny; break;
+        case Direction::DOWN:  ++ny; break;
+        case Direction::LEFT:  --nx; break;
+        case Direction::RIGHT: ++nx; break;
+        default: break;
+    }
 
-	if (new_x < 0 || new_x >= GRID_SIZE || new_y < 0 || new_y >= GRID_SIZE) {
-		_game_over = true;
-		_shake_timer = SHAKE_DURATION;
-		if (_sound_SFX_DEATH_SNAKE) host.mixer().play_sfx(_sound_SFX_DEATH_SNAKE, _sound_SFX_DEATH_SNAKE_count);
-		return;
-	}
+    if (nx < 0 || nx >= C::GRID_W || ny < 0 || ny >= C::GRID_H) {
+        _game_over = true;
+        host.audio().play_sfx(sounds::SFX_DEATH_SNAKE, sounds::SFX_DEATH_SNAKE_COUNT);
+        return;
+    }
 
-	bool eating = (new_x == _food_x && new_y == _food_y);
+    bool eating = (nx == _food_x && ny == _food_y);
+    int16_t check = eating ? _len : _len - 1;
+    for (int16_t i = 0; i < check; ++i) {
+        if (_body[i].x == nx && _body[i].y == ny) {
+            _game_over = true;
+            host.audio().play_sfx(sounds::SFX_DEATH_SNAKE, sounds::SFX_DEATH_SNAKE_COUNT);
+            return;
+        }
+    }
 
-	int16_t check_len = eating ? _body_length : static_cast<int16_t>(_body_length - 1);
-	for (int16_t i = 0; i < check_len; ++i) {
-		if (_body[i].x == new_x && _body[i].y == new_y) {
-			_game_over = true;
-			_shake_timer = SHAKE_DURATION;
-			if (_sound_SFX_DEATH_SNAKE) host.mixer().play_sfx(_sound_SFX_DEATH_SNAKE, _sound_SFX_DEATH_SNAKE_count);
-			return;
-		}
-	}
+    for (int16_t i = _len - 1; i > 0; --i) _body[i] = _body[i - 1];
+    _body[0] = {nx, ny};
 
-	for (int16_t i = _body_length - 1; i > 0; --i) {
-		_body[i] = _body[i - 1];
-	}
-	_body[0] = {new_x, new_y};
+    if (eating) {
+        ++_len;
+        _body[_len - 1] = _body[_len - 2];
+        ++_score;
+        _speed = static_cast<uint8_t>(_score / C::SPEED_DIVISOR);
+        host.audio().play_sfx(sounds::SFX_EAT, sounds::SFX_EAT_COUNT);
 
-	if (eating) {
-		++_body_length;
-		_body[_body_length - 1] = _body[_body_length - 2];
-		++_score;
-
-		_eat_effect_timer = EAT_EFFECT_DURATION;
-		_eat_effect_x = new_x;
-		_eat_effect_y = new_y;
-		if (_sound_SFX_EAT) host.mixer().play_sfx(_sound_SFX_EAT, _sound_SFX_EAT_count);
-
-		const uint32_t speed_down = static_cast<uint32_t>(_score) / 5;
-		_move_interval = (speed_down >= INITIAL_MOVE_INTERVAL - MIN_MOVE_INTERVAL)
-							? MIN_MOVE_INTERVAL
-							: INITIAL_MOVE_INTERVAL - speed_down;
-
-		if (_body_length >= MAX_LENGTH) {
-			_won = true;
-			_game_over = true;
-			return;
-		}
-
-		spawn_food();
-	}
+        uint32_t r = static_cast<uint32_t>(_speed);
+        _interval = (r >= C::INITIAL_INTERVAL - C::MIN_INTERVAL) ? C::MIN_INTERVAL
+                                                                  : C::INITIAL_INTERVAL - r;
+        if (_len >= C::MAX_LENGTH) { _won = true; _game_over = true; return; }
+        spawn_food();
+    }
 }
+
+// ── 主循环 ──────────────────────────────────────
 
 void SnakeScreen::update(IPlatform& platform, IScreenHost& host) {
-	++_frame;
+    ++_frame;
+    auto& input = platform.input();
 
-	if (_eat_effect_timer > 0) --_eat_effect_timer;
-	if (_shake_timer > 0) {
-		--_shake_timer;
-		_shake_offset_x = static_cast<int8_t>((next_rng() % 3) - 1);
-		_shake_offset_y = static_cast<int8_t>((next_rng() % 3) - 1);
-	} else {
-		_shake_offset_x = 0;
-		_shake_offset_y = 0;
-	}
+    if (_paused) {
+        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) _paused = false;
+        if (input.was_pressed(ButtonBits::B)) { host.switch_to(ScreenType::MENU); return; }
+        return;
+    }
+    if (!_game_over && input.was_pressed(ButtonBits::START)) { _paused = true; return; }
+    if (_game_over) { if (input.was_pressed(ButtonBits::START)) reset_game(); return; }
 
-	auto& input = platform.input();
+    if (input.was_pressed(ButtonBits::UP))    enqueue_dir(Direction::UP);
+    if (input.was_pressed(ButtonBits::DOWN))  enqueue_dir(Direction::DOWN);
+    if (input.was_pressed(ButtonBits::LEFT))  enqueue_dir(Direction::LEFT);
+    if (input.was_pressed(ButtonBits::RIGHT)) enqueue_dir(Direction::RIGHT);
 
-	// 暂停处理
-	if (_paused) {
-		if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
-			_paused = false;
-		}
-		if (input.was_pressed(ButtonBits::B)) {
-			host.switch_to(ScreenType::MENU);
-		}
-		return;
-	}
-
-	// 暂停触发
-	if (!_game_over && input.was_pressed(ButtonBits::START)) {
-		_paused = true;
-		return;
-	}
-
-	if (_game_over) {
-		if (input.was_pressed(ButtonBits::START)) {
-			reset_game();
-		}
-		return;
-	}
-
-	if (input.was_pressed(ButtonBits::UP)) {
-		_next_direction = Direction::UP;
-	} else if (input.was_pressed(ButtonBits::DOWN)) {
-		_next_direction = Direction::DOWN;
-	} else if (input.was_pressed(ButtonBits::LEFT)) {
-		_next_direction = Direction::LEFT;
-	} else if (input.was_pressed(ButtonBits::RIGHT)) {
-		_next_direction = Direction::RIGHT;
-	}
-
-	++_move_counter;
-	if (_move_counter >= _move_interval) {
-		_move_counter = 0;
-		move_snake(host);
-	}
+    if (++_move_ctr >= _interval) { _move_ctr = 0; move_snake(host); }
 }
 
+// ── 渲染 ────────────────────────────────────────
+
 void SnakeScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
-	IDisplay& display = platform.display();
-	display.clear(BG_COLOR);
+    IDisplay& d = platform.display();
+    d.clear(C::BG_COLOR);
 
-	// 绘制网格
-	const auto edge = static_cast<int16_t>((GRID_SIZE * CELL_SIZE) - 1);
-	for (int16_t i = 1; i < GRID_SIZE; ++i) {
-		const int16_t p = i * CELL_SIZE;
-		display.draw_v_line(p, 0, edge, GRID_LINE);
-		display.draw_h_line(0, p, edge, GRID_LINE);
-	}
+    const auto G = C::STATUS_H;
+    const auto C2 = static_cast<int16_t>(C::CELL - 1);  // 内部填充尺寸
 
-	// 食物（脉冲）
-	const int16_t pulse = ((_frame / 8) % 2 == 0) ? 0 : 1;
-	const Rect food_rect{
-		static_cast<int16_t>((_food_x * CELL_SIZE) + 1 + pulse),
-		static_cast<int16_t>((_food_y * CELL_SIZE) + 1 + pulse),
-		static_cast<int16_t>(CELL_SIZE - 2 - (pulse * 2)),
-		static_cast<int16_t>(CELL_SIZE - 2 - (pulse * 2)),
-	};
-	display.fill_rect(food_rect, FOOD_COLOR);
+    // 状态栏
+    d.fill_rect(Rect{0, 0, 80, C::STATUS_H}, C::BAR_COLOR);
+    char buf[16];
+    buf[0]='S'; buf[1]='C'; buf[2]=':';
+    itoa_dec(static_cast<uint16_t>(_score), buf + 3, sizeof(buf) - 3);
+    TextRenderer::draw_text(d, {2, 1}, buf, C::SCORE_COLOR, 1, COMPACT_FONT_3X5);
+    buf[0]='S'; buf[1]='P'; buf[2]='D'; buf[3]=':';
+    itoa_dec(_speed, buf + 4, sizeof(buf) - 4);
+    TextRenderer::draw_text(d, {42, 1}, buf, C::SCORE_COLOR, 1, COMPACT_FONT_3X5);
 
-	// 蛇身（渐变 + 正弦波动画，填满整个格子）
-	for (int16_t i = 1; i < _body_length; ++i) {
-		int16_t wave_x = 0;
-		int16_t wave_y = 0;
-		float wave = std::sin((static_cast<float>(_frame) * WAVE_FREQ) + (static_cast<float>(i) * WAVE_PHASE_PER_SEG));
-		auto wave_offset = static_cast<int16_t>(wave);
-		switch (_direction) {
-			case Direction::LEFT:
-			case Direction::RIGHT:
-				wave_y = wave_offset; break;
-			case Direction::UP:
-			case Direction::DOWN:
-				wave_x = wave_offset; break;
-		}
-		const Rect seg_rect{
-			static_cast<int16_t>((_body[i].x * CELL_SIZE) + 1 + wave_x),
-			static_cast<int16_t>((_body[i].y * CELL_SIZE) + 1 + wave_y),
-			static_cast<int16_t>(CELL_SIZE - 2),
-			static_cast<int16_t>(CELL_SIZE - 2),
-		};
-		display.fill_rect(seg_rect, body_gradient_color(i, _body_length));
-	}
+    // 网格
+    for (int16_t i = 0; i <= C::GRID_W; ++i)
+        d.draw_v_line(static_cast<int16_t>(i * C::CELL), G, C::AREA_H, C::GRID_LINE);
+    for (int16_t i = 0; i <= C::GRID_H; ++i)
+        d.draw_h_line(0, static_cast<int16_t>(G + i * C::CELL), C::AREA_W, C::GRID_LINE);
 
-	// 蛇头
-	const auto hx = static_cast<int16_t>(_body[0].x * CELL_SIZE);
-	const auto hy = static_cast<int16_t>(_body[0].y * CELL_SIZE);
-	display.fill_rect(Rect{static_cast<int16_t>(hx + 1), static_cast<int16_t>(hy + 1),
-	                       static_cast<int16_t>(CELL_SIZE - 2), static_cast<int16_t>(CELL_SIZE - 2)}, HEAD_COLOR);
+    // 边界
+    d.draw_rect(Rect{0, G, static_cast<int16_t>(C::AREA_W + 1), static_cast<int16_t>(C::AREA_H + 1)}, C::BORDER_COLOR);
 
-	// 眼睛（根据方向）
-	int16_t ex1_x = 0;
-	int16_t ex1_y = 0;
-	int16_t ex2_x = 0;
-	int16_t ex2_y = 0;
-	switch (_direction) {
-		case Direction::RIGHT: ex1_x = hx + 5; ex1_y = hy + 2; ex2_x = hx + 5; ex2_y = hy + 5; break;
-		case Direction::LEFT:  ex1_x = hx + 2; ex1_y = hy + 2; ex2_x = hx + 2; ex2_y = hy + 5; break;
-		case Direction::UP:    ex1_x = hx + 2; ex1_y = hy + 2; ex2_x = hx + 5; ex2_y = hy + 2; break;
-		case Direction::DOWN:  ex1_x = hx + 2; ex1_y = hy + 5; ex2_x = hx + 5; ex2_y = hy + 5; break;
-	}
-	display.draw_pixel(ex1_x, ex1_y, HEAD_EYE);
-	display.draw_pixel(ex2_x, ex2_y, HEAD_EYE);
+    // 食物（脉冲动效）
+    int16_t pulse = (_frame / 8) & 1;
+    d.fill_rect(Rect{static_cast<int16_t>(_food_x * C::CELL + 1 + pulse),
+                     static_cast<int16_t>(G + _food_y * C::CELL + 1 + pulse),
+                     static_cast<int16_t>(C2 - pulse * 2),
+                     static_cast<int16_t>(C2 - pulse * 2)}, C::FOOD_COLOR);
 
-	// 吃食物粒子
-	if (_eat_effect_timer > 0) {
-		const auto epx = static_cast<int16_t>((_eat_effect_x * CELL_SIZE) + (CELL_SIZE / 2));
-		const auto epy = static_cast<int16_t>((_eat_effect_y * CELL_SIZE) + (CELL_SIZE / 2));
-		uint8_t phase = EAT_EFFECT_DURATION - _eat_effect_timer;
-		if (phase < 4) {
-			display.draw_pixel(static_cast<int16_t>(epx - phase), epy, EAT_PARTICLE);
-			display.draw_pixel(static_cast<int16_t>(epx + phase), epy, EAT_PARTICLE);
-			display.draw_pixel(epx, static_cast<int16_t>(epy - phase), EAT_PARTICLE);
-			display.draw_pixel(epx, static_cast<int16_t>(epy + phase), EAT_PARTICLE);
-		}
-	}
+    // 蛇身（尾→头）
+    for (int16_t i = _len - 1; i >= 1; --i)
+        d.fill_rect(Rect{static_cast<int16_t>(_body[i].x * C::CELL + 1),
+                         static_cast<int16_t>(G + _body[i].y * C::CELL + 1), C2, C2},
+                    body_color(i, _len));
 
-	// 分数
-	char score_buf[16];
-	std::snprintf(score_buf, sizeof(score_buf), "SC:%d", _score);
-	TextRenderer::draw_text(display, {2, 1}, score_buf, SCORE_COLOR, 1, COMPACT_FONT_3X5);
+    // 头 + 眼睛
+    auto hx = static_cast<int16_t>(_body[0].x * C::CELL + 1);
+    auto hy = static_cast<int16_t>(G + _body[0].y * C::CELL + 1);
+    d.fill_rect(Rect{hx, hy, C2, C2}, C::HEAD_COLOR);
+    if      (_dir == Direction::RIGHT) { d.draw_pixel(hx+3, hy+1, C::HEAD_EYE); d.draw_pixel(hx+3, hy+3, C::HEAD_EYE); }
+    else if (_dir == Direction::LEFT)  { d.draw_pixel(hx+1, hy+1, C::HEAD_EYE); d.draw_pixel(hx+1, hy+3, C::HEAD_EYE); }
+    else if (_dir == Direction::UP)    { d.draw_pixel(hx+1, hy+1, C::HEAD_EYE); d.draw_pixel(hx+3, hy+1, C::HEAD_EYE); }
+    else if (_dir == Direction::DOWN)  { d.draw_pixel(hx+1, hy+3, C::HEAD_EYE); d.draw_pixel(hx+3, hy+3, C::HEAD_EYE); }
 
-	// 游戏结束 / 胜利 UI
-	if (_game_over) {
-		const auto ox = static_cast<int16_t>(8 + _shake_offset_x);
-		const auto oy = static_cast<int16_t>(22 + _shake_offset_y);
-		display.fill_rect(Rect{ox, oy, 64, 36}, OVERLAY_BG);
-		display.draw_rect(Rect{ox, oy, 64, 36}, _won ? WIN_COLOR : GAMEOVER_COLOR);
-
-		const char* title = _won ? "YOU WIN!" : "GAME OVER";
-		Color title_color = _won ? WIN_COLOR : GAMEOVER_COLOR;
-		TextRenderer::draw_text_centered(display, {40, static_cast<int16_t>(oy + 8)}, title, title_color, 1, BASIC_FONT_5X7);
-
-		char final_buf[16];
-		std::snprintf(final_buf, sizeof(final_buf), "SCORE: %d", _score);
-		TextRenderer::draw_text_centered(display, {40, static_cast<int16_t>(oy + 20)}, final_buf, SCORE_COLOR, 1, COMPACT_FONT_3X5);
-
-		TextRenderer::draw_text_centered(display, {40, static_cast<int16_t>(oy + 28)}, "START=AGAIN", HINT_COLOR, 1, COMPACT_FONT_3X5);
-	}
-
-	// 暂停覆盖层
-	if (_paused) {
-		display.fill_rect({10, 22, 60, 36}, PAUSE_BG);
-		display.draw_rect({10, 22, 60, 36}, HEAD_COLOR);
-		TextRenderer::draw_text_centered(display, {40, 30}, "PAUSED", PAUSE_TEXT, 1, BASIC_FONT_5X7);
-		TextRenderer::draw_text_centered(display, {40, 44}, "A: Resume", PAUSE_TEXT, 1, COMPACT_FONT_3X5);
-		TextRenderer::draw_text_centered(display, {40, 54}, "B: Menu", HINT_COLOR, 1, COMPACT_FONT_3X5);
-	}
+    // 结束 / 暂停
+    if (_game_over) {
+        d.fill_rect(Rect{10, 24, 60, 32}, C::OVERLAY_BG);
+        d.draw_rect(Rect{10, 24, 60, 32}, _won ? C::WIN_COLOR : C::GAMEOVER_COLOR);
+        auto tc = _won ? C::WIN_COLOR : C::GAMEOVER_COLOR;
+        TextRenderer::draw_text_centered(d, {40, 30}, _won ? "YOU WIN!" : "GAME OVER", tc, 1, BASIC_FONT_5X7);
+        buf[0]='S'; buf[1]='C'; buf[2]='O'; buf[3]='R'; buf[4]='E'; buf[5]=':'; buf[6]=' ';
+        itoa_dec(static_cast<uint16_t>(_score), buf + 7, sizeof(buf) - 7);
+        TextRenderer::draw_text_centered(d, {40, 44}, buf, C::SCORE_COLOR, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(d, {40, 54}, "START=AGAIN", C::HINT_COLOR, 1, COMPACT_FONT_3X5);
+    }
+    if (_paused) {
+        d.fill_rect({10, 22, 60, 36}, C::PAUSE_BG);
+        d.draw_rect({10, 22, 60, 36}, C::HEAD_COLOR);
+        TextRenderer::draw_text_centered(d, {40, 30}, "PAUSED", C::PAUSE_TEXT, 1, BASIC_FONT_5X7);
+        TextRenderer::draw_text_centered(d, {40, 44}, "A: Resume", C::PAUSE_TEXT, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(d, {40, 54}, "B: Menu", C::HINT_COLOR, 1, COMPACT_FONT_3X5);
+    }
 }
 
 }  // namespace handheld

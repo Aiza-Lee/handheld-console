@@ -9,14 +9,17 @@ Checks: >
   -bugprone-easily-swappable-parameters,
   -cppcoreguidelines-avoid-magic-numbers,
   -cppcoreguidelines-avoid-const-or-ref-data-members,
+  -cppcoreguidelines-avoid-c-arrays,
   -cppcoreguidelines-prefer-member-initializer,
   -cppcoreguidelines-pro-type-union-access,
   -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-pro-bounds-constant-array-index,
   -misc-confusable-identifiers,
   -modernize-use-trailing-return-type,
   -readability-identifier-length,
   -readability-implicit-bool-conversion,
-  -readability-magic-numbers
+  -readability-magic-numbers,
+  -readability-math-missing-parentheses
 WarningsAsErrors: ' '
 HeaderFilterRegex: '.*'
 FormatStyle: none

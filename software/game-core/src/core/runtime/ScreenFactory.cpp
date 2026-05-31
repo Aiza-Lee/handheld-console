@@ -33,8 +33,7 @@ std::unique_ptr<GameScreen> DefaultScreenFactory::create(ScreenType type) {
 		case ScreenType::GROW_BALL:
 			return std::make_unique<GrowBallScreen>();
 		default:
-			;
-			// throw std::runtime_error("Unknown screen type");
+			return nullptr;
 	}
 }
 

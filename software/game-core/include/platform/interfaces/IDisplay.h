@@ -30,6 +30,14 @@ public:
 	// 绘制单个像素
 	virtual void draw_pixel(int16_t x, int16_t y, Color color) = 0;
 
+	// 高效矩形填充（平台可覆盖以跳过逐像素虚函数调用）
+	virtual void fill_rect(const Rect& rect, Color color) {
+		if (rect.empty()) return;
+		for (int16_t row = 0; row < rect.height; ++row) {
+			draw_h_line(rect.x, static_cast<int16_t>(rect.y + row), rect.width, color);
+		}
+	}
+
 	// 提交当前帧
 	virtual void present() = 0;
 
@@ -99,16 +107,6 @@ public:
 		draw_h_line(rect.x, static_cast<int16_t>(rect.y + rect.height - 1), rect.width, color);
 		draw_v_line(rect.x, rect.y, rect.height, color);
 		draw_v_line(static_cast<int16_t>(rect.x + rect.width - 1), rect.y, rect.height, color);
-	}
-
-	void fill_rect(const Rect& rect, Color color) {
-		if (rect.empty()) {
-			return;
-		}
-
-		for (int16_t row = 0; row < rect.height; ++row) {
-			draw_h_line(rect.x, static_cast<int16_t>(rect.y + row), rect.width, color);
-		}
 	}
 
 	void draw_bitmap(Point origin, const Color* pixels, int16_t bitmap_width, int16_t bitmap_height,

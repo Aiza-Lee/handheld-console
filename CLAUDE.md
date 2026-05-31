@@ -36,7 +36,7 @@ ctest -R game-core-smoke
 
 ### Platform Abstraction
 
-All hardware services are behind interfaces in `include/platform/interfaces/`. `IPlatform` is the composed facade that provides `IDisplay`, `IInput`, `IAudio`, `IPower`, `ITime`, and `IStorage`. Three platform implementations exist:
+All hardware services are behind interfaces in `include/platform/interfaces/`. `IPlatform` is the composed facade that provides `IDisplay`, `IInput`, `IPower`, `ITime`, `IStorage`, `IAssetProvider`, and `write_audio_samples()`. Three platform implementations exist:
 
 | Implementation | Location | Use |
 |---|---|---|
@@ -96,14 +96,11 @@ Smoke tests are standalone executables (no test framework), each with its own `m
 software/game-core/
   assets/              ← 原始资产文件
     sprites/           ← 精灵数据 (.raw / .bin / 任意格式)
-    sounds/            ← 音效 (.tone)
     levels/            ← 关卡数据
   tools/               ← 转换脚本
     asset_convert.py   ← 二进制 → C++ 数组
-    audio2tone.py      ← .tone → C++ Tone 数组
-    regenerate_assets.py  ← 一键再生所有预生成文件
   src/assets/generated/   ← 预生成的 C++ 文件（提交到 git，供 CCS 直接使用）
-  cmake/AssetHelpers.cmake  ← CMake 函数 add_assets() / add_sounds()
+  cmake/AssetHelpers.cmake  ← CMake 函数 add_assets()
 ```
 
 ### 注册资产
@@ -153,70 +150,27 @@ void MyScreen::render(IPlatform& platform, IScreenHost&) {
 
 - `software/game-core/tools/asset_convert.py` — 读取任意二进制文件，补齐到 4 字节，输出 `extern "C"` C++ 数组
 - `software/game-core/cmake/AssetHelpers.cmake` — CMake 函数 `add_assets()`，驱动转换 + 文件生成
-- `software/game-core/tools/regenerate_assets.py` — 从原始资产重新生成 `src/assets/generated/` 下所有预生成文件
 
-### 添加新资产步骤
+## Audio
 
-1. 将原始数据文件放入 `software/game-core/assets/` 下对应子目录
-2. 在 `sdl/CMakeLists.txt` 的 `add_assets()` 中增加一行三元组
-3. 更新 `tools/regenerate_assets.py` 中的 ASSETS / SOUNDS 列表
-4. 运行 `python3 tools/regenerate_assets.py`（在 game-core 目录下）
-5. 重新构建（`cmake --build`），CMake 也会自动检测并生成
+音效以 `inline constexpr Tone` 数组形式定义在 `software/game-core/include/core/audio/Sounds.h` 中。
 
-### CCS 构建（非 CMake）
+`AudioEngine`（`core/audio/AudioEngine.h`）是一个 4 通道软件正弦波合成器：通道 0 用于 BGM（循环），通道 1-3 用于一次性 SFX。输出 44100Hz S16LE 单声道 PCM。
 
-CCS 用户无法使用 CMake 资产管线。预生成的 `.cpp` 文件已提交在 `src/assets/generated/` 中，可直接加入 CCS 工程：
-
-- 将 `src/assets/generated/` 中所有 `.cpp` 文件加入 CCS 源文件列表
-- 设置 include path 包含 `include/` 和 `src/assets/generated/`
-- 修改资产后，在 game-core 目录下运行 `python3 tools/regenerate_assets.py` 再生所有文件
-
-## Audio Tone Pipeline
-
-音效以 `.tone` 格式编写，用 `audio2tone.py` 转为 C++ `Tone` 数组。
-
-### 编写音效
-
-`software/game-core/assets/sounds/` 目录下创建 `.tone` 文件，例如 `pickup.tone`：
-
-```tone
-# 拾取道具音效
-C5 100
-E5 100
-G5 200
-```
-
-支持三种行格式：
-
-| 格式 | 示例 | 含义 |
-|---|---|---|
-| `音符名 八度 时长` | `C4 200` | 中央 C，200ms。音符: C, C#, D, D#, E, F, F#, G, G#, A, A#, B |
-| `REST 时长` | `REST 100` | 静音 100ms |
-| `频率 时长` | `440 200` | 原始频率 440Hz，200ms |
-
-### 注册音效
-
-```cmake
-# sdl/CMakeLists.txt
-add_sounds(TARGET host-sim-sdl
-    SOUNDS
-        SCALE  ${GAME_CORE_ROOT}/assets/sounds/scale.tone
-)
-```
+平台只需实现 `IPlatform::write_audio_samples(const int16_t* data, size_t count)` 将 PCM 数据送入硬件。
 
 ### 在游戏中使用
 
 ```cpp
-// 由 add_sounds() 生成
-extern "C" const handheld::Tone _sound_SCALE[];
-extern "C" const uint32_t _sound_SCALE_count;
+#include "core/audio/Sounds.h"
 
-// 在 screen 的某个时机触发
-platform.audio().play_sequence(_sound_SCALE, _sound_SCALE_count, false);
-// 第三个参数 loop=true 可循环播放
+void MyScreen::enter(IPlatform& platform, IScreenHost& host) {
+    // 设置循环 BGM
+    host.audio().set_bgm(sounds::BGM_MENU, sounds::BGM_MENU_COUNT);
+}
+
+void MyScreen::update(IPlatform& platform, IScreenHost& host) {
+    // 播放一次性 SFX
+    host.audio().play_sfx(sounds::SFX_SELECT, sounds::SFX_SELECT_COUNT);
+}
 ```
-
-### 背后工具
-
-- `software/game-core/tools/audio2tone.py` — 读取 `.tone` 文件，计算音符频率，输出 `extern "C"` 的 Tone 数组
-- `software/game-core/cmake/AssetHelpers.cmake` 中的 `add_sounds()` — CMake 封装
