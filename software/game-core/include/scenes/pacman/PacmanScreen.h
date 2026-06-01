@@ -1,9 +1,89 @@
 #ifndef SCENES_PACMAN_PACMAN_SCREEN_H
 #define SCENES_PACMAN_PACMAN_SCREEN_H
 
+#include "core/graphics/Color.h"
 #include "core/graphics/Geometry.h"
 #include "core/runtime/GameScreen.h"
 #include <cstdint>
+
+namespace handheld {
+namespace pacman {
+namespace cfg {
+
+// 音频
+constexpr bool ENABLE_BGM = true;
+
+// 颜色
+constexpr Color WALL_COLOR = rgb565(15, 18, 60);
+constexpr Color DOT_COLOR = rgb565(200, 170, 130);
+constexpr Color POWER_COLOR = rgb565(220, 190, 150);
+constexpr Color PAC_COLOR = rgb565(240, 210, 50);
+constexpr Color BG_COLOR = rgb565(2, 2, 10);
+constexpr Color GHOST1_COL = rgb565(220, 60, 60);
+constexpr Color GHOST2_COL = rgb565(200, 80, 180);
+constexpr Color VULN_COLOR = rgb565(50, 50, 170);
+constexpr Color VULN_BLINK = rgb565(200, 200, 240);
+constexpr Color AURA_COLOR = rgb565(180, 140, 220);
+constexpr Color PARTICLE_COLOR = rgb565(240, 210, 80);
+constexpr Color WIN_COLOR = rgb565(120, 200, 220);
+constexpr Color MAZE_BORDER = rgb565(10, 12, 30);
+constexpr Color HINT_COLOR = rgb565(120, 140, 120);
+constexpr Color PAUSE_BG = rgb565(4, 6, 20);
+constexpr Color PAUSE_TEXT = rgb565(220, 200, 100);
+
+// 覆盖层尺寸
+constexpr int16_t PAUSE_RECT_X = 10;
+constexpr int16_t PAUSE_RECT_Y = 20;
+constexpr int16_t PAUSE_RECT_W = 60;
+constexpr int16_t PAUSE_RECT_H = 40;
+constexpr int16_t END_RECT_X = 10;
+constexpr int16_t END_RECT_Y = 20;
+constexpr int16_t END_RECT_W = 60;
+constexpr int16_t END_RECT_H = 48;
+constexpr int16_t WIN_RECT_X = 10;
+constexpr int16_t WIN_RECT_Y = 20;
+constexpr int16_t WIN_RECT_W = 60;
+constexpr int16_t WIN_RECT_H = 40;
+
+// 布局
+constexpr int16_t GRID = 10;
+constexpr int16_t CELL = 8;
+
+// 游戏参数 (20 FPS 基准)
+constexpr uint32_t PAC_MOVE_INTERVAL = 6;
+constexpr uint32_t GHOST_MOVE_INTERVAL = 8;
+constexpr uint32_t POWER_DURATION = 120;
+constexpr uint32_t DYING_TIMER = 20;
+constexpr uint32_t CELEBRATION_DURATION = 30;
+constexpr int16_t MAX_DEATH_PARTICLES = 10;
+constexpr int8_t INIT_LIVES = 3;
+
+// 分数
+constexpr int16_t DOT_SCORE = 10;
+constexpr int16_t GHOST_SCORE = 50;
+
+// 初始位置
+constexpr int8_t PAC_START_X = 5, PAC_START_Y = 8;
+constexpr int8_t GHOST0_X = 4, GHOST0_Y = 4;
+constexpr int8_t GHOST1_X = 5, GHOST1_Y = 4;
+
+// 迷宫 (10x10)
+constexpr char MAZE[GRID][GRID] = {
+    {'W','W','W','W','W','W','W','W','W','W'},
+    {'W','.','.','.','.','.','.','.','.','W'},
+    {'W','.','W','W','.','W','W','.','.','W'},
+    {'W','P','W','.','.','.','W','P','.','W'},
+    {'W','.','.','.','W','.','.','.','.','W'},
+    {'W','.','.','.','W','.','.','.','.','W'},
+    {'W','P','W','.','.','.','W','P','.','W'},
+    {'W','.','W','W','.','W','W','.','.','W'},
+    {'W','.','.','.','.','.','.','.','.','W'},
+    {'W','W','W','W','W','W','W','W','W','W'},
+};
+
+}  // namespace cfg
+}  // namespace pacman
+}  // namespace handheld
 
 namespace handheld {
 
@@ -15,12 +95,6 @@ public:
     void render(IPlatform& platform, IScreenHost& host) override;
 
 private:
-    static constexpr int16_t GRID = 10;
-    static constexpr int16_t CELL = 8;
-    static constexpr uint32_t PAC_MOVE_INTERVAL = 6;
-    static constexpr uint32_t GHOST_MOVE_INTERVAL = 8;
-    static constexpr uint32_t POWER_DURATION = 120;
-
     enum class Dir : uint8_t { UP, DOWN, LEFT, RIGHT, NONE };
     enum class State : uint8_t { PLAYING, DYING, GAME_OVER };
     enum class GhostState : uint8_t { CHASE, VULNERABLE, RETURNING };
@@ -31,27 +105,14 @@ private:
         GhostState state;
     };
 
-    static constexpr char _MAZE[GRID][GRID] = {
-        {'W','W','W','W','W','W','W','W','W','W'},
-        {'W','.','.','.','.','.','.','.','.','W'},
-        {'W','.','W','W','.','W','W','.','.','W'},
-        {'W','P','W','.','.','.','W','P','.','W'},
-        {'W','.','.','.','W','.','.','.','.','W'},
-        {'W','.','.','.','W','.','.','.','.','W'},
-        {'W','P','W','.','.','.','W','P','.','W'},
-        {'W','.','W','W','.','W','W','.','.','W'},
-        {'W','.','.','.','.','.','.','.','.','W'},
-        {'W','W','W','W','W','W','W','W','W','W'},
-    };
-
     Dir _pac_dir;
     Dir _pac_next;
     int8_t _pac_x, _pac_y;
     State _state;
     bool _paused = false;
     Ghost _ghosts[2];
-    bool _dots[GRID][GRID];
-    bool _power[GRID][GRID];
+    bool _dots[pacman::cfg::GRID][pacman::cfg::GRID];
+    bool _power[pacman::cfg::GRID][pacman::cfg::GRID];
     int8_t _dot_count;
     int16_t _score;
     int8_t _lives;
@@ -68,8 +129,7 @@ private:
         int8_t vx, vy;
         uint8_t life;
     };
-    static constexpr int16_t MAX_DEATH_PARTICLES = 10;
-    DeathParticle _death_particles[MAX_DEATH_PARTICLES];
+    DeathParticle _death_particles[pacman::cfg::MAX_DEATH_PARTICLES];
     uint8_t _death_particle_count;
     uint8_t _celebration_timer;
 

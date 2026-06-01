@@ -1,5 +1,4 @@
 #include "scenes/pacman/PacmanScreen.h"
-#include "scenes/pacman/PacmanConfig.h"
 
 #include "core/common/ButtonBits.h"
 #include "core/graphics/Color.h"
@@ -238,10 +237,11 @@ void PacmanScreen::update(IPlatform& platform, IScreenHost& host) {
 		return;
 	}
 
-	if (_state == State::GAME_OVER) {
-		if (input.was_pressed(ButtonBits::START)) reset_game();
-		return;
-	}
+		if (_state == State::GAME_OVER) {
+			if (input.was_pressed(ButtonBits::START)) reset_game();
+			if (input.was_pressed(ButtonBits::B)) { host.switch_to(ScreenType::MENU); return; }
+			return;
+		}
 
 	if (_state == State::PLAYING && input.was_pressed(ButtonBits::START)) {
 		_paused = true; return;
@@ -379,30 +379,32 @@ void PacmanScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
 	}
 
 	if (_dot_count == 0) {
-		display.fill_rect(Rect{10, 28, 60, 24}, BG_COLOR);
-		display.draw_rect(Rect{10, 28, 60, 24}, WIN_COLOR);
-		TextRenderer::draw_text_centered(display, {40, 34}, "YOU WIN!", WIN_COLOR, 1, BASIC_FONT_5X7);
-		TextRenderer::draw_text_centered(display, {40, 46}, "START=AGAIN", HINT_COLOR, 1, COMPACT_FONT_3X5);
+		display.fill_rect(Rect{WIN_RECT_X, WIN_RECT_Y, WIN_RECT_W, WIN_RECT_H}, BG_COLOR);
+		display.draw_rect(Rect{WIN_RECT_X, WIN_RECT_Y, WIN_RECT_W, WIN_RECT_H}, WIN_COLOR);
+		TextRenderer::draw_text_centered(display, {40, 28}, "YOU WIN!", WIN_COLOR, 1, BASIC_FONT_5X7);
+		TextRenderer::draw_text_centered(display, {40, 42}, "START=AGAIN", HINT_COLOR, 1, COMPACT_FONT_3X5);
+		TextRenderer::draw_text_centered(display, {40, 52}, "B: Menu", HINT_COLOR, 1, COMPACT_FONT_3X5);
 		_state = State::GAME_OVER;
 	}
 
 	if (_state == State::GAME_OVER && _dot_count > 0) {
-		display.fill_rect(Rect{10, 24, 60, 32}, BG_COLOR);
-		display.draw_rect(Rect{10, 24, 60, 32}, GHOST1_COL);
-		TextRenderer::draw_text_centered(display, {40, 30}, "GAME OVER", GHOST1_COL, 1, BASIC_FONT_5X7);
+		display.fill_rect(Rect{END_RECT_X, END_RECT_Y, END_RECT_W, END_RECT_H}, BG_COLOR);
+		display.draw_rect(Rect{END_RECT_X, END_RECT_Y, END_RECT_W, END_RECT_H}, GHOST1_COL);
+		TextRenderer::draw_text_centered(display, {40, 28}, "GAME OVER", GHOST1_COL, 1, BASIC_FONT_5X7);
 		std::snprintf(buf, sizeof(buf), "SCORE: %d", _score);
-		TextRenderer::draw_text_centered(display, {40, 44}, buf, Color::WHITE, 1, COMPACT_FONT_3X5);
-		TextRenderer::draw_text_centered(display, {40, 54}, "START=AGAIN", HINT_COLOR, 1, COMPACT_FONT_3X5);
+		TextRenderer::draw_text_centered(display, {40, 42}, buf, Color::WHITE, 1, COMPACT_FONT_3X5);
+		TextRenderer::draw_text_centered(display, {40, 50}, "START=AGAIN", HINT_COLOR, 1, COMPACT_FONT_3X5);
+		TextRenderer::draw_text_centered(display, {40, 58}, "B: Menu", HINT_COLOR, 1, COMPACT_FONT_3X5);
 	}
 
 	// 暂停覆盖层 (吃豆人主题: 黄蓝配色)
 	if (_paused) {
-		display.fill_rect({10, 22, 60, 36}, PAUSE_BG);
-		display.draw_rect({10, 22, 60, 36}, PAC_COLOR);
-		TextRenderer::draw_text_centered(display, {40, 30}, "PAUSED", PAUSE_TEXT, 1, BASIC_FONT_5X7);
-		TextRenderer::draw_text_centered(display, {40, 44}, "A: Resume", PAUSE_TEXT, 1, COMPACT_FONT_3X5);
-		TextRenderer::draw_text_centered(display, {40, 54}, "B: Menu", HINT_COLOR, 1, COMPACT_FONT_3X5);
-	}
+			display.fill_rect({PAUSE_RECT_X, PAUSE_RECT_Y, PAUSE_RECT_W, PAUSE_RECT_H}, PAUSE_BG);
+			display.draw_rect({PAUSE_RECT_X, PAUSE_RECT_Y, PAUSE_RECT_W, PAUSE_RECT_H}, PAC_COLOR);
+			TextRenderer::draw_text_centered(display, {40, 28}, "PAUSED", PAUSE_TEXT, 1, BASIC_FONT_5X7);
+			TextRenderer::draw_text_centered(display, {40, 42}, "A: Resume", PAUSE_TEXT, 1, COMPACT_FONT_3X5);
+			TextRenderer::draw_text_centered(display, {40, 52}, "B: Menu", HINT_COLOR, 1, COMPACT_FONT_3X5);
+		}
 }
 
 }  // namespace handheld

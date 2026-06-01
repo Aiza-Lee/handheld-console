@@ -170,6 +170,11 @@ inline constexpr Tone SFX_DEATH_GROWBALL[] = {
 };
 inline constexpr size_t SFX_DEATH_GROWBALL_COUNT = 6;
 
+inline constexpr Tone SFX_VICTORY_GROWBALL[] = {
+    {523, 80}, {659, 80}, {783, 80}, {1046, 150}, {0, 50}, {1046, 80}, {1318, 200},
+};
+inline constexpr size_t SFX_VICTORY_GROWBALL_COUNT = 7;
+
 } // namespace sounds
 } // namespace handheld
 

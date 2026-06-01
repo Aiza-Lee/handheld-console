@@ -1,5 +1,4 @@
 #include "scenes/menu/MenuScreen.h"
-#include "scenes/menu/MenuConfig.h"
 
 #include <algorithm>
 #include "core/common/ButtonBits.h"

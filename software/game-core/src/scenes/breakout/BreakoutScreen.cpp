@@ -1,5 +1,4 @@
 #include "scenes/breakout/BreakoutScreen.h"
-#include "scenes/breakout/BreakoutConfig.h"
 
 #include "core/audio/Sounds.h"
 #include "core/common/ButtonBits.h"
@@ -275,20 +274,21 @@ void BreakoutScreen::draw_overlay(IDisplay& display) const {
     if (_state == State::GAME_OVER) {
         bool won = (_celebration > 0);
         Color c = won ? WIN_COLOR : BRICK_COLORS[0];
-        display.fill_rect(Rect{8, 24, 64, 32}, BG_COLOR);
-        display.draw_rect(Rect{8, 24, 64, 32}, c);
-        TextRenderer::draw_text_centered(display, {40, 30}, won ? "YOU WIN!" : "GAME OVER", c, 1, BASIC_FONT_5X7);
+        display.fill_rect(Rect{END_RECT_X, END_RECT_Y, END_RECT_W, END_RECT_H}, BG_COLOR);
+        display.draw_rect(Rect{END_RECT_X, END_RECT_Y, END_RECT_W, END_RECT_H}, c);
+        TextRenderer::draw_text_centered(display, {40, 28}, won ? "YOU WIN!" : "GAME OVER", c, 1, BASIC_FONT_5X7);
         std::snprintf(buf, sizeof(buf), "SC:%d", _score);
-        TextRenderer::draw_text_centered(display, {40, 44}, buf, Color::WHITE, 1, COMPACT_FONT_3X5);
-        TextRenderer::draw_text_centered(display, {40, 54}, "START=AGAIN", HINT_COLOR, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(display, {40, 42}, buf, Color::WHITE, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(display, {40, 50}, "START=AGAIN", HINT_COLOR, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(display, {40, 58}, "B: Menu", HINT_COLOR, 1, COMPACT_FONT_3X5);
     }
 
     if (_paused) {
-        display.fill_rect({10, 22, 60, 36}, PAUSE_BG);
-        display.draw_rect({10, 22, 60, 36}, PADDLE_COLOR);
-        TextRenderer::draw_text_centered(display, {40, 30}, "PAUSED", PAUSE_TEXT, 1, BASIC_FONT_5X7);
-        TextRenderer::draw_text_centered(display, {40, 44}, "A: Resume", PAUSE_TEXT, 1, COMPACT_FONT_3X5);
-        TextRenderer::draw_text_centered(display, {40, 54}, "B: Menu", HINT_COLOR, 1, COMPACT_FONT_3X5);
+        display.fill_rect({PAUSE_RECT_X, PAUSE_RECT_Y, PAUSE_RECT_W, PAUSE_RECT_H}, PAUSE_BG);
+        display.draw_rect({PAUSE_RECT_X, PAUSE_RECT_Y, PAUSE_RECT_W, PAUSE_RECT_H}, PADDLE_COLOR);
+        TextRenderer::draw_text_centered(display, {40, 28}, "PAUSED", PAUSE_TEXT, 1, BASIC_FONT_5X7);
+        TextRenderer::draw_text_centered(display, {40, 42}, "A: Resume", PAUSE_TEXT, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(display, {40, 52}, "B: Menu", HINT_COLOR, 1, COMPACT_FONT_3X5);
     }
 }
 

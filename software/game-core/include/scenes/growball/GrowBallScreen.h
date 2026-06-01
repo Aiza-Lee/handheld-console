@@ -26,7 +26,6 @@ private:
 	bool _paused = false;
 	bool _victory = false;
 	bool _game_over = false;
-	uint32_t _start_ms = 0;
 };
 
 }  // namespace handheld
