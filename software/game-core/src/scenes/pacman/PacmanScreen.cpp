@@ -22,7 +22,7 @@ constexpr uint32_t RNG_SEED = 12345;
 void PacmanScreen::enter(IPlatform& platform, IScreenHost& host) {
 	reset_game();
 	platform.display().clear(BG_COLOR);
-	host.audio().set_bgm(sounds::BGM_PACMAN, sounds::BGM_PACMAN_COUNT);
+	if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_PACMAN, sounds::BGM_PACMAN_COUNT);
 }
 
 uint32_t PacmanScreen::next_rng() {

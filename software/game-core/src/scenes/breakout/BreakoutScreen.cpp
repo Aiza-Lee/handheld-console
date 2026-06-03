@@ -28,7 +28,7 @@ void BreakoutScreen::enter(IPlatform& platform, IScreenHost& host) {
     platform.display().clear(BG_COLOR);
     _level = 0;
     reset_game();
-    host.audio().set_bgm(sounds::BGM_BREAKOUT, sounds::BGM_BREAKOUT_COUNT);
+    if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_BREAKOUT, sounds::BGM_BREAKOUT_COUNT);
 }
 
 void BreakoutScreen::reset_game() {

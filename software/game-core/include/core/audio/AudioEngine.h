@@ -6,17 +6,13 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <cmath>
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
 
 namespace handheld {
 
 // 4通道软件音频引擎，在 game-core 层实现多通道混合。
 // 通道 0 专用于 BGM（循环），通道 1-3 用于一次性 SFX。
-// 输出 44100Hz S16LE 单声道 PCM。
+// 输出 44100Hz S16LE 单声道方波 PCM（适配 PWM 蜂鸣器硬件）。
+// 方波合成使用纯整数 DDS（Direct Digital Synthesis），无需浮点运算。
 class AudioEngine {
 public:
     static constexpr int CHANNEL_COUNT = 4;
@@ -37,9 +33,9 @@ public:
         ch.tone_count = count;
         ch.tone_index = 0;
         ch.samples_elapsed = 0;
-        ch.phase = 0.0;
+        ch.phase_accum = 0;
         ch.loop = true;
-        ch.volume = 0.30F;
+        ch.amp = kAmpBgm;
     }
 
     void play_sfx(const Tone* tones, size_t count) {
@@ -54,9 +50,9 @@ public:
                 ch.tone_count = count;
                 ch.tone_index = 0;
                 ch.samples_elapsed = 0;
-                ch.phase = 0.0;
+                ch.phase_accum = 0;
                 ch.loop = false;
-                ch.volume = 0.50F;
+                ch.amp = kAmpSfx;
                 return;
             }
         }
@@ -79,6 +75,33 @@ public:
         return false;
     }
 
+    // 返回当前活跃的最高优先级通道的频率（Hz）。
+    // 优先级：SFX 通道 (3 > 2 > 1) > BGM 通道 (0)。
+    // 无活跃通道时返回 0。
+    [[nodiscard]] uint16_t active_frequency() const {
+        // SFX 优先
+        for (int i = CHANNEL_COUNT - 1; i >= SFX_CHANNEL_START; --i) {
+            if (_channels[i].active) {
+                return _channels[i].tones[_channels[i].tone_index].frequencyHz;
+            }
+        }
+        // BGM
+        if (_channels[BGM_CHANNEL].active) {
+            return _channels[BGM_CHANNEL].tones[_channels[BGM_CHANNEL].tone_index].frequencyHz;
+        }
+        return 0;
+    }
+
+    // 返回当前活跃的最高优先级通道的音量百分比（0-100）。
+    [[nodiscard]] uint8_t active_volume_pct() const {
+        for (int i = CHANNEL_COUNT - 1; i >= SFX_CHANNEL_START; --i) {
+            if (_channels[i].active) return kVolumePctSfx;
+        }
+        if (_channels[BGM_CHANNEL].active) return kVolumePctBgm;
+        return 0;
+    }
+
+    // 填充方波 PCM 采样缓冲区（纯整数 DDS）。
     void fill_buffer(int16_t* buf, size_t sample_count) {
         for (size_t i = 0; i < sample_count; ++i) {
             int32_t sum = 0;
@@ -95,34 +118,42 @@ public:
     }
 
 private:
+    // 方波幅度（峰值），音量百分比 × 280
+    static constexpr int32_t kAmpBgm = 30 * 280;   // 30% → 8400
+    static constexpr int32_t kAmpSfx = 50 * 280;   // 50% → 14000
+    static constexpr uint8_t kVolumePctBgm = 30;
+    static constexpr uint8_t kVolumePctSfx = 50;
+
     struct Channel {
         bool active = false;
         const Tone* tones = nullptr;
         size_t tone_count = 0;
         size_t tone_index = 0;
         uint32_t samples_elapsed = 0;
-        double phase = 0.0;
+        uint32_t phase_accum = 0;   // DDS 相位累加器 (0 ~ SAMPLE_RATE-1)
         bool loop = false;
-        float volume = 1.0F;
+        int32_t amp = 0;            // 方波峰值幅度
     };
 
     Channel _channels[CHANNEL_COUNT];
 
+    // 纯整数方波：相位 < SAMPLE_RATE/2 输出 +amp，否则输出 -amp
     [[nodiscard]] int32_t _sample(const Channel& ch) const {
         const Tone& tone = ch.tones[ch.tone_index];
         if (tone.frequencyHz == 0) return 0;
-        return static_cast<int32_t>(std::sin(ch.phase) * 28000.0 * ch.volume);
+        return (ch.phase_accum < (SAMPLE_RATE / 2U)) ? ch.amp : -ch.amp;
     }
 
+    // 纯整数 DDS 相位推进 + 音符时长跟踪
     void _advance(Channel& ch) {
         const Tone& tone = ch.tones[ch.tone_index];
+        ch.phase_accum += tone.frequencyHz;
+        if (ch.phase_accum >= SAMPLE_RATE) {
+            ch.phase_accum -= SAMPLE_RATE;
+        }
+
         uint32_t tone_samples = static_cast<uint32_t>(tone.durationMs) * SAMPLE_RATE / 1000;
         if (tone_samples == 0) tone_samples = 1;
-
-        if (tone.frequencyHz > 0) {
-            ch.phase += 2.0 * M_PI * static_cast<double>(tone.frequencyHz) / SAMPLE_RATE;
-            if (ch.phase > 2.0 * M_PI) ch.phase -= 2.0 * M_PI;
-        }
 
         ++ch.samples_elapsed;
         if (ch.samples_elapsed >= tone_samples) {

@@ -8,7 +8,7 @@
 namespace handheld::invaders::cfg {
 
 // ── 音频 ─────────────────────────────────────────────────────────
-constexpr bool ENABLE_BGM = true;
+constexpr bool ENABLE_BGM = false;
 
 // ── 屏幕 ─────────────────────────────────────────────────────────
 constexpr int16_t SCREEN_WIDTH = 80;

@@ -16,7 +16,7 @@ int main() {
 		handheld::SdlPlatform platform;
 		platform.init_assets(builtin_assets, builtin_assets_count);
 		handheld::DefaultScreenFactory factory;
-		constexpr uint32_t FRAME_TIME_MS = 67;
+		constexpr uint32_t FRAME_TIME_MS = 50;
 		handheld::ScreenRunner runner(platform, factory, handheld::ScreenType::BOOT, FRAME_TIME_MS);
 
 		while (platform.is_running()) {

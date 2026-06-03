@@ -11,7 +11,7 @@ namespace pacman {
 namespace cfg {
 
 // 音频
-constexpr bool ENABLE_BGM = true;
+constexpr bool ENABLE_BGM = false;
 
 // 颜色
 constexpr Color WALL_COLOR = rgb565(15, 18, 60);

@@ -9,7 +9,6 @@
 #include "platform/interfaces/IInput.h"
 #include "platform/interfaces/IPlatform.h"
 #include "platform/interfaces/IPower.h"
-#include "platform/interfaces/IStorage.h"
 #include "platform/interfaces/ITime.h"
 
 #include <cstdint>
@@ -33,7 +32,6 @@ public:
 		[[nodiscard]] int16_t height() const override;
 		void clear(Color color) override;
 		void draw_pixel(int16_t x, int16_t y, Color color) override;
-			void fill_rect(const Rect& rect, Color color) override;
 		void present() override;
 
 		void bind(SDL_Renderer& renderer, SDL_Texture& texture);
@@ -67,7 +65,6 @@ public:
 	void write_audio_samples(const int16_t* data, size_t count) override;
 	IPower& power() override;
 	ITime& time() override;
-	IStorage& storage() override;
 	IAssetProvider& assets() override;
 
 private:
@@ -103,14 +100,6 @@ private:
 		uint64_t _start_ticks = 0;
 	};
 
-	class Storage final : public IStorage {
-	public:
-		bool exists(const char* key) const override;
-		bool load(const char* key, void* data, size_t size) const override;
-		bool save(const char* key, const void* data, size_t size) override;
-		bool erase(const char* key) override;
-	};
-
 	void _handle_event(const SDL_Event& event);
 
 	Display _display;
@@ -119,7 +108,6 @@ private:
 	bool _audio_muted = false;
 	Power _power;
 	Time _time;
-	Storage _storage;
 	BuiltinAssetProvider _assets;
 	SDL_Window* _window = nullptr;
 	SDL_Renderer* _renderer = nullptr;

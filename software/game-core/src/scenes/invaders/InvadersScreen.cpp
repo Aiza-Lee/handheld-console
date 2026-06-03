@@ -36,7 +36,7 @@ void InvadersScreen::enter(IPlatform& platform, IScreenHost& host) {
     _score = 0;
     _level = 1;
     reset_game();
-    host.audio().set_bgm(sounds::BGM_INVADERS, sounds::BGM_INVADERS_COUNT);
+    if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_INVADERS, sounds::BGM_INVADERS_COUNT);
 }
 
 void InvadersScreen::reset_game() {

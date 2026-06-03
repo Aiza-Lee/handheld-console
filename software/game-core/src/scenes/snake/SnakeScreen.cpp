@@ -53,7 +53,7 @@ void SnakeScreen::enqueue_dir(Direction d) {
 void SnakeScreen::enter(IPlatform& platform, IScreenHost& host) {
     reset_game();
     platform.display().clear(C::BG_COLOR);
-    host.audio().set_bgm(sounds::BGM_SNAKE, sounds::BGM_SNAKE_COUNT);
+    if (C::ENABLE_BGM) host.audio().set_bgm(sounds::BGM_SNAKE, sounds::BGM_SNAKE_COUNT);
 }
 
 void SnakeScreen::reset_game() {

@@ -1,5 +1,6 @@
 #include "scenes/growball/GrowBallWorld.h"
 #include <algorithm>
+#include "core/math/LookupTable.h"
 #include <cmath>
 #include <cstdlib>
 
@@ -121,8 +122,8 @@ void GrowBallWorld::update_ai(uint32_t now_ms) {
                 ai.wander_angle += rand_float(-1.0F, 1.0F);
                 ai.last_change_ms = now_ms;
             }
-            target_dx = std::cos(ai.wander_angle) * AI_WANDER_TARGET_DIST;
-            target_dy = std::sin(ai.wander_angle) * AI_WANDER_TARGET_DIST;
+            target_dx = cos_lut_double(phase_from_radians(ai.wander_angle)) * AI_WANDER_TARGET_DIST;
+            target_dy = sin_lut_double(phase_from_radians(ai.wander_angle)) * AI_WANDER_TARGET_DIST;
         }
 
         float const tdist = std::sqrt((target_dx * target_dx) + (target_dy * target_dy));

@@ -182,10 +182,6 @@ ITime& SdlPlatform::time() {
 	return _time;
 }
 
-IStorage& SdlPlatform::storage() {
-	return _storage;
-}
-
 IAssetProvider& SdlPlatform::assets() {
 	return _assets;
 }

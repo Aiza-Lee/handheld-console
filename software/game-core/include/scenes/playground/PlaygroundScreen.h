@@ -20,7 +20,7 @@ public:
 
 private:
 	static constexpr uint8_t MODE_COUNT = 5;
-	static constexpr bool ENABLE_BGM = true;
+	static constexpr bool ENABLE_BGM = false;
 
 	struct Star {
 		int16_t x = 0;

@@ -108,8 +108,13 @@ void ScreenRunner::tick() {
 	top.update(_platform, *this);
 	top.render(_platform, *this);
 
-	// 驱动音频引擎：根据帧间隔生成对应长度的 PCM 采样
+	// 驱动音频引擎
 	if (_audio_engine.is_playing()) {
+		// 直接频率通道：PWM 蜂鸣器平台通过此路径设置频率，避免 PCM 检测开销
+		_platform.set_buzzer_frequency(_audio_engine.active_frequency(),
+		                                _audio_engine.active_volume_pct());
+
+		// PCM 通道：为 SDL/DAC 平台生成方波 PCM 采样
 		const size_t count = (AudioEngine::SAMPLE_RATE * _frame_time_ms) / 1000;
 		_audio_engine.fill_buffer(_audio_buf.data(), count);
 		_platform.write_audio_samples(_audio_buf.data(), count);
@@ -123,15 +128,11 @@ void ScreenRunner::tick() {
 void ScreenRunner::run_forever() {
 	_last_frame_tick = _platform.time().ticks_ms();
 	for (;;) {
-		tick();
-
-		if (_frame_time_ms > 0) {
-			const uint32_t now = _platform.time().ticks_ms();
-			const uint32_t elapsed = now - _last_frame_tick;
-			if (elapsed < _frame_time_ms) {
-				_platform.time().delay_ms(_frame_time_ms - elapsed);
-			}
-			_last_frame_tick = _platform.time().ticks_ms();
+		uint32_t now = _platform.time().ticks_ms();
+		uint32_t elapsed = now - _last_frame_tick;
+		if (elapsed >= _frame_time_ms) {
+			_last_frame_tick += _frame_time_ms;
+			tick();
 		}
 	}
 }

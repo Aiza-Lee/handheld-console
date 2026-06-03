@@ -10,7 +10,6 @@
 #include "platform/interfaces/IPlatform.h"
 #include "platform/interfaces/IPower.h"
 #include "platform/interfaces/IAssetProvider.h"
-#include "platform/interfaces/IStorage.h"
 #include "platform/interfaces/ITime.h"
 
 #include <cstddef>
@@ -38,7 +37,6 @@ public:
 	[[nodiscard]] uint32_t clear_count() const { return _clear_count; }
 	[[nodiscard]] uint32_t draw_pixel_count() const { return _draw_pixel_count; }
 	[[nodiscard]] uint32_t present_count() const { return _present_count; }
-		[[nodiscard]] uint32_t fill_rect_count() const { return _fill_rect_count; }
 
 private:
 	Size _size;
@@ -46,7 +44,6 @@ private:
 	uint32_t _clear_count = 0;
 	uint32_t _draw_pixel_count = 0;
 	uint32_t _present_count = 0;
-		uint32_t _fill_rect_count = 0;
 };
 
 class FakeInput final : public IInput {
@@ -103,14 +100,6 @@ public:
 	bool exists(uint16_t /*asset_id*/) const override { return false; }
 };
 
-class FakeStorage final : public IStorage {
-public:
-	bool exists(const char* /*key*/) const override { return false; }
-	bool load(const char* /*key*/, void* /*data*/, size_t /*size*/) const override { return false; }
-	bool save(const char* /*key*/, const void* /*data*/, size_t /*size*/) override { return false; }
-	bool erase(const char* /*key*/) override { return false; }
-};
-
 class FakePlatform final : public IPlatform {
 public:
 	explicit FakePlatform(Size display_size = {80, 80}) : _display(display_size) {}
@@ -121,7 +110,6 @@ public:
 	[[nodiscard]] size_t samples_written() const { return _samples_written; }
 	IPower& power() override { return _power; }
 	ITime& time() override { return _time; }
-	IStorage& storage() override { return _storage; }
 	IAssetProvider& assets() override { return _assets; }
 
 	FakeDisplay& fake_display() { return _display; }
@@ -133,7 +121,6 @@ private:
 	size_t _samples_written = 0;
 	FakePower _power;
 	FakeTime _time;
-	FakeStorage _storage;
 	FakeAssetProvider _assets;
 };
 

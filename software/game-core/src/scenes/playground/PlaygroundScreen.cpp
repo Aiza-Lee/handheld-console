@@ -5,7 +5,7 @@
 #include "core/graphics/TextRenderer.h"
 #include "core/runtime/IScreenHost.h"
 #include "core/runtime/ScreenType.h"
-#include <cmath>
+#include "core/math/LookupTable.h"
 #include "core/audio/Sounds.h"
 
 namespace handheld {
@@ -58,7 +58,7 @@ void PlaygroundScreen::enter(IPlatform& platform, IScreenHost& host) {
 	_accent_phase = 0;
 	_stars_ready = false;
 	display.clear(BACKDROP);
-	host.audio().set_bgm(sounds::BGM_PLAYGROUND, sounds::BGM_PLAYGROUND_COUNT);
+	if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_PLAYGROUND, sounds::BGM_PLAYGROUND_COUNT);
 }
 
 void PlaygroundScreen::update(IPlatform& platform, IScreenHost& host) {
@@ -109,8 +109,8 @@ void PlaygroundScreen::update(IPlatform& platform, IScreenHost& host) {
 		const auto cy = static_cast<int16_t>(display.height() / 2);
 		const auto rx = static_cast<int16_t>((display.width() / 2) - 10);
 		const auto ry = static_cast<int16_t>((display.height() / 2) - 16);
-		_x = static_cast<int16_t>(cx + (std::cos(t) * rx));
-		_y = static_cast<int16_t>(cy + (std::sin(t * 1.37) * ry));
+		_x = static_cast<int16_t>(cx + (cos_lut_double(phase_from_radians(t)) * rx));
+		_y = static_cast<int16_t>(cy + (sin_lut_double(phase_from_radians(t * 1.37)) * ry));
 	}
 
 	if (_stars_ready) {
@@ -254,7 +254,7 @@ void PlaygroundScreen::render_background(IDisplay& display) const {
 		int16_t previous_y = y;
 		for (auto x = static_cast<int16_t>(stage.x + 3); x < stage_right; x += 6) {
 			const double t = (static_cast<double>(x) * 0.075) + (static_cast<double>(_frame) * 0.03);
-			const auto ny = static_cast<int16_t>(y + (std::sin(t) * 4.0));
+			const auto ny = static_cast<int16_t>(y + (sin_lut_double(phase_from_radians(t)) * 4.0));
 			display.draw_line(previous_x, previous_y, x, ny, (y % 36 == 14) ? MIST : SECONDARY);
 			previous_x = x;
 			previous_y = ny;
@@ -320,16 +320,16 @@ void PlaygroundScreen::render_mode_orbit_lab(IDisplay& display) const {
 
 	const double t = static_cast<double>(_frame) * 0.058;
 	const Point sat_a = {
-		static_cast<int16_t>(center.x + (std::cos(t) * 34.0)),
-		static_cast<int16_t>(center.y + (std::sin(t) * 20.0))
+		static_cast<int16_t>(center.x + (cos_lut_double(phase_from_radians(t)) * 34.0)),
+		static_cast<int16_t>(center.y + (sin_lut_double(phase_from_radians(t)) * 20.0))
 	};
 	const Point sat_b = {
-		static_cast<int16_t>(center.x + (std::cos(-t * 1.6) * 22.0)),
-		static_cast<int16_t>(center.y + (std::sin(-t * 1.6) * 12.0))
+		static_cast<int16_t>(center.x + (cos_lut_double(phase_from_radians(-t * 1.6)) * 22.0)),
+		static_cast<int16_t>(center.y + (sin_lut_double(phase_from_radians(-t * 1.6)) * 12.0))
 	};
 	const Point sat_c = {
-		static_cast<int16_t>(center.x + (std::cos(t * 0.7) * 14.0)),
-		static_cast<int16_t>(center.y + (std::sin(t * 0.7) * 28.0))
+		static_cast<int16_t>(center.x + (cos_lut_double(phase_from_radians(t * 0.7)) * 14.0)),
+		static_cast<int16_t>(center.y + (sin_lut_double(phase_from_radians(t * 0.7)) * 28.0))
 	};
 
 	display.draw_line(center.x, center.y, sat_a.x, sat_a.y, SECONDARY);
@@ -353,7 +353,7 @@ void PlaygroundScreen::render_mode_starflow(IDisplay& display) const {
 	render_stage_shell(display);
 
 	for (int16_t x = stage.x; x < static_cast<int16_t>(stage.x + stage.width); x += 4) {
-		const double wave = std::sin((static_cast<double>(x) * 0.12) + (static_cast<double>(_frame) * 0.09));
+		const double wave = sin_lut_double(phase_from_radians((static_cast<double>(x) * 0.12) + (static_cast<double>(_frame) * 0.09)));
 		const auto y = static_cast<int16_t>(horizon + (wave * 3.0));
 		display.draw_pixel(x, y, MIST);
 	}
@@ -388,7 +388,7 @@ void PlaygroundScreen::render_mode_signal_scope(IDisplay& display) const {
 	int16_t prev_y = mid;
 	for (auto x = static_cast<int16_t>(stage.x + 3); x < static_cast<int16_t>(stage.x + stage.width - 2); ++x) {
 		const double t = (static_cast<double>(x) * 0.19) + (static_cast<double>(_frame) * 0.11);
-		const double wave = (std::sin(t) * 7.0) + (std::sin(t * 0.37) * 3.0);
+		const double wave = (sin_lut_double(phase_from_radians(t)) * 7.0) + (sin_lut_double(phase_from_radians(t * 0.37)) * 3.0);
 		const auto y = static_cast<int16_t>(mid + wave);
 		display.draw_line(prev_x, prev_y, x, y, PRIMARY);
 		prev_x = x;
@@ -408,9 +408,9 @@ void PlaygroundScreen::render_mode_aurora_bloom(IDisplay& display) const {
 
 	for (int16_t k = 0; k < 9; ++k) {
 		const double phase = (static_cast<double>(_frame) * 0.035) + (k * 0.62);
-		const auto len = static_cast<int16_t>(18 + (std::sin(phase * 1.2) * 9.0));
-		const auto dx = static_cast<int16_t>(std::cos(phase) * len);
-		const auto dy = static_cast<int16_t>(std::sin(phase) * len);
+		const auto len = static_cast<int16_t>(18 + (sin_lut_double(phase_from_radians(phase * 1.2)) * 9.0));
+		const auto dx = static_cast<int16_t>(cos_lut_double(phase_from_radians(phase)) * len);
+		const auto dy = static_cast<int16_t>(sin_lut_double(phase_from_radians(phase)) * len);
 		const Color petal = (k % 2 == 0) ? HIGHLIGHT : PRIMARY;
 		display.draw_line(center.x, center.y, static_cast<int16_t>(center.x + dx), static_cast<int16_t>(center.y + dy), petal);
 		display.draw_pixel(static_cast<int16_t>(center.x + dx), static_cast<int16_t>(center.y + dy), SOFT_WHITE);
@@ -419,8 +419,8 @@ void PlaygroundScreen::render_mode_aurora_bloom(IDisplay& display) const {
 	for (int16_t ring = 8; ring <= 28; ring += 6) {
 		for (int16_t deg = 0; deg < 360; deg += 28) {
 			const double a = (static_cast<double>(deg) * 0.0174533) + (_frame * 0.006);
-			const auto px = static_cast<int16_t>(center.x + (std::cos(a) * ring));
-			const auto py = static_cast<int16_t>(center.y + (std::sin(a) * ring));
+			const auto px = static_cast<int16_t>(center.x + (cos_lut_double(phase_from_radians(a)) * ring));
+			const auto py = static_cast<int16_t>(center.y + (sin_lut_double(phase_from_radians(a)) * ring));
 			if (px <= stage.x || px >= static_cast<int16_t>(stage.x + stage.width - 1)) {
 				continue;
 			}

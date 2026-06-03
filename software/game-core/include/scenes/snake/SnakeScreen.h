@@ -8,7 +8,7 @@
 
 namespace handheld::snake::cfg {
 
-constexpr bool ENABLE_BGM = true;
+constexpr bool ENABLE_BGM = false;
 
 // 地图
 constexpr int16_t GRID_W = 13;
