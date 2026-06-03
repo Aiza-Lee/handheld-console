@@ -23,11 +23,9 @@ Color enemy_row_color(int16_t row) {
     }
 }
 
-int16_t enemy_row_score(int16_t row) {
-    return ROW_SCORES[row];
-}
+int16_t enemy_row_score(int16_t row) { return ROW_SCORES[row]; }
 
-}  // namespace
+} // namespace
 
 // ── 生命周期 ──────────────────────────────────────────────────────
 
@@ -103,17 +101,23 @@ void InvadersScreen::player_shoot(IScreenHost& host) {
     }
 }
 
-void InvadersScreen::enemy_shoot() {
+void InvadersScreen::enemy_shoot(IScreenHost& host) {
     int16_t slot = -1;
     for (int16_t i = 0; i < MAX_EBULLETS; ++i) {
-        if (!_ebullets[i].active) { slot = i; break; }
+        if (!_ebullets[i].active) {
+            slot = i;
+            break;
+        }
     }
     if (slot < 0) return;
 
     int16_t bottom_row = -1;
     for (int16_t row = GRID_ROWS - 1; row >= 0; --row) {
         for (int16_t col = 0; col < GRID_COLS; ++col) {
-            if (_enemy_alive[row * GRID_COLS + col]) { bottom_row = row; break; }
+            if (_enemy_alive[row * GRID_COLS + col]) {
+                bottom_row = row;
+                break;
+            }
         }
         if (bottom_row >= 0) break;
     }
@@ -130,6 +134,7 @@ void InvadersScreen::enemy_shoot() {
     _ebullets[slot].x = static_cast<int16_t>(_enemy_base_x + col * CELL_W + ENEMY_W / 2);
     _ebullets[slot].y = static_cast<int16_t>(_enemy_base_y + bottom_row * CELL_H + ENEMY_H);
     _ebullets[slot].active = true;
+    host.audio().play_sfx(sounds::SFX_ENEMY_SHOOT, sounds::SFX_ENEMY_SHOOT_COUNT);
 }
 
 // ── 敌人移动 ──────────────────────────────────────────────────────
@@ -154,7 +159,7 @@ void InvadersScreen::move_enemies(IScreenHost& host) {
     if (hit_edge) {
         _enemy_dir_x = static_cast<int8_t>(-_enemy_dir_x);
         _enemy_base_y += ENEMY_DROP;
-        _enemy_base_x += _enemy_dir_x;  // 离开边界，避免下一帧重复触边
+        _enemy_base_x += _enemy_dir_x; // 离开边界，避免下一帧重复触边
     } else {
         _enemy_base_x += _enemy_dir_x;
     }
@@ -169,8 +174,7 @@ void InvadersScreen::move_enemies(IScreenHost& host) {
                 // 敌人已到达护盾高度，清除所有护盾像素
                 for (int16_t s = 0; s < SHIELD_COUNT; ++s)
                     for (int16_t sy = 0; sy < SHIELD_H; ++sy)
-                        for (int16_t sx = 0; sx < SHIELD_W; ++sx)
-                            _shields[s][sy][sx] = false;
+                        for (int16_t sx = 0; sx < SHIELD_W; ++sx) _shields[s][sy][sx] = false;
             }
         }
     }
@@ -202,17 +206,15 @@ void InvadersScreen::move_bullets(IScreenHost& host) {
                 if (!_enemy_alive[row * GRID_COLS + col]) continue;
                 int16_t ex = _enemy_base_x + col * CELL_W;
                 int16_t ey = _enemy_base_y + row * CELL_H;
-                if (_bullet_x >= ex && _bullet_x < ex + ENEMY_W &&
-                    _bullet_y >= ey && _bullet_y < ey + ENEMY_H) {
+                if (_bullet_x >= ex && _bullet_x < ex + ENEMY_W && _bullet_y >= ey && _bullet_y < ey + ENEMY_H) {
                     _enemy_alive[row * GRID_COLS + col] = false;
                     --_enemies_alive_count;
                     _score += enemy_row_score(row);
                     _bullet_active = false;
-                    spawn_particles(static_cast<int16_t>(ex + ENEMY_W / 2),
-                                    static_cast<int16_t>(ey + ENEMY_H / 2));
+                    spawn_particles(static_cast<int16_t>(ex + ENEMY_W / 2), static_cast<int16_t>(ey + ENEMY_H / 2));
                     host.audio().play_sfx(sounds::SFX_EXPLOSION, sounds::SFX_EXPLOSION_COUNT);
-                    _move_interval = INIT_MOVE_INTERVAL -
-                                     static_cast<uint32_t>((TOTAL_ENEMIES - _enemies_alive_count) / 4);
+                    _move_interval =
+                        INIT_MOVE_INTERVAL - static_cast<uint32_t>((TOTAL_ENEMIES - _enemies_alive_count) / 4);
                     if (_move_interval < MIN_MOVE_INTERVAL) _move_interval = MIN_MOVE_INTERVAL;
                     break;
                 }
@@ -227,8 +229,8 @@ void InvadersScreen::move_bullets(IScreenHost& host) {
 
     // 检查是否击中神秘飞船
     if (_bullet_active && _saucer.alive) {
-        if (_bullet_x >= _saucer.x && _bullet_x < _saucer.x + SAUCER_W &&
-            _bullet_y >= _saucer.y && _bullet_y < _saucer.y + SAUCER_H) {
+        if (_bullet_x >= _saucer.x && _bullet_x < _saucer.x + SAUCER_W && _bullet_y >= _saucer.y &&
+            _bullet_y < _saucer.y + SAUCER_H) {
             _bullet_active = false;
             _saucer.alive = false;
             _score += _saucer.points;
@@ -245,7 +247,10 @@ void InvadersScreen::move_bullets(IScreenHost& host) {
     for (auto& eb : _ebullets) {
         if (!eb.active) continue;
         eb.y += ENEMY_BULLET_SPEED;
-        if (eb.y >= SCREEN_HEIGHT) { eb.active = false; continue; }
+        if (eb.y >= SCREEN_HEIGHT) {
+            eb.active = false;
+            continue;
+        }
 
         // 击中护盾（命中则停用该子弹）
         if (damage_shield(eb.x, eb.y)) {
@@ -254,13 +259,12 @@ void InvadersScreen::move_bullets(IScreenHost& host) {
         }
 
         // 击中玩家
-        if (_state == State::PLAYING &&
-            eb.x >= _player_x && eb.x < _player_x + PLAYER_W &&
-            eb.y >= PLAYER_Y && eb.y < PLAYER_Y + PLAYER_H) {
+        if (_state == State::PLAYING && eb.x >= _player_x && eb.x < _player_x + PLAYER_W && eb.y >= PLAYER_Y &&
+            eb.y < PLAYER_Y + PLAYER_H) {
             eb.active = false;
             spawn_particles(static_cast<int16_t>(_player_x + PLAYER_W / 2),
                             static_cast<int16_t>(PLAYER_Y + PLAYER_H / 2));
-            host.audio().play_sfx(sounds::SFX_EXPLOSION, sounds::SFX_EXPLOSION_COUNT);
+            host.audio().play_sfx(sounds::SFX_PLAYER_HIT, sounds::SFX_PLAYER_HIT_COUNT);
             --_lives;
             if (_lives <= 0) {
                 _state = State::GAME_OVER;
@@ -277,8 +281,7 @@ void InvadersScreen::move_bullets(IScreenHost& host) {
 void InvadersScreen::init_shields() {
     for (int16_t s = 0; s < SHIELD_COUNT; ++s)
         for (int16_t sy = 0; sy < SHIELD_H; ++sy)
-            for (int16_t sx = 0; sx < SHIELD_W; ++sx)
-                _shields[s][sy][sx] = true;
+            for (int16_t sx = 0; sx < SHIELD_W; ++sx) _shields[s][sy][sx] = true;
 }
 
 bool InvadersScreen::damage_shield(int16_t bx, int16_t by) {
@@ -301,7 +304,7 @@ bool InvadersScreen::damage_shield(int16_t bx, int16_t by) {
 
 // ── 神秘飞船 ──────────────────────────────────────────────────────
 
-void InvadersScreen::update_saucer() {
+void InvadersScreen::update_saucer(IScreenHost& host) {
     if (_saucer_score_display > 0) {
         --_saucer_score_display;
     }
@@ -317,6 +320,7 @@ void InvadersScreen::update_saucer() {
     if (_saucer_timer > 0) {
         --_saucer_timer;
         if (_saucer_timer == 0) {
+            host.audio().play_sfx(sounds::SFX_SAUCER_APPEAR, sounds::SFX_SAUCER_APPEAR_COUNT);
             _saucer.alive = true;
             _saucer.dir = (next_rng() % 2 == 0) ? static_cast<int8_t>(1) : static_cast<int8_t>(-1);
             _saucer.y = SAUCER_Y;
@@ -360,27 +364,22 @@ void InvadersScreen::update_particles() {
 
 // ── 渲染 ──────────────────────────────────────────────────────────
 
-void InvadersScreen::draw_enemy(IDisplay& display, int16_t px, int16_t py,
-                                int16_t row, uint32_t frame) const {
+void InvadersScreen::draw_enemy(IDisplay& display, int16_t px, int16_t py, int16_t row, uint32_t frame) const {
     Color color = enemy_row_color(row);
     int anim = (frame / 20) % 2;
     const char* shape = ENEMY_SHAPES[row][anim];
     for (int16_t dy = 0; dy < ENEMY_H; ++dy)
         for (int16_t dx = 0; dx < ENEMY_W; ++dx)
             if (shape[dy * 6 + dx] == 'X')
-                display.draw_pixel(static_cast<int16_t>(px + dx),
-                                   static_cast<int16_t>(py + dy), color);
+                display.draw_pixel(static_cast<int16_t>(px + dx), static_cast<int16_t>(py + dy), color);
 }
 
 void InvadersScreen::draw_player(IDisplay& display, int16_t x, uint32_t frame) const {
     int16_t cx = static_cast<int16_t>(x + PLAYER_W / 2);
     display.draw_pixel(cx, PLAYER_Y, INV_PLAYER);
-    for (int16_t dx = -1; dx <= 1; ++dx)
-        display.draw_pixel(static_cast<int16_t>(cx + dx), PLAYER_Y + 1, INV_PLAYER);
-    for (int16_t dx = -2; dx <= 2; ++dx)
-        display.draw_pixel(static_cast<int16_t>(cx + dx), PLAYER_Y + 2, INV_PLAYER);
-    for (int16_t dx = -3; dx <= 3; ++dx)
-        display.draw_pixel(static_cast<int16_t>(cx + dx), PLAYER_Y + 3, INV_PLAYER);
+    for (int16_t dx = -1; dx <= 1; ++dx) display.draw_pixel(static_cast<int16_t>(cx + dx), PLAYER_Y + 1, INV_PLAYER);
+    for (int16_t dx = -2; dx <= 2; ++dx) display.draw_pixel(static_cast<int16_t>(cx + dx), PLAYER_Y + 2, INV_PLAYER);
+    for (int16_t dx = -3; dx <= 3; ++dx) display.draw_pixel(static_cast<int16_t>(cx + dx), PLAYER_Y + 3, INV_PLAYER);
     for (int16_t dx = -3; dx <= 3; ++dx) {
         if (dx == 0) continue;
         display.draw_pixel(static_cast<int16_t>(cx + dx), PLAYER_Y + 4, INV_PLAYER);
@@ -402,8 +401,8 @@ void InvadersScreen::draw_shields(IDisplay& display) const {
         for (int16_t sy = 0; sy < SHIELD_H; ++sy)
             for (int16_t lx = 0; lx < SHIELD_W; ++lx)
                 if (_shields[s][sy][lx])
-                    display.draw_pixel(static_cast<int16_t>(sx + lx),
-                                       static_cast<int16_t>(SHIELD_Y + sy), SHIELD_COLOR);
+                    display.draw_pixel(static_cast<int16_t>(sx + lx), static_cast<int16_t>(SHIELD_Y + sy),
+                                       SHIELD_COLOR);
     }
 }
 
@@ -415,7 +414,7 @@ void InvadersScreen::draw_saucer(IDisplay& display) const {
     for (int16_t dx = 1; dx <= 12; ++dx) display.draw_pixel(static_cast<int16_t>(sx + dx), sy + 2, SAUCER_COLOR);
     display.draw_pixel(static_cast<int16_t>(sx + 2), sy + 3, SAUCER_COLOR);
     display.draw_pixel(static_cast<int16_t>(sx + 11), sy + 3, SAUCER_COLOR);
-    for (int16_t dx = 4; dx <= 9; ++dx)  display.draw_pixel(static_cast<int16_t>(sx + dx), sy + 3, SAUCER_COLOR);
+    for (int16_t dx = 4; dx <= 9; ++dx) display.draw_pixel(static_cast<int16_t>(sx + dx), sy + 3, SAUCER_COLOR);
     display.draw_pixel(static_cast<int16_t>(sx + 4), sy + 4, SAUCER_COLOR);
     display.draw_pixel(static_cast<int16_t>(sx + 9), sy + 4, SAUCER_COLOR);
     if ((_frame / 15) % 2 == 0) {
@@ -432,7 +431,10 @@ void InvadersScreen::update(IPlatform& platform, IScreenHost& host) {
 
     if (_paused) {
         if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) _paused = false;
-        if (input.was_pressed(ButtonBits::B)) { host.switch_to(ScreenType::MENU); return; }
+        if (input.was_pressed(ButtonBits::B)) {
+            host.switch_to(ScreenType::MENU);
+            return;
+        }
         return;
     }
 
@@ -447,19 +449,28 @@ void InvadersScreen::update(IPlatform& platform, IScreenHost& host) {
                 if (_player_x > PLAY_AREA_RIGHT) _player_x = PLAY_AREA_RIGHT;
             }
             if (input.was_pressed(ButtonBits::A)) player_shoot(host);
-            if (input.was_pressed(ButtonBits::START)) { _paused = true; return; }
+            if (input.was_pressed(ButtonBits::START)) {
+                _paused = true;
+                return;
+            }
             move_enemies(host);
             if (_state != State::PLAYING) break;
             move_bullets(host);
             update_particles();
-            update_saucer();
+            update_saucer(host);
             ++_shoot_timer;
-            int16_t shoot_base = static_cast<int16_t>(SHOOT_INTERVAL_BASE - (_level - 1) * SHOOT_INTERVAL_STEP_PER_LEVEL);
+            int16_t shoot_base =
+                static_cast<int16_t>(SHOOT_INTERVAL_BASE - (_level - 1) * SHOOT_INTERVAL_STEP_PER_LEVEL);
             if (shoot_base < MIN_SHOOT_BASE) shoot_base = MIN_SHOOT_BASE;
-            uint32_t shoot_threshold = static_cast<uint32_t>(shoot_base + _enemies_alive_count * SHOOT_INTERVAL_PER_ENEMY);
-            if (_shoot_timer >= shoot_threshold) { _shoot_timer = 0; enemy_shoot(); }
+            uint32_t shoot_threshold =
+                static_cast<uint32_t>(shoot_base + _enemies_alive_count * SHOOT_INTERVAL_PER_ENEMY);
+            if (_shoot_timer >= shoot_threshold) {
+                _shoot_timer = 0;
+                enemy_shoot(host);
+            }
             if (_enemies_alive_count == 0) {
                 _state = State::LEVEL_CLEAR;
+                host.audio().play_sfx(sounds::SFX_LEVEL_CLEAR_INVADERS, sounds::SFX_LEVEL_CLEAR_INVADERS_COUNT);
                 _level_clear_timer = LEVEL_CLEAR_DURATION;
             }
             break;
@@ -467,23 +478,27 @@ void InvadersScreen::update(IPlatform& platform, IScreenHost& host) {
         case State::DYING: {
             update_particles();
             move_bullets(host);
-            update_saucer();
+            update_saucer(host);
             if (_dying_timer > 0) --_dying_timer;
             else respawn_player();
             break;
         }
         case State::LEVEL_CLEAR: {
             update_particles();
-            if (_level_clear_timer > 0)
-                --_level_clear_timer;
-            else
-                start_next_level();
+            if (_level_clear_timer > 0) --_level_clear_timer;
+            else start_next_level();
             break;
         }
         case State::GAME_OVER: {
             update_particles();
-            if (input.was_pressed(ButtonBits::START)) { _level = 1; reset_game(); }
-            if (input.was_pressed(ButtonBits::B)) { host.switch_to(ScreenType::MENU); return; }
+            if (input.was_pressed(ButtonBits::START)) {
+                _level = 1;
+                reset_game();
+            }
+            if (input.was_pressed(ButtonBits::B)) {
+                host.switch_to(ScreenType::MENU);
+                return;
+            }
             break;
         }
     }
@@ -504,10 +519,8 @@ void InvadersScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
     for (int8_t i = 0; i < _lives; ++i) {
         int16_t lx = static_cast<int16_t>(60 + i * 7);
         display.draw_pixel(static_cast<int16_t>(lx + 1), 1, INV_LIFE_COLOR);
-        for (int16_t dx = 0; dx < 3; ++dx)
-            display.draw_pixel(static_cast<int16_t>(lx + dx), 2, INV_LIFE_COLOR);
-        for (int16_t dx = -1; dx <= 1; ++dx)
-            display.draw_pixel(static_cast<int16_t>(lx + 1 + dx), 3, INV_LIFE_COLOR);
+        for (int16_t dx = 0; dx < 3; ++dx) display.draw_pixel(static_cast<int16_t>(lx + dx), 2, INV_LIFE_COLOR);
+        for (int16_t dx = -1; dx <= 1; ++dx) display.draw_pixel(static_cast<int16_t>(lx + 1 + dx), 3, INV_LIFE_COLOR);
     }
 
     // 地面
@@ -523,17 +536,15 @@ void InvadersScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
     for (int16_t row = 0; row < GRID_ROWS; ++row)
         for (int16_t col = 0; col < GRID_COLS; ++col)
             if (_enemy_alive[row * GRID_COLS + col])
-                draw_enemy(display,
-                           static_cast<int16_t>(_enemy_base_x + col * CELL_W),
-                           static_cast<int16_t>(_enemy_base_y + row * CELL_H),
-                           row, _frame);
+                draw_enemy(display, static_cast<int16_t>(_enemy_base_x + col * CELL_W),
+                           static_cast<int16_t>(_enemy_base_y + row * CELL_H), row, _frame);
 
     // 神秘飞船
     draw_saucer(display);
     if (_saucer_score_display > 0) {
         snprintf(buf, sizeof(buf), "%d", _saucer.points);
-        TextRenderer::draw_text_centered(display, {_saucer_score_x, _saucer_score_y},
-                                         buf, SAUCER_COLOR, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(display, {_saucer_score_x, _saucer_score_y}, buf, SAUCER_COLOR, 1,
+                                         COMPACT_FONT_3X5);
     }
 
     // 子弹
@@ -572,15 +583,14 @@ void InvadersScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
         display.draw_rect({ox, oy, 60, oh}, INV_TEXT);
         const char* msg = (_enemies_alive_count == 0) ? "YOU WIN!" : "GAME OVER";
         TextRenderer::draw_text_centered(display, {40, static_cast<int16_t>(oy + 10)}, msg,
-                                         (_enemies_alive_count == 0) ? INV_BULLET : INV_WARN_COLOR,
-                                         1, BASIC_FONT_5X7);
+                                         (_enemies_alive_count == 0) ? INV_BULLET : INV_WARN_COLOR, 1, BASIC_FONT_5X7);
         snprintf(buf, sizeof(buf), "SC:%d", _score);
-        TextRenderer::draw_text_centered(display, {40, static_cast<int16_t>(oy + 18)}, buf,
-                                         INV_TEXT, 1, COMPACT_FONT_3X5);
-        TextRenderer::draw_text_centered(display, {40, static_cast<int16_t>(oy + oh - 14)},
-                                         "START=AGAIN", INV_HINT_COLOR, 1, COMPACT_FONT_3X5);
-        TextRenderer::draw_text_centered(display, {40, static_cast<int16_t>(oy + oh - 6)},
-                                         "B: Menu", INV_HINT_COLOR, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(display, {40, static_cast<int16_t>(oy + 18)}, buf, INV_TEXT, 1,
+                                         COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(display, {40, static_cast<int16_t>(oy + oh - 14)}, "START: AGAIN",
+                                         INV_HINT_COLOR, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(display, {40, static_cast<int16_t>(oy + oh - 6)}, "B: Menu", INV_HINT_COLOR, 1,
+                                         COMPACT_FONT_3X5);
     }
 
     // 暂停覆盖层
@@ -593,4 +603,14 @@ void InvadersScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
     }
 }
 
-}  // namespace handheld
+void InvadersScreen::render_menu_preview(IDisplay& display, const Rect& box, uint32_t frame) {
+    const auto cx = static_cast<int16_t>(box.x + box.width / 2 - ENEMY_W / 2);
+    const auto cy = static_cast<int16_t>(box.y + box.height / 2 - ENEMY_H / 2);
+    const char* shape = ENEMY_SHAPES[0][0];
+    Color color = enemy_row_color(0);
+    for (int16_t dy = 0; dy < ENEMY_H; ++dy)
+        for (int16_t dx = 0; dx < ENEMY_W; ++dx)
+            if (shape[dy * 6 + dx] == 'X')
+                display.draw_pixel(static_cast<int16_t>(cx + dx), static_cast<int16_t>(cy + dy), color);
+}
+} // namespace handheld

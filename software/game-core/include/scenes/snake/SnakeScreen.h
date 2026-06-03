@@ -66,11 +66,14 @@ public:
     void enter(IPlatform& platform, IScreenHost& host) override;
     void update(IPlatform& platform, IScreenHost& host) override;
     void render(IPlatform& platform, IScreenHost& host) override;
+    static void render_menu_preview(IDisplay& display, const Rect& box, uint32_t frame);
 
 private:
     enum class Direction : uint8_t { NONE = 0, UP, DOWN, LEFT, RIGHT };
 
-    struct Segment { int8_t x, y; };
+    struct Segment {
+        int8_t x, y;
+    };
 
     Direction _dir = Direction::RIGHT;
     bool _game_over = false;
@@ -101,6 +104,6 @@ private:
     [[nodiscard]] static bool opposite_dir(Direction a, Direction b);
 };
 
-}  // namespace handheld
+} // namespace handheld
 
 #endif

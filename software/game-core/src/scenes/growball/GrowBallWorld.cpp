@@ -29,10 +29,7 @@ void GrowBallWorld::clamp_to_world(Ball& ball) {
     ball.y = clamp_f(ball.y, ball.radius, WORLD_H - ball.radius);
 }
 
-
-static float add_area_growth(float radius, float added_area) {
-    return std::sqrt((radius * radius) + added_area);
-}
+static float add_area_growth(float radius, float added_area) { return std::sqrt((radius * radius) + added_area); }
 
 // --- spawning ---
 
@@ -257,4 +254,4 @@ void GrowBallWorld::simulate(float input_vx, float input_vy, uint32_t now_ms, bo
     }
 }
 
-}  // namespace handheld
+} // namespace handheld

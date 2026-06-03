@@ -6,6 +6,6 @@ extern "C" const unsigned char _asset_TEST_RED_SPRITE[];
 extern "C" const unsigned int _asset_TEST_RED_SPRITE_len;
 
 extern "C" const handheld::AssetEntry builtin_assets[] = {
-	{ handheld::asset::TEST_RED_SPRITE, _asset_TEST_RED_SPRITE, _asset_TEST_RED_SPRITE_len },
+    {handheld::asset::TEST_RED_SPRITE, _asset_TEST_RED_SPRITE, _asset_TEST_RED_SPRITE_len},
 };
 extern "C" const uint32_t builtin_assets_count = 1;

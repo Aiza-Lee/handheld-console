@@ -1,7 +1,7 @@
 # --- 基础缩进与排版 ---
 IndentWidth: 4
 TabWidth: 4
-UseTab: Always              # 保持你原有的 Tab 设置
+UseTab: Never               # 使用空格缩进
 ColumnLimit: 120            # 行宽限制
 AccessModifierOffset: -4    # public/private 关键字向左偏移 4 格
 

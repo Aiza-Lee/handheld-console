@@ -9,7 +9,7 @@ namespace asset {
 
 constexpr uint16_t TEST_RED_SPRITE = 1;
 
-}  // namespace asset
-}  // namespace handheld
+} // namespace asset
+} // namespace handheld
 
-#endif  // GEN_ASSET_ID_H
+#endif // GEN_ASSET_ID_H

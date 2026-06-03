@@ -37,30 +37,30 @@ class IScreenHost;
 
 class GameScreen {
 public:
-	GameScreen() = default;
-	GameScreen(const GameScreen&) = delete;
-	GameScreen(GameScreen&&) = delete;
-	GameScreen& operator=(const GameScreen&) = delete;
-	GameScreen& operator=(GameScreen&&) = delete;
-	virtual ~GameScreen() = default;
+    GameScreen() = default;
+    GameScreen(const GameScreen&) = delete;
+    GameScreen(GameScreen&&) = delete;
+    GameScreen& operator=(const GameScreen&) = delete;
+    GameScreen& operator=(GameScreen&&) = delete;
+    virtual ~GameScreen() = default;
 
-	// 首次进入屏幕（或 switch_to 替换为当前屏幕时）调用
-	virtual void enter(IPlatform& platform, IScreenHost& host) {}
+    // 首次进入屏幕（或 switch_to 替换为当前屏幕时）调用
+    virtual void enter(IPlatform& platform, IScreenHost& host) {}
 
-	// 从栈中移除时调用（栈弹出 / switch_to 替换整个栈）
-	virtual void exit(IPlatform& platform, IScreenHost& host) {}
+    // 从栈中移除时调用（栈弹出 / switch_to 替换整个栈）
+    virtual void exit(IPlatform& platform, IScreenHost& host) {}
 
-	// 被新屏幕 push 覆盖时调用（栈中下层屏幕被隐藏但不销毁）
-	virtual void suspend(IPlatform& platform, IScreenHost& host) {}
+    // 被新屏幕 push 覆盖时调用（栈中下层屏幕被隐藏但不销毁）
+    virtual void suspend(IPlatform& platform, IScreenHost& host) {}
 
-	// 上层屏幕 pop 后恢复时调用（重新成为栈顶）
-	virtual void resume(IPlatform& platform, IScreenHost& host) {}
+    // 上层屏幕 pop 后恢复时调用（重新成为栈顶）
+    virtual void resume(IPlatform& platform, IScreenHost& host) {}
 
-	// 每帧更新屏幕状态（只调用栈顶）
-	virtual void update(IPlatform& platform, IScreenHost& host) = 0;
+    // 每帧更新屏幕状态（只调用栈顶）
+    virtual void update(IPlatform& platform, IScreenHost& host) = 0;
 
-	// 渲染当前帧（只调用栈顶）
-	virtual void render(IPlatform& platform, IScreenHost& host) = 0;
+    // 渲染当前帧（只调用栈顶）
+    virtual void render(IPlatform& platform, IScreenHost& host) = 0;
 };
 
 } // namespace handheld

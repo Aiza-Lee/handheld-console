@@ -8,7 +8,7 @@
 namespace handheld::invaders::cfg {
 
 // ── 音频 ─────────────────────────────────────────────────────────
-constexpr bool ENABLE_BGM = false;
+constexpr bool ENABLE_BGM = true;
 
 // ── 屏幕 ─────────────────────────────────────────────────────────
 constexpr int16_t SCREEN_WIDTH = 80;
@@ -75,11 +75,11 @@ constexpr uint32_t DYING_TIMER = 15;
 // ── 子弹 ─────────────────────────────────────────────────────────
 constexpr int16_t PLAYER_BULLET_SPEED = 5;
 constexpr int16_t ENEMY_BULLET_SPEED = 3;
-constexpr int16_t PLAYER_BULLET_TRAIL = 4;        // 玩家子弹拖尾长度
-constexpr int16_t ENEMY_BULLET_TRAIL = 3;         // 敌人子弹拖尾长度
-constexpr uint32_t SHOOT_INTERVAL_BASE = 8;       // 敌人射击间隔基础值
-constexpr uint32_t SHOOT_INTERVAL_PER_ENEMY = 1;  // 每个存活敌人增加的射击间隔
-constexpr uint32_t MIN_SHOOT_BASE = 4;            // 射击间隔基础值下限
+constexpr int16_t PLAYER_BULLET_TRAIL = 4;       // 玩家子弹拖尾长度
+constexpr int16_t ENEMY_BULLET_TRAIL = 3;        // 敌人子弹拖尾长度
+constexpr uint32_t SHOOT_INTERVAL_BASE = 8;      // 敌人射击间隔基础值
+constexpr uint32_t SHOOT_INTERVAL_PER_ENEMY = 1; // 每个存活敌人增加的射击间隔
+constexpr uint32_t MIN_SHOOT_BASE = 4;           // 射击间隔基础值下限
 constexpr int16_t MAX_PARTICLES = 12;
 constexpr int16_t MAX_EBULLETS = 2;
 constexpr int16_t MAX_PARTICLES_PER_EXPLOSION = 6;
@@ -88,26 +88,26 @@ constexpr int16_t MAX_PARTICLES_PER_EXPLOSION = 6;
 constexpr int16_t SHIELD_COUNT = 4;
 constexpr int16_t SHIELD_W = 8;
 constexpr int16_t SHIELD_H = 6;
-constexpr int16_t SHIELD_Y = 60;         // 护盾顶部 Y
-constexpr int16_t SHIELD_GAP = 8;        // 护盾间距
+constexpr int16_t SHIELD_Y = 60;  // 护盾顶部 Y
+constexpr int16_t SHIELD_GAP = 8; // 护盾间距
 constexpr int16_t SHIELD_OX = (SCREEN_WIDTH - SHIELD_COUNT * SHIELD_W - (SHIELD_COUNT - 1) * SHIELD_GAP) / 2;
 
 // ── 神秘飞船 (UFO) ──────────────────────────────────────────────
-constexpr int16_t SAUCER_Y = 10;         // 飞船飞行高度
+constexpr int16_t SAUCER_Y = 10; // 飞船飞行高度
 constexpr int16_t SAUCER_W = 14;
 constexpr int16_t SAUCER_H = 5;
 constexpr int16_t SAUCER_SPEED = 1;
-constexpr uint32_t SAUCER_MIN_INTERVAL = 120;   // 最短出现间隔（帧，6s @20fps）
-constexpr uint32_t SAUCER_MAX_INTERVAL = 360;   // 最长出现间隔（帧，18s @20fps）
+constexpr uint32_t SAUCER_MIN_INTERVAL = 120; // 最短出现间隔（帧，6s @20fps）
+constexpr uint32_t SAUCER_MAX_INTERVAL = 360; // 最长出现间隔（帧，18s @20fps）
 constexpr int16_t SAUCER_SCORES[] = {50, 100, 150, 200, 300};
-constexpr uint8_t SAUCER_SCORE_DISPLAY_FRAMES = 20;  // 得分闪烁帧数 (1s @20fps)
+constexpr uint8_t SAUCER_SCORE_DISPLAY_FRAMES = 20; // 得分闪烁帧数 (1s @20fps)
 
 // ── 关卡 ─────────────────────────────────────────────────────────
-constexpr uint32_t LEVEL_CLEAR_DURATION = 30;       // 通关庆祝帧数 (1.5s @20fps)
-constexpr int16_t LEVEL_Y_OFFSET_PER_LEVEL = 3;     // 每关敌人起始位置下移像素
-constexpr int16_t LEVEL_SPEED_STEP = 1;             // 每关敌人移动间隔递减量
-constexpr int16_t SHOOT_INTERVAL_STEP_PER_LEVEL = 2;// 每关射击间隔递减量
-constexpr int16_t MAX_VICTORY_LEVEL = 6;            // 通关关卡数
+constexpr uint32_t LEVEL_CLEAR_DURATION = 30;        // 通关庆祝帧数 (1.5s @20fps)
+constexpr int16_t LEVEL_Y_OFFSET_PER_LEVEL = 3;      // 每关敌人起始位置下移像素
+constexpr int16_t LEVEL_SPEED_STEP = 1;              // 每关敌人移动间隔递减量
+constexpr int16_t SHOOT_INTERVAL_STEP_PER_LEVEL = 2; // 每关射击间隔递减量
+constexpr int16_t MAX_VICTORY_LEVEL = 6;             // 通关关卡数
 
 // ── 分数 ─────────────────────────────────────────────────────────
 constexpr int16_t ROW_SCORES[4] = {40, 30, 20, 10};
@@ -115,53 +115,45 @@ constexpr int16_t ROW_SCORES[4] = {40, 30, 20, 10};
 // ── 敌人形状 (6x5, 每行两个动画帧) ──────────────────────────────
 constexpr const char* ENEMY_SHAPES[4][2] = {
     {
-        " X  X "
-        "  XX  "
-        " XXXX "
-        "X XX X"
-        "X XX X",
-        " X  X "
-        " XXXX "
-        " XXXX "
-        "X XX X"
-        " XX XX",
-    },
+     " X  X "
+     "  XX  "
+     " XXXX "
+     "X XX X"
+     "X XX X", " X  X "
+ " XXXX "
+ " XXXX "
+ "X XX X"
+ " XX XX", },
     {
-        "X    X"
-        " XX XX"
-        " XXXX "
-        " XX XX"
-        "X XX X",
-        "X    X"
-        "XX  XX"
-        " XXXX "
-        "X XX X"
-        " X X X",
-    },
+     "X    X"
+     " XX XX"
+     " XXXX "
+     " XX XX"
+     "X XX X", "X    X"
+ "XX  XX"
+ " XXXX "
+ "X XX X"
+ " X X X", },
     {
-        "  XX  "
-        " XXXX "
-        "XXXXXX"
-        "X XX X"
-        "X XX X",
-        " XXXX "
-        " XXXX "
-        "XXXXXX"
-        "X XX X"
-        "X XX X",
-    },
+     "  XX  "
+     " XXXX "
+     "XXXXXX"
+     "X XX X"
+     "X XX X", " XXXX "
+ " XXXX "
+ "XXXXXX"
+ "X XX X"
+ "X XX X", },
     {
-        "  XX  "
-        " XXXX "
-        "XXXXXX"
-        "X XX X"
-        "X XX X",
-        " XXXX "
-        " XXXX "
-        "XXXXXX"
-        "X XX X"
-        "X XX X",
-    },
+     "  XX  "
+     " XXXX "
+     "XXXXXX"
+     "X XX X"
+     "X XX X", " XXXX "
+ " XXXX "
+ "XXXXXX"
+ "X XX X"
+ "X XX X", },
 };
 
 } // namespace handheld::invaders::cfg
@@ -174,6 +166,7 @@ public:
     void enter(IPlatform& platform, IScreenHost& host) override;
     void update(IPlatform& platform, IScreenHost& host) override;
     void render(IPlatform& platform, IScreenHost& host) override;
+    static void render_menu_preview(IDisplay& display, const Rect& box, uint32_t frame);
 
 private:
     enum class State : uint8_t { PLAYING, DYING, LEVEL_CLEAR, GAME_OVER };
@@ -244,10 +237,10 @@ private:
     void start_next_level();
     void respawn_player();
     void player_shoot(IScreenHost& host);
-    void enemy_shoot();
+    void enemy_shoot(IScreenHost& host);
     void move_enemies(IScreenHost& host);
     void move_bullets(IScreenHost& host);
-    void update_saucer();
+    void update_saucer(IScreenHost& host);
     void init_shields();
     bool damage_shield(int16_t x, int16_t y);
     void spawn_particles(int16_t x, int16_t y);
@@ -259,6 +252,6 @@ private:
     uint32_t next_rng();
 };
 
-}  // namespace handheld
+} // namespace handheld
 
-#endif  // SCENES_INVADERS_INVADERS_SCREEN_H
+#endif // SCENES_INVADERS_INVADERS_SCREEN_H

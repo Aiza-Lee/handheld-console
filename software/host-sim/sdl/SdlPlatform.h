@@ -24,96 +24,96 @@ namespace handheld {
 
 class SdlPlatform final : public IPlatform {
 public:
-	class Display final : public IDisplay {
-	public:
-		explicit Display(Size size);
+    class Display final : public IDisplay {
+    public:
+        explicit Display(Size size);
 
-		[[nodiscard]] int16_t width() const override;
-		[[nodiscard]] int16_t height() const override;
-		void clear(Color color) override;
-		void draw_pixel(int16_t x, int16_t y, Color color) override;
-		void present() override;
+        [[nodiscard]] int16_t width() const override;
+        [[nodiscard]] int16_t height() const override;
+        void clear(Color color) override;
+        void draw_pixel(int16_t x, int16_t y, Color color) override;
+        void present() override;
 
-		void bind(SDL_Renderer& renderer, SDL_Texture& texture);
+        void bind(SDL_Renderer& renderer, SDL_Texture& texture);
 
-	private:
-		[[nodiscard]] uint32_t _to_argb8888(Color color) const;
+    private:
+        [[nodiscard]] uint32_t _to_argb8888(Color color) const;
 
-		Size _size;
-		std::vector<uint32_t> _framebuffer;
-		SDL_Renderer* _renderer = nullptr;
-		SDL_Texture* _texture = nullptr;
-	};
+        Size _size;
+        std::vector<uint32_t> _framebuffer;
+        SDL_Renderer* _renderer = nullptr;
+        SDL_Texture* _texture = nullptr;
+    };
 
-	explicit SdlPlatform(Size display_size = {80, 80}, int window_scale = 4);
-	~SdlPlatform() override;
+    explicit SdlPlatform(Size display_size = {80, 80}, int window_scale = 4);
+    ~SdlPlatform() override;
 
-	SdlPlatform(const SdlPlatform&) = delete;
-	SdlPlatform(SdlPlatform&&) = delete;
-	SdlPlatform& operator=(const SdlPlatform&) = delete;
-	SdlPlatform& operator=(SdlPlatform&&) = delete;
+    SdlPlatform(const SdlPlatform&) = delete;
+    SdlPlatform(SdlPlatform&&) = delete;
+    SdlPlatform& operator=(const SdlPlatform&) = delete;
+    SdlPlatform& operator=(SdlPlatform&&) = delete;
 
-	[[nodiscard]] bool is_running() const;
-	void process_events();
-	void delay_to_next_frame(uint32_t frame_time_ms);
+    [[nodiscard]] bool is_running() const;
+    void process_events();
+    void delay_to_next_frame(uint32_t frame_time_ms);
 
-	// 设置内置资产表（通常在 main() 中调用）
-	void init_assets(const AssetEntry* entries, size_t count);
+    // 设置内置资产表（通常在 main() 中调用）
+    void init_assets(const AssetEntry* entries, size_t count);
 
-	IDisplay& display() override;
-	IInput& input() override;
-	void write_audio_samples(const int16_t* data, size_t count) override;
-	IPower& power() override;
-	ITime& time() override;
-	IAssetProvider& assets() override;
+    IDisplay& display() override;
+    IInput& input() override;
+    void write_audio_samples(const int16_t* data, size_t count) override;
+    IPower& power() override;
+    ITime& time() override;
+    IAssetProvider& assets() override;
 
 private:
-	class Input final : public IInput {
-	public:
-		void poll() override;
-		[[nodiscard]] ButtonState current_buttons() const override;
-		[[nodiscard]] ButtonState previous_buttons() const override;
+    class Input final : public IInput {
+    public:
+        void poll() override;
+        [[nodiscard]] ButtonState current_buttons() const override;
+        [[nodiscard]] ButtonState previous_buttons() const override;
 
-		void set_button(ButtonBits button, bool pressed);
+        void set_button(ButtonBits button, bool pressed);
 
-	private:
-		ButtonState _current;
-		ButtonState _previous;
-		ButtonState _pending;
-	};
+    private:
+        ButtonState _current;
+        ButtonState _previous;
+        ButtonState _pending;
+    };
 
-	class Power final : public IPower {
-	public:
-		[[nodiscard]] PowerStatus read_status() const override;
-		[[nodiscard]] bool can_suspend() const override;
-		void suspend() override;
-	};
+    class Power final : public IPower {
+    public:
+        [[nodiscard]] PowerStatus read_status() const override;
+        [[nodiscard]] bool can_suspend() const override;
+        void suspend() override;
+    };
 
-	class Time final : public ITime {
-	public:
-		Time();
+    class Time final : public ITime {
+    public:
+        Time();
 
-		[[nodiscard]] uint32_t ticks_ms() const override;
-		void delay_ms(uint32_t duration_ms) override;
+        [[nodiscard]] uint32_t ticks_ms() const override;
+        void delay_ms(uint32_t duration_ms) override;
 
-	private:
-		uint64_t _start_ticks = 0;
-	};
+    private:
+        uint64_t _start_ticks = 0;
+    };
 
-	void _handle_event(const SDL_Event& event);
+    void _handle_event(const SDL_Event& event);
 
-	Display _display;
-	Input _input;
-	SDL_AudioStream* _audio_stream = nullptr;
-	bool _audio_muted = false;
-	Power _power;
-	Time _time;
-	BuiltinAssetProvider _assets;
-	SDL_Window* _window = nullptr;
-	SDL_Renderer* _renderer = nullptr;
-	SDL_Texture* _texture = nullptr;
-	uint32_t _last_frame_tick = 0;
-	bool _running = true;
+    Display _display;
+    Input _input;
+    SDL_AudioStream* _audio_stream = nullptr;
+    bool _audio_muted = false;
+    Power _power;
+    Time _time;
+    BuiltinAssetProvider _assets;
+    SDL_Window* _window = nullptr;
+    SDL_Renderer* _renderer = nullptr;
+    SDL_Texture* _texture = nullptr;
+    uint32_t _last_frame_tick = 0;
+    bool _running = true;
 };
 
 } // namespace handheld

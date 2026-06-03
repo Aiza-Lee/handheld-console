@@ -18,41 +18,40 @@ class IScreenFactory;
 // 下层屏幕保持挂起状态（suspend/resume）。
 class ScreenRunner : public IScreenHost {
 public:
-	ScreenRunner(IPlatform& platform, IScreenFactory& factory, ScreenType initial_screen,
-	             uint32_t frame_time_ms = 33);
-	ScreenRunner(const ScreenRunner&) = delete;
-	ScreenRunner(ScreenRunner&&) = delete;
-	ScreenRunner& operator=(const ScreenRunner&) = delete;
-	ScreenRunner& operator=(ScreenRunner&&) = delete;
-	~ScreenRunner() = default;
+    ScreenRunner(IPlatform& platform, IScreenFactory& factory, ScreenType initial_screen, uint32_t frame_time_ms = 33);
+    ScreenRunner(const ScreenRunner&) = delete;
+    ScreenRunner(ScreenRunner&&) = delete;
+    ScreenRunner& operator=(const ScreenRunner&) = delete;
+    ScreenRunner& operator=(ScreenRunner&&) = delete;
+    ~ScreenRunner() = default;
 
-	void tick();
-	void run_forever();
-	void switch_to(ScreenType type) override;
-	void push_screen(ScreenType type) override;
-	void pop_screen() override;
-	[[nodiscard]] AudioEngine& audio() override { return _audio_engine; }
-	[[nodiscard]] uint32_t frame_time_ms() const { return _frame_time_ms; }
+    void tick();
+    void run_forever();
+    void switch_to(ScreenType type) override;
+    void push_screen(ScreenType type) override;
+    void pop_screen() override;
+    [[nodiscard]] AudioEngine& audio() override { return _audio_engine; }
+    [[nodiscard]] uint32_t frame_time_ms() const { return _frame_time_ms; }
 
 private:
-	enum class PendingOp { NONE, SWITCH, PUSH, POP };
+    enum class PendingOp { NONE, SWITCH, PUSH, POP };
 
-	void _apply_pending();
+    void _apply_pending();
 
-	static constexpr size_t K_MAX_SCREENS = 4;
-	static constexpr size_t K_MAX_AUDIO_SAMPLES = AudioEngine::SAMPLE_RATE * 100 / 1000;
+    static constexpr size_t K_MAX_SCREENS = 4;
+    static constexpr size_t K_MAX_AUDIO_SAMPLES = AudioEngine::SAMPLE_RATE * 100 / 1000;
 
-	IPlatform& _platform;
-	IScreenFactory& _factory;
-	std::array<std::unique_ptr<GameScreen>, K_MAX_SCREENS> _stack{};
-	uint8_t _stack_size = 0;
-	ScreenType _pending_type;
-	PendingOp _pending_op = PendingOp::NONE;
-	uint32_t _frame_time_ms;
-	uint32_t _last_frame_tick = 0;
-	bool _entered = false;
-	AudioEngine _audio_engine;
-	std::array<int16_t, K_MAX_AUDIO_SAMPLES> _audio_buf{};
+    IPlatform& _platform;
+    IScreenFactory& _factory;
+    std::array<std::unique_ptr<GameScreen>, K_MAX_SCREENS> _stack{};
+    uint8_t _stack_size = 0;
+    ScreenType _pending_type;
+    PendingOp _pending_op = PendingOp::NONE;
+    uint32_t _frame_time_ms;
+    uint32_t _last_frame_tick = 0;
+    bool _entered = false;
+    AudioEngine _audio_engine;
+    std::array<int16_t, K_MAX_AUDIO_SAMPLES> _audio_buf{};
 };
 
 } // namespace handheld

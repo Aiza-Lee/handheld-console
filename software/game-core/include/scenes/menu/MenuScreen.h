@@ -7,6 +7,8 @@
 #include <cstddef>
 #include <cstdint>
 
+class IDisplay;
+
 namespace handheld::menu::cfg {
 
 // 颜色
@@ -22,19 +24,23 @@ constexpr Color MENU_STAR_DIM = rgb565(30, 40, 65);
 constexpr Color MENU_SCROLL_ARROW = rgb565(180, 160, 210);
 
 // 菜单项
+using MenuPreviewFn = void (*)(IDisplay&, const Rect&, uint32_t frame);
+
 struct MenuEntry {
     const char* name;
     ScreenType screen_type;
+    MenuPreviewFn render_preview = nullptr; // nullptr = 使用默认文字渲染
 };
 constexpr MenuEntry ENTRIES[] = {
+    {  "Settings",   ScreenType::SETTINGS},
     {"Playground", ScreenType::PLAYGROUND},
-    {"Snake",     ScreenType::SNAKE},
-    {"Pac-Man",   ScreenType::PACMAN},
-    {"Breakout",  ScreenType::BREAKOUT},
-    {"Invaders",  ScreenType::INVADERS},
-    {"Grow Ball", ScreenType::GROW_BALL},
+    {     "Snake",      ScreenType::SNAKE},
+    {   "Pac-Man",     ScreenType::PACMAN},
+    {  "Breakout",   ScreenType::BREAKOUT},
+    {  "Invaders",   ScreenType::INVADERS},
+    { "Grow Ball",  ScreenType::GROW_BALL},
 };
-constexpr std::size_t ENTRY_COUNT = 6;
+constexpr std::size_t ENTRY_COUNT = 7;
 
 // 布局
 constexpr int16_t BOX_X = 5;
@@ -46,7 +52,7 @@ constexpr int16_t MAX_VISIBLE = 4;
 constexpr int16_t STAR_COUNT = 12;
 
 // 文本
-constexpr const char* TITLE = "GAMES";
+constexpr const char* TITLE = "MENU";
 constexpr const char* HINT = "A/START: select";
 
 } // namespace handheld::menu::cfg

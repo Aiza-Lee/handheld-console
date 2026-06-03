@@ -19,6 +19,7 @@ public:
     static constexpr int SAMPLE_RATE = 44100;
     static constexpr int BGM_CHANNEL = 0;
     static constexpr int SFX_CHANNEL_START = 1;
+    static constexpr int32_t kMaxAmp = 28000; // 100% 音量对应的方波峰值幅度
 
     AudioEngine() = default;
 
@@ -35,7 +36,7 @@ public:
         ch.samples_elapsed = 0;
         ch.phase_accum = 0;
         ch.loop = true;
-        ch.amp = kAmpBgm;
+        ch.amp = static_cast<int32_t>(_bgm_volume_pct) * 280;
     }
 
     void play_sfx(const Tone* tones, size_t count) {
@@ -52,7 +53,7 @@ public:
                 ch.samples_elapsed = 0;
                 ch.phase_accum = 0;
                 ch.loop = false;
-                ch.amp = kAmpSfx;
+                ch.amp = static_cast<int32_t>(_sfx_volume_pct) * 280;
                 return;
             }
         }
@@ -64,9 +65,7 @@ public:
         }
     }
 
-    void stop_bgm() {
-        _channels[BGM_CHANNEL].active = false;
-    }
+    void stop_bgm() { _channels[BGM_CHANNEL].active = false; }
 
     [[nodiscard]] bool is_playing() const {
         for (const auto& ch : _channels) {
@@ -75,17 +74,38 @@ public:
         return false;
     }
 
+    // ── 音量控制 ───────────────────────────────────
+
+    [[nodiscard]] uint8_t bgm_volume() const { return _bgm_volume_pct; }
+    [[nodiscard]] uint8_t sfx_volume() const { return _sfx_volume_pct; }
+
+    void set_bgm_volume(uint8_t pct) {
+        _bgm_volume_pct = std::min(pct, static_cast<uint8_t>(100));
+        if (_channels[BGM_CHANNEL].active) {
+            _channels[BGM_CHANNEL].amp = static_cast<int32_t>(_bgm_volume_pct) * 280;
+        }
+    }
+
+    void set_sfx_volume(uint8_t pct) {
+        _sfx_volume_pct = std::min(pct, static_cast<uint8_t>(100));
+        for (int i = SFX_CHANNEL_START; i < CHANNEL_COUNT; ++i) {
+            if (_channels[i].active) {
+                _channels[i].amp = static_cast<int32_t>(_sfx_volume_pct) * 280;
+            }
+        }
+    }
+
+    // ── 查询 ───────────────────────────────────────
+
     // 返回当前活跃的最高优先级通道的频率（Hz）。
     // 优先级：SFX 通道 (3 > 2 > 1) > BGM 通道 (0)。
     // 无活跃通道时返回 0。
     [[nodiscard]] uint16_t active_frequency() const {
-        // SFX 优先
         for (int i = CHANNEL_COUNT - 1; i >= SFX_CHANNEL_START; --i) {
             if (_channels[i].active) {
                 return _channels[i].tones[_channels[i].tone_index].frequencyHz;
             }
         }
-        // BGM
         if (_channels[BGM_CHANNEL].active) {
             return _channels[BGM_CHANNEL].tones[_channels[BGM_CHANNEL].tone_index].frequencyHz;
         }
@@ -95,9 +115,9 @@ public:
     // 返回当前活跃的最高优先级通道的音量百分比（0-100）。
     [[nodiscard]] uint8_t active_volume_pct() const {
         for (int i = CHANNEL_COUNT - 1; i >= SFX_CHANNEL_START; --i) {
-            if (_channels[i].active) return kVolumePctSfx;
+            if (_channels[i].active) return _sfx_volume_pct;
         }
-        if (_channels[BGM_CHANNEL].active) return kVolumePctBgm;
+        if (_channels[BGM_CHANNEL].active) return _bgm_volume_pct;
         return 0;
     }
 
@@ -105,7 +125,7 @@ public:
     void fill_buffer(int16_t* buf, size_t sample_count) {
         for (size_t i = 0; i < sample_count; ++i) {
             int32_t sum = 0;
-            for (auto & ch : _channels) {
+            for (auto& ch : _channels) {
                 if (ch.active) {
                     sum += _sample(ch);
                     _advance(ch);
@@ -118,24 +138,20 @@ public:
     }
 
 private:
-    // 方波幅度（峰值），音量百分比 × 280
-    static constexpr int32_t kAmpBgm = 30 * 280;   // 30% → 8400
-    static constexpr int32_t kAmpSfx = 50 * 280;   // 50% → 14000
-    static constexpr uint8_t kVolumePctBgm = 30;
-    static constexpr uint8_t kVolumePctSfx = 50;
-
     struct Channel {
         bool active = false;
         const Tone* tones = nullptr;
         size_t tone_count = 0;
         size_t tone_index = 0;
         uint32_t samples_elapsed = 0;
-        uint32_t phase_accum = 0;   // DDS 相位累加器 (0 ~ SAMPLE_RATE-1)
+        uint32_t phase_accum = 0; // DDS 相位累加器 (0 ~ SAMPLE_RATE-1)
         bool loop = false;
-        int32_t amp = 0;            // 方波峰值幅度
+        int32_t amp = 0; // 方波峰值幅度
     };
 
     Channel _channels[CHANNEL_COUNT];
+    uint8_t _bgm_volume_pct = 10;
+    uint8_t _sfx_volume_pct = 50;
 
     // 纯整数方波：相位 < SAMPLE_RATE/2 输出 +amp，否则输出 -amp
     [[nodiscard]] int32_t _sample(const Channel& ch) const {

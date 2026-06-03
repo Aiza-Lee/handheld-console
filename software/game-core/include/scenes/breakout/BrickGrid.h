@@ -13,8 +13,8 @@ public:
     static constexpr int16_t ROWS = 11;
     static constexpr int16_t OX = 2;
     static constexpr int16_t OY = 8;
-    static constexpr int16_t CELL = 5;   // SIZE + GAP
-    static constexpr int16_t SIZE = 4;   // 实际砖块像素
+    static constexpr int16_t CELL = 5; // SIZE + GAP
+    static constexpr int16_t SIZE = 4; // 实际砖块像素
     static constexpr int16_t W = COLS * CELL;
     static constexpr int16_t H = ROWS * CELL;
     static constexpr uint8_t INDESTRUCTIBLE = 9;
@@ -69,9 +69,7 @@ inline int16_t BrickGrid::destroy(int16_t row, int16_t col) {
 }
 
 inline Rect BrickGrid::brick_rect(int16_t row, int16_t col) {
-    return {static_cast<int16_t>(OX + col * CELL),
-            static_cast<int16_t>(OY + row * CELL),
-            SIZE, SIZE};
+    return {static_cast<int16_t>(OX + col * CELL), static_cast<int16_t>(OY + row * CELL), SIZE, SIZE};
 }
 
 } // namespace handheld::breakout

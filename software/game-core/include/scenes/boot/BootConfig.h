@@ -28,8 +28,8 @@ constexpr int16_t GLOW_Y = 35;
 constexpr int16_t RULE_Y = 43;
 constexpr int16_t HINT_Y = 50;
 
-}  // namespace cfg
-}  // namespace boot
-}  // namespace handheld
+} // namespace cfg
+} // namespace boot
+} // namespace handheld
 
 #endif

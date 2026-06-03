@@ -67,23 +67,56 @@ constexpr int8_t PAC_START_X = 5, PAC_START_Y = 8;
 constexpr int8_t GHOST0_X = 4, GHOST0_Y = 4;
 constexpr int8_t GHOST1_X = 5, GHOST1_Y = 4;
 
-// 迷宫 (10x10)
-constexpr char MAZE[GRID][GRID] = {
-    {'W','W','W','W','W','W','W','W','W','W'},
-    {'W','.','.','.','.','.','.','.','.','W'},
-    {'W','.','W','W','.','W','W','.','.','W'},
-    {'W','P','W','.','.','.','W','P','.','W'},
-    {'W','.','.','.','W','.','.','.','.','W'},
-    {'W','.','.','.','W','.','.','.','.','W'},
-    {'W','P','W','.','.','.','W','P','.','W'},
-    {'W','.','W','W','.','W','W','.','.','W'},
-    {'W','.','.','.','.','.','.','.','.','W'},
-    {'W','W','W','W','W','W','W','W','W','W'},
+// 关卡配置
+struct LevelConfig {
+    const char* name;
+    int ghost_interval;
+    int power_duration;
+    // 迷宫以 C-string 指针数组传递（10 行，每行 11 char 含 \0）
+    const char* maze[GRID];
 };
 
-}  // namespace cfg
-}  // namespace pacman
-}  // namespace handheld
+inline constexpr char MAZE_1[GRID][GRID + 1] = {
+    "WWWWWWWWWW", "W........W", "W.WW.WW..W", "WPW...WP.W", "W...W....W",
+    "W...W....W", "WPW...WP.W", "W.WW.WW..W", "W........W", "WWWWWWWWWW",
+};
+
+inline constexpr char MAZE_2[GRID][GRID + 1] = {
+    "WWWWWWWWWW", "W...WW...W", "W.W....W.W", "WP.W..W.PW", "W..W..W..W",
+    "W..W..W..W", "WP.W..W.PW", "W.W....W.W", "W...WW...W", "WWWWWWWWWW",
+};
+
+inline constexpr char MAZE_3[GRID][GRID + 1] = {
+    "WWWWWWWWWW", "W........W", "W.W.WW.W.W", "WP......PW", "W..W..W..W",
+    "W..W..W..W", "WP......PW", "W.W.WW.W.W", "W........W", "WWWWWWWWWW",
+};
+
+inline constexpr LevelConfig LEVELS[] = {
+    {"LV1",
+     8, 120,
+     {(const char*)MAZE_1[0], (const char*)MAZE_1[1], (const char*)MAZE_1[2], (const char*)MAZE_1[3],
+     (const char*)MAZE_1[4], (const char*)MAZE_1[5], (const char*)MAZE_1[6], (const char*)MAZE_1[7],
+     (const char*)MAZE_1[8], (const char*)MAZE_1[9]}},
+    {"LV2",
+     6, 100,
+     {(const char*)MAZE_2[0], (const char*)MAZE_2[1], (const char*)MAZE_2[2], (const char*)MAZE_2[3],
+     (const char*)MAZE_2[4], (const char*)MAZE_2[5], (const char*)MAZE_2[6], (const char*)MAZE_2[7],
+     (const char*)MAZE_2[8], (const char*)MAZE_2[9]}},
+    {"LV3",
+     5,  80,
+     {(const char*)MAZE_3[0], (const char*)MAZE_3[1], (const char*)MAZE_3[2], (const char*)MAZE_3[3],
+     (const char*)MAZE_3[4], (const char*)MAZE_3[5], (const char*)MAZE_3[6], (const char*)MAZE_3[7],
+     (const char*)MAZE_3[8], (const char*)MAZE_3[9]}},
+};
+constexpr int LEVEL_COUNT = 3;
+
+// 状态栏
+constexpr int16_t STATUS_H = 7;
+constexpr Color STATUS_BG = rgb565(4, 8, 18);
+
+} // namespace cfg
+} // namespace pacman
+} // namespace handheld
 
 namespace handheld {
 
@@ -93,6 +126,7 @@ public:
     void enter(IPlatform& platform, IScreenHost& host) override;
     void update(IPlatform& platform, IScreenHost& host) override;
     void render(IPlatform& platform, IScreenHost& host) override;
+    static void render_menu_preview(IDisplay& display, const Rect& box, uint32_t frame);
 
 private:
     enum class Dir : uint8_t { UP, DOWN, LEFT, RIGHT, NONE };
@@ -116,6 +150,7 @@ private:
     int8_t _dot_count;
     int16_t _score;
     int8_t _lives;
+    int8_t _level = 0;
     uint32_t _power_timer;
     uint32_t _pac_move_counter;
     uint32_t _ghost_move_counter;
@@ -134,6 +169,7 @@ private:
     uint8_t _celebration_timer;
 
     void reset_game();
+    void load_level(uint8_t level);
     [[nodiscard]] bool is_wall(int8_t x, int8_t y) const;
     [[nodiscard]] static bool is_valid_cell(int8_t x, int8_t y);
     [[nodiscard]] static int8_t manhattan(int8_t x1, int8_t y1, int8_t x2, int8_t y2);
@@ -148,6 +184,6 @@ private:
     uint32_t next_rng();
 };
 
-}  // namespace handheld
+} // namespace handheld
 
-#endif  // SCENES_PACMAN_PACMAN_SCREEN_H
+#endif // SCENES_PACMAN_PACMAN_SCREEN_H

@@ -19,109 +19,106 @@ namespace handheld {
 
 class FakeDisplay final : public IDisplay {
 public:
-	explicit FakeDisplay(Size size = {160, 128}) : _size(size) {}
+    explicit FakeDisplay(Size size = {160, 128}) : _size(size) {}
 
-	[[nodiscard]] int16_t width() const override { return _size.width; }
-	[[nodiscard]] int16_t height() const override { return _size.height; }
+    [[nodiscard]] int16_t width() const override { return _size.width; }
+    [[nodiscard]] int16_t height() const override { return _size.height; }
 
-	void clear(Color color) override {
-		_last_clear_color = color;
-		++_clear_count;
-	}
+    void clear(Color color) override {
+        _last_clear_color = color;
+        ++_clear_count;
+    }
 
-	void draw_pixel(int16_t /*x*/, int16_t /*y*/, Color /*color*/) override { ++_draw_pixel_count; }
+    void draw_pixel(int16_t /*x*/, int16_t /*y*/, Color /*color*/) override { ++_draw_pixel_count; }
 
-	void present() override { ++_present_count; }
+    void present() override { ++_present_count; }
 
-	[[nodiscard]] Color last_clear_color() const { return _last_clear_color; }
-	[[nodiscard]] uint32_t clear_count() const { return _clear_count; }
-	[[nodiscard]] uint32_t draw_pixel_count() const { return _draw_pixel_count; }
-	[[nodiscard]] uint32_t present_count() const { return _present_count; }
+    [[nodiscard]] Color last_clear_color() const { return _last_clear_color; }
+    [[nodiscard]] uint32_t clear_count() const { return _clear_count; }
+    [[nodiscard]] uint32_t draw_pixel_count() const { return _draw_pixel_count; }
+    [[nodiscard]] uint32_t present_count() const { return _present_count; }
 
 private:
-	Size _size;
-	Color _last_clear_color = Color::BLACK;
-	uint32_t _clear_count = 0;
-	uint32_t _draw_pixel_count = 0;
-	uint32_t _present_count = 0;
+    Size _size;
+    Color _last_clear_color = Color::BLACK;
+    uint32_t _clear_count = 0;
+    uint32_t _draw_pixel_count = 0;
+    uint32_t _present_count = 0;
 };
 
 class FakeInput final : public IInput {
 public:
-	void poll() override {
-		_previous = _current;
-		_current = _pending;
-		++_poll_count;
-	}
+    void poll() override {
+        _previous = _current;
+        _current = _pending;
+        ++_poll_count;
+    }
 
-	[[nodiscard]] ButtonState current_buttons() const override { return _current; }
-	[[nodiscard]] ButtonState previous_buttons() const override { return _previous; }
-	[[nodiscard]] uint32_t poll_count() const { return _poll_count; }
+    [[nodiscard]] ButtonState current_buttons() const override { return _current; }
+    [[nodiscard]] ButtonState previous_buttons() const override { return _previous; }
+    [[nodiscard]] uint32_t poll_count() const { return _poll_count; }
 
-	void set_button(ButtonBits button, bool pressed) {
-		_pending.set(button, pressed);
-	}
+    void set_button(ButtonBits button, bool pressed) { _pending.set(button, pressed); }
 
 private:
-	ButtonState _current;
-	ButtonState _previous;
-	ButtonState _pending;
-	uint32_t _poll_count = 0;
+    ButtonState _current;
+    ButtonState _previous;
+    ButtonState _pending;
+    uint32_t _poll_count = 0;
 };
-
 
 class FakePower final : public IPower {
 public:
-	[[nodiscard]] PowerStatus read_status() const override { return _status; }
-	[[nodiscard]] bool can_suspend() const override { return _allow_suspend; }
-	void suspend() override {}
+    [[nodiscard]] PowerStatus read_status() const override { return _status; }
+    [[nodiscard]] bool can_suspend() const override { return _allow_suspend; }
+    void suspend() override {}
 
 private:
-	PowerStatus _status{};
-	bool _allow_suspend = false;
+    PowerStatus _status{};
+    bool _allow_suspend = false;
 };
 
 class FakeTime final : public ITime {
 public:
-	[[nodiscard]] uint32_t ticks_ms() const override { return _ticks_ms; }
-	void delay_ms(uint32_t duration_ms) override { _ticks_ms += duration_ms; }
+    [[nodiscard]] uint32_t ticks_ms() const override { return _ticks_ms; }
+    void delay_ms(uint32_t duration_ms) override { _ticks_ms += duration_ms; }
 
 private:
-	uint32_t _ticks_ms = 0;
+    uint32_t _ticks_ms = 0;
 };
 
 class FakeAssetProvider final : public IAssetProvider {
 public:
-	bool get(uint16_t /*asset_id*/, const void*& out_data, uint32_t& out_size) const override {
-		out_data = nullptr;
-		out_size = 0;
-		return false;
-	}
-	bool exists(uint16_t /*asset_id*/) const override { return false; }
+    bool get(uint16_t /*asset_id*/, const void*& out_data, uint32_t& out_size) const override {
+        out_data = nullptr;
+        out_size = 0;
+        return false;
+    }
+    bool exists(uint16_t /*asset_id*/) const override { return false; }
 };
 
 class FakePlatform final : public IPlatform {
 public:
-	explicit FakePlatform(Size display_size = {80, 80}) : _display(display_size) {}
+    explicit FakePlatform(Size display_size = {80, 80}) : _display(display_size) {}
 
-	IDisplay& display() override { return _display; }
-	IInput& input() override { return _input; }
-	void write_audio_samples(const int16_t*, size_t count) override { _samples_written += count; }
-	[[nodiscard]] size_t samples_written() const { return _samples_written; }
-	IPower& power() override { return _power; }
-	ITime& time() override { return _time; }
-	IAssetProvider& assets() override { return _assets; }
+    IDisplay& display() override { return _display; }
+    IInput& input() override { return _input; }
+    void write_audio_samples(const int16_t*, size_t count) override { _samples_written += count; }
+    [[nodiscard]] size_t samples_written() const { return _samples_written; }
+    IPower& power() override { return _power; }
+    ITime& time() override { return _time; }
+    IAssetProvider& assets() override { return _assets; }
 
-	FakeDisplay& fake_display() { return _display; }
-	FakeInput& fake_input() { return _input; }
+    FakeDisplay& fake_display() { return _display; }
+    FakeInput& fake_input() { return _input; }
 
 private:
-	FakeDisplay _display;
-	FakeInput _input;
-	size_t _samples_written = 0;
-	FakePower _power;
-	FakeTime _time;
-	FakeAssetProvider _assets;
+    FakeDisplay _display;
+    FakeInput _input;
+    size_t _samples_written = 0;
+    FakePower _power;
+    FakeTime _time;
+    FakeAssetProvider _assets;
 };
 
 } // namespace handheld

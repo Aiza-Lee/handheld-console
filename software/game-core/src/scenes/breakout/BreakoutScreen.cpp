@@ -18,7 +18,9 @@ namespace bg = breakout;
 // ── RNG ─────────────────────────────────────────
 
 uint32_t BreakoutScreen::next_rng() {
-    _rng ^= _rng << 13U; _rng ^= _rng >> 17U; _rng ^= _rng << 5U;
+    _rng ^= _rng << 13U;
+    _rng ^= _rng >> 17U;
+    _rng ^= _rng << 5U;
     return _rng;
 }
 
@@ -51,8 +53,7 @@ void BreakoutScreen::load_level(uint8_t level) {
 
     for (auto& b : _balls) b.active = false;
     _ball_count = 1;
-    _balls[0] = {static_cast<int8_t>(_paddle_x + PADDLE_W / 2),
-                 static_cast<int8_t>(PADDLE_Y - 1), 0, 0, 0, 0, true};
+    _balls[0] = {static_cast<int8_t>(_paddle_x + PADDLE_W / 2), static_cast<int8_t>(PADDLE_Y - 1), 0, 0, 0, 0, true};
 
     for (auto& p : _powerups) p.active = false;
     _particles.clear();
@@ -72,7 +73,10 @@ void BreakoutScreen::spawn_triple(int8_t x, int8_t y) {
     int16_t slots[3] = {-1, -1, -1};
     int16_t found = 0;
     for (int16_t i = 0; i < MAX_BALLS && found < 3; ++i)
-        if (!_balls[i].active) { slots[found] = i; ++found; }
+        if (!_balls[i].active) {
+            slots[found] = i;
+            ++found;
+        }
     if (found < 3) return;
 
     const int8_t vx_list[3] = {-1, 0, 1};
@@ -91,7 +95,10 @@ void BreakoutScreen::split_balls() {
         // 找一个空闲槽位
         int16_t slot = -1;
         for (int16_t s = 0; s < MAX_BALLS; ++s)
-            if (!_balls[s].active) { slot = s; break; }
+            if (!_balls[s].active) {
+                slot = s;
+                break;
+            }
         if (slot < 0) break;
 
         auto& orig = _balls[i];
@@ -111,7 +118,11 @@ bool BreakoutScreen::step_ball(Ball& b, IScreenHost& host) {
     int8_t sx = (b.vx > 0) ? 1 : -1;
     for (int8_t s = 0; s < abs_vx; ++s) {
         int8_t nx = b.x + sx;
-        if (nx < 0 || nx >= 80) { b.vx = -b.vx; break; }
+        if (nx < 0 || nx >= 80) {
+            b.vx = -b.vx;
+            host.audio().play_sfx(sounds::SFX_WALL_BOUNCE, sounds::SFX_WALL_BOUNCE_COUNT);
+            break;
+        }
 
         uint8_t tile = _grid.hit_test(nx, b.y);
         if (tile != 0) {
@@ -127,6 +138,8 @@ bool BreakoutScreen::step_ball(Ball& b, IScreenHost& host) {
                 spawn_particles(row, col, tile);
                 host.audio().play_sfx(sounds::SFX_BRICK, sounds::SFX_BRICK_COUNT);
                 spawn_powerup(row, col);
+            } else {
+                host.audio().play_sfx(sounds::SFX_INDESTRUCTIBLE, sounds::SFX_INDESTRUCTIBLE_COUNT);
             }
             break;
         }
@@ -137,8 +150,16 @@ bool BreakoutScreen::step_ball(Ball& b, IScreenHost& host) {
     int8_t sy = (b.vy > 0) ? 1 : -1;
     for (int8_t s = 0; s < abs_vy; ++s) {
         int8_t ny = b.y + sy;
-        if (ny < 0) { b.vy = -b.vy; break; }
-        if (ny >= 80) { b.active = false; return true; }  // 掉出屏幕
+        if (ny < 0) {
+            b.vy = -b.vy;
+            host.audio().play_sfx(sounds::SFX_WALL_BOUNCE, sounds::SFX_WALL_BOUNCE_COUNT);
+            break;
+        }
+        if (ny >= 80) {
+            b.active = false;
+            host.audio().play_sfx(sounds::SFX_BALL_LOST, sounds::SFX_BALL_LOST_COUNT);
+            return true;
+        } // 掉出屏幕
 
         uint8_t tile = _grid.hit_test(b.x, ny);
         if (tile != 0) {
@@ -152,13 +173,14 @@ bool BreakoutScreen::step_ball(Ball& b, IScreenHost& host) {
                 spawn_particles(row, col, tile);
                 host.audio().play_sfx(sounds::SFX_BRICK, sounds::SFX_BRICK_COUNT);
                 spawn_powerup(row, col);
+            } else {
+                host.audio().play_sfx(sounds::SFX_INDESTRUCTIBLE, sounds::SFX_INDESTRUCTIBLE_COUNT);
             }
             break;
         }
 
         // 挡板碰撞（仅下降时检测）
-        if (ny >= PADDLE_Y && sy > 0 &&
-            b.x >= _paddle_x && b.x < _paddle_x + PADDLE_W) {
+        if (ny >= PADDLE_Y && sy > 0 && b.x >= _paddle_x && b.x < _paddle_x + PADDLE_W) {
             b.y = PADDLE_Y - 1;
             int16_t off = b.x - (_paddle_x + PADDLE_W / 2);
             for (int z = 0; z < 5; ++z) {
@@ -180,7 +202,8 @@ void BreakoutScreen::move_balls(IScreenHost& host) {
     for (int16_t i = 0; i < MAX_BALLS; ++i) {
         if (!_balls[i].active) continue;
         auto& b = _balls[i];
-        b.px = b.x; b.py = b.y;
+        b.px = b.x;
+        b.py = b.y;
         if (step_ball(b, host)) --_ball_count;
     }
 }
@@ -208,14 +231,13 @@ void BreakoutScreen::move_powerups() {
     }
 }
 
-void BreakoutScreen::collect_powerups() {
+void BreakoutScreen::collect_powerups(IScreenHost& host) {
     for (auto& p : _powerups) {
         if (!p.active) continue;
-        if (p.y + POWERUP_SIZE >= PADDLE_Y &&
-            p.y < PADDLE_Y + PADDLE_H &&
-            p.x + POWERUP_SIZE > _paddle_x &&
+        if (p.y + POWERUP_SIZE >= PADDLE_Y && p.y < PADDLE_Y + PADDLE_H && p.x + POWERUP_SIZE > _paddle_x &&
             p.x < _paddle_x + PADDLE_W) {
             p.active = false;
+            host.audio().play_sfx(sounds::SFX_POWERUP, sounds::SFX_POWERUP_COUNT);
             int8_t cx = static_cast<int8_t>(_paddle_x + PADDLE_W / 2);
             int8_t cy = static_cast<int8_t>(PADDLE_Y - 5);
             if (p.type == POWERUP_TYPE_TRIPLE) spawn_triple(cx, cy);
@@ -279,7 +301,7 @@ void BreakoutScreen::draw_overlay(IDisplay& display) const {
         TextRenderer::draw_text_centered(display, {40, 28}, won ? "YOU WIN!" : "GAME OVER", c, 1, BASIC_FONT_5X7);
         std::snprintf(buf, sizeof(buf), "SC:%d", _score);
         TextRenderer::draw_text_centered(display, {40, 42}, buf, Color::WHITE, 1, COMPACT_FONT_3X5);
-        TextRenderer::draw_text_centered(display, {40, 50}, "START=AGAIN", HINT_COLOR, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(display, {40, 50}, "START: AGAIN", HINT_COLOR, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(display, {40, 58}, "B: Menu", HINT_COLOR, 1, COMPACT_FONT_3X5);
     }
 
@@ -302,20 +324,32 @@ void BreakoutScreen::update(IPlatform& platform, IScreenHost& host) {
 
     if (_paused) {
         if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) _paused = false;
-        if (input.was_pressed(ButtonBits::B)) { host.switch_to(ScreenType::MENU); return; }
+        if (input.was_pressed(ButtonBits::B)) {
+            host.switch_to(ScreenType::MENU);
+            return;
+        }
         return;
     }
 
     if (_state == State::GAME_OVER) {
-        if (input.was_pressed(ButtonBits::START)) { _level = 0; reset_game(); }
-        if (input.was_pressed(ButtonBits::B)) { host.switch_to(ScreenType::MENU); return; }
+        if (input.was_pressed(ButtonBits::START)) {
+            _level = 0;
+            reset_game();
+        }
+        if (input.was_pressed(ButtonBits::B)) {
+            host.switch_to(ScreenType::MENU);
+            return;
+        }
         return;
     }
 
-    if (input.was_pressed(ButtonBits::START)) { _paused = true; return; }
+    if (input.was_pressed(ButtonBits::START)) {
+        _paused = true;
+        return;
+    }
 
     // 挡板移动
-    if (input.is_down(ButtonBits::LEFT))  _paddle_x -= PADDLE_SPEED;
+    if (input.is_down(ButtonBits::LEFT)) _paddle_x -= PADDLE_SPEED;
     if (input.is_down(ButtonBits::RIGHT)) _paddle_x += PADDLE_SPEED;
     _paddle_x = std::max<int16_t>(_paddle_x, 0);
     if (_paddle_x + PADDLE_W > 80) _paddle_x = static_cast<int16_t>(80 - PADDLE_W);
@@ -338,9 +372,10 @@ void BreakoutScreen::update(IPlatform& platform, IScreenHost& host) {
         return;
     }
 
-    collect_powerups();
+    collect_powerups(host);
 
     if (_grid.remaining() == 0) {
+        host.audio().play_sfx(sounds::SFX_LEVEL_CLEAR_BREAKOUT, sounds::SFX_LEVEL_CLEAR_BREAKOUT_COUNT);
         ++_level;
         if (_level >= LEVEL_COUNT) {
             _state = State::GAME_OVER;
@@ -379,8 +414,7 @@ void BreakoutScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
     // 球 + 拖尾
     for (const auto& b : _balls) {
         if (!b.active || b.y > 77) continue;
-        if (b.px != b.x || b.py != b.y)
-            display.draw_pixel(b.px, b.py, TRAIL_COLOR);
+        if (b.px != b.x || b.py != b.y) display.draw_pixel(b.px, b.py, TRAIL_COLOR);
         display.draw_pixel(b.x, b.y, BALL_COLOR);
     }
 
@@ -391,8 +425,7 @@ void BreakoutScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
     // 庆祝粒子
     if (_celebration > 0) {
         for (uint8_t i = 0; i < 8; ++i)
-            display.draw_pixel(static_cast<int16_t>(next_rng() % 80),
-                               static_cast<int16_t>(next_rng() % 80),
+            display.draw_pixel(static_cast<int16_t>(next_rng() % 80), static_cast<int16_t>(next_rng() % 80),
                                BRICK_COLORS[next_rng() % 5]);
     }
 
@@ -400,4 +433,15 @@ void BreakoutScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
     draw_overlay(display);
 }
 
-}  // namespace handheld
+void BreakoutScreen::render_menu_preview(IDisplay& display, const Rect& box, uint32_t /*frame*/) {
+    const auto bx = static_cast<int16_t>(box.x + 2);
+    const auto by = static_cast<int16_t>(box.y + 1);
+    const Color colors[2] = {rgb565(200, 60, 60), rgb565(190, 180, 40)};
+    for (int row = 0; row < 2; ++row)
+        for (int col = 0; col < 3; ++col)
+            for (int px = 0; px < 2; ++px)
+                display.draw_pixel(static_cast<int16_t>(bx + col * 2 + px), static_cast<int16_t>(by + row * 3),
+                                   colors[row]);
+    display.draw_pixel(static_cast<int16_t>(bx + 4), static_cast<int16_t>(by + 6), rgb565(220, 240, 255));
+}
+} // namespace handheld

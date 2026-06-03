@@ -34,7 +34,10 @@ void GrowBallScreen::draw_filled_circle(IDisplay& display, int16_t cx, int16_t c
         int16_t sx = cx - half_w;
         int16_t len = (half_w * 2) + 1;
         if (sy < 0 || sy >= SCREEN_HEIGHT) continue;
-        if (sx < 0) { len += sx; sx = 0; }
+        if (sx < 0) {
+            len += sx;
+            sx = 0;
+        }
         if (sx + len > SCREEN_WIDTH) len = SCREEN_WIDTH - sx;
         if (len <= 0) continue;
         display.draw_h_line(sx, sy, len, color);
@@ -49,16 +52,23 @@ void GrowBallScreen::draw_circle_outline(IDisplay& display, int16_t cx, int16_t 
     int16_t x = 0, y = r, d = 1 - r;
     while (x <= y) {
         auto plot = [&](int16_t px, int16_t py) {
-            if (px >= 0 && px < SCREEN_WIDTH && py >= 0 && py < SCREEN_HEIGHT)
-                display.draw_pixel(px, py, color);
+            if (px >= 0 && px < SCREEN_WIDTH && py >= 0 && py < SCREEN_HEIGHT) display.draw_pixel(px, py, color);
         };
-        plot(cx + x, cy - y); plot(cx + y, cy - x);
-        plot(cx + y, cy + x); plot(cx + x, cy + y);
-        plot(cx - x, cy + y); plot(cx - y, cy + x);
-        plot(cx - y, cy - x); plot(cx - x, cy - y);
+        plot(cx + x, cy - y);
+        plot(cx + y, cy - x);
+        plot(cx + y, cy + x);
+        plot(cx + x, cy + y);
+        plot(cx - x, cy + y);
+        plot(cx - y, cy + x);
+        plot(cx - y, cy - x);
+        plot(cx - x, cy - y);
         ++x;
-        if (d < 0) { d += 2 * x + 1; }
-        else { --y; d += 2 * (x - y) + 1; }
+        if (d < 0) {
+            d += 2 * x + 1;
+        } else {
+            --y;
+            d += 2 * (x - y) + 1;
+        }
     }
 }
 
@@ -81,14 +91,12 @@ void GrowBallScreen::update(IPlatform& platform, IScreenHost& host) {
         return;
     }
     if (_victory) {
-        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START))
-            enter(platform, host);
+        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) enter(platform, host);
         if (input.was_pressed(ButtonBits::B)) host.switch_to(ScreenType::MENU);
         return;
     }
     if (_game_over) {
-        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START))
-            enter(platform, host);
+        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) enter(platform, host);
         if (input.was_pressed(ButtonBits::B)) host.switch_to(ScreenType::MENU);
         return;
     }
@@ -102,10 +110,22 @@ void GrowBallScreen::update(IPlatform& platform, IScreenHost& host) {
     // build input vector
     float const thrust = GrowBallWorld::speed_limit(_world.player().radius) * PLAYER_THRUST_MULT;
     float input_vx = 0, input_vy = 0;
-    if (input.is_down(ButtonBits::UP))    input_vy -= thrust;
-    if (input.is_down(ButtonBits::DOWN))  input_vy += thrust;
-    if (input.is_down(ButtonBits::LEFT))  input_vx -= thrust;
+    if (input.is_down(ButtonBits::UP)) input_vy -= thrust;
+    if (input.is_down(ButtonBits::DOWN)) input_vy += thrust;
+    if (input.is_down(ButtonBits::LEFT)) input_vx -= thrust;
     if (input.is_down(ButtonBits::RIGHT)) input_vx += thrust;
+
+    // 推进器音效：方向键按住时每 8 帧播放一次
+    bool const thrusting = (input_vx != 0.0f || input_vy != 0.0f);
+    if (thrusting) {
+        ++_thrust_timer;
+        if (_thrust_timer >= 8) {
+            _thrust_timer = 0;
+            host.audio().play_sfx(sounds::SFX_THRUST, sounds::SFX_THRUST_COUNT);
+        }
+    } else {
+        _thrust_timer = 0;
+    }
 
     uint32_t const now_ms = platform.time().ticks_ms();
     float const radius_before = _world.player().radius;
@@ -137,8 +157,8 @@ void GrowBallScreen::render(IPlatform& platform, IScreenHost& host) {
     // grid
     float const wx_start = _camera_x - (CAMERA_OFFSET_X / _zoom);
     float const wy_start = _camera_y - (CAMERA_OFFSET_Y / _zoom);
-    float const wx_end   = _camera_x + (CAMERA_OFFSET_X / _zoom);
-    float const wy_end   = _camera_y + (CAMERA_OFFSET_Y / _zoom);
+    float const wx_end = _camera_x + (CAMERA_OFFSET_X / _zoom);
+    float const wy_end = _camera_y + (CAMERA_OFFSET_Y / _zoom);
 
     for (float wx = std::floor(wx_start / GRID_SPACING) * GRID_SPACING; wx <= wx_end; wx += GRID_SPACING) {
         int16_t sx = 0, sy0 = 0, sy1 = 0;
@@ -164,14 +184,10 @@ void GrowBallScreen::render(IPlatform& platform, IScreenHost& host) {
         int16_t const cx0 = std::max<int16_t>(sx0, 0);
         int16_t const cx1 = std::min<int16_t>(sx1, SCREEN_WIDTH);
 
-        if (sx0 >= 0 && sx0 < SCREEN_WIDTH && cy1 > cy0)
-            display.draw_v_line(sx0, cy0, cy1 - cy0, BORDER_COLOR);
-        if (sx1 >= 0 && sx1 < SCREEN_WIDTH && cy1 > cy0)
-            display.draw_v_line(sx1, cy0, cy1 - cy0, BORDER_COLOR);
-        if (sy0 >= 0 && sy0 < SCREEN_HEIGHT && cx1 > cx0)
-            display.draw_h_line(cx0, sy0, cx1 - cx0, BORDER_COLOR);
-        if (sy1 >= 0 && sy1 < SCREEN_HEIGHT && cx1 > cx0)
-            display.draw_h_line(cx0, sy1, cx1 - cx0, BORDER_COLOR);
+        if (sx0 >= 0 && sx0 < SCREEN_WIDTH && cy1 > cy0) display.draw_v_line(sx0, cy0, cy1 - cy0, BORDER_COLOR);
+        if (sx1 >= 0 && sx1 < SCREEN_WIDTH && cy1 > cy0) display.draw_v_line(sx1, cy0, cy1 - cy0, BORDER_COLOR);
+        if (sy0 >= 0 && sy0 < SCREEN_HEIGHT && cx1 > cx0) display.draw_h_line(cx0, sy0, cx1 - cx0, BORDER_COLOR);
+        if (sy1 >= 0 && sy1 < SCREEN_HEIGHT && cx1 > cx0) display.draw_h_line(cx0, sy1, cx1 - cx0, BORDER_COLOR);
     }
 
     // 收集所有球体，按屏幕半径排序后绘制（小先大后，大的覆盖小的）
@@ -203,11 +219,12 @@ void GrowBallScreen::render(IPlatform& platform, IScreenHost& host) {
         int16_t sx = 0, sy = 0;
         world_to_screen(player.x, player.y, sx, sy);
         auto sr = static_cast<int16_t>(player.radius * _zoom + 0.5f);
-        draw_list[draw_count++] = {sx, sy, static_cast<int16_t>(std::max<int>(sr, 1)), player.color, true, Color::WHITE};
+        draw_list[draw_count++] = {sx,           sy,   static_cast<int16_t>(std::max<int>(sr, 1)),
+                                   player.color, true, Color::WHITE};
     }
 
     std::sort(draw_list, draw_list + draw_count,
-        [](const BallDrawInfo& a, const BallDrawInfo& b) { return a.sr < b.sr; });
+              [](const BallDrawInfo& a, const BallDrawInfo& b) { return a.sr < b.sr; });
 
     for (int i = 0; i < draw_count; ++i) {
         const auto& b = draw_list[i];
@@ -247,4 +264,23 @@ void GrowBallScreen::render(IPlatform& platform, IScreenHost& host) {
     }
 }
 
-}  // namespace handheld
+void GrowBallScreen::render_menu_preview(IDisplay& display, const Rect& box, uint32_t frame) {
+    const auto cx = static_cast<int16_t>(box.x + box.width / 2);
+    const auto cy = static_cast<int16_t>(box.y + box.height / 2);
+    const Color c = rgb565(180, 140, 240);
+    display.draw_pixel(cx, cy, rgb565(240, 200, 100));
+    int r = 1 + static_cast<int>((frame / 15) % 3);
+    if (r >= 1) {
+        display.draw_pixel(static_cast<int16_t>(cx + 1), cy, c);
+        display.draw_pixel(static_cast<int16_t>(cx - 1), cy, c);
+        display.draw_pixel(cx, static_cast<int16_t>(cy + 1), c);
+        display.draw_pixel(cx, static_cast<int16_t>(cy - 1), c);
+    }
+    if (r >= 2) {
+        display.draw_pixel(static_cast<int16_t>(cx + 2), cy, rgb565(140, 100, 200));
+        display.draw_pixel(static_cast<int16_t>(cx - 2), cy, rgb565(140, 100, 200));
+        display.draw_pixel(cx, static_cast<int16_t>(cy + 2), rgb565(140, 100, 200));
+        display.draw_pixel(cx, static_cast<int16_t>(cy - 2), rgb565(140, 100, 200));
+    }
+}
+} // namespace handheld
