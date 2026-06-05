@@ -675,9 +675,26 @@ inline constexpr size_t SFX_TETRIS_GAMEOVER_COUNT = 3;
 // ── 2048 ──────────────────────────────────────────────────────────
 
 inline constexpr Tone BGM_2048[] = {
-    {REST, 1000},
+    {  C4, 300},
+    {  E4, 200},
+    {  G4, 300},
+    {  B4, 200},
+    {  C5, 400},
+    {  B4, 200},
+    {  G4, 200},
+    {  E4, 300},
+    {REST, 200},
+    {  A3, 300},
+    {  C4, 200},
+    {  E4, 300},
+    {  G4, 200},
+    {  A4, 300},
+    {  G4, 200},
+    {  E4, 300},
+    {  D4, 200},
+    {REST, 300},
 };
-inline constexpr size_t BGM_2048_COUNT = 1;
+inline constexpr size_t BGM_2048_COUNT = 18;
 
 inline constexpr Tone SFX_2048_MOVE[] = {
     {C4, 40},
