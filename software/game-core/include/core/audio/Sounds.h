@@ -699,10 +699,42 @@ inline constexpr size_t SFX_2048_GAMEOVER_COUNT = 3;
 
 // ── Pong ──────────────────────────────────────────────────────────
 
+// 乒乓球经典 8-bit 比赛音乐（重复循环）
 inline constexpr Tone BGM_PONG[] = {
-    {REST, 1000},
+    {  C4, 200},
+    {  G3, 200},
+    {  C4, 200},
+    {REST, 200},
+    {  E4, 200},
+    {  C4, 200},
+    {  G3, 200},
+    {REST, 200},
+    {  A3, 200},
+    {  E4, 200},
+    {  A3, 200},
+    {REST, 200},
+    {  C4, 200},
+    {  A3, 200},
+    {  E4, 200},
+    {REST, 200},
+    {  D4, 200},
+    {  A3, 200},
+    {  D4, 200},
+    {REST, 200},
+    {  F4, 200},
+    {  D4, 200},
+    {  A3, 200},
+    {REST, 200},
+    {  G3, 200},
+    {  B3, 200},
+    {  D4, 200},
+    {  G4, 200},
+    {REST, 200},
+    {  C4, 300},
+    {  G3, 200},
+    {REST, 300},
 };
-inline constexpr size_t BGM_PONG_COUNT = 1;
+inline constexpr size_t BGM_PONG_COUNT = 32;
 
 inline constexpr Tone SFX_PONG_HIT[] = {
     {A4, 30},
