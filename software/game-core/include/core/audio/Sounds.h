@@ -643,10 +643,22 @@ inline constexpr size_t SFX_TOGGLE_OFF_COUNT = 2;
 
 // ── Tetris ────────────────────────────────────────────────────────
 
+// 经典 Korobeiniki 旋律（Tetris A 主题）简化循环
 inline constexpr Tone BGM_TETRIS[] = {
-    {REST, 1000},
+    {  E5, 400}, {  B4, 200}, {  A4, 200}, {  D5, 400},
+    {  C5, 200}, {  B4, 200}, {  A4, 200}, {  G4, 200},
+    {REST, 200},
+    {  E5, 400}, {  C5, 200}, {  D5, 200}, {  E5, 400},
+    {  B4, 200}, {  A4, 200}, {  G4, 200}, {  A4, 200},
+    {REST, 200},
+    {  D5, 400}, {  A4, 200}, {  G4, 200}, {  E4, 400},
+    {  D4, 200}, {  C4, 200}, {  B3, 200}, {  C4, 200},
+    {REST, 200},
+    {  E4, 400}, {  C4, 200}, {  D4, 200}, {  E4, 400},
+    {  A3, 200}, {  G3, 200}, {  E3, 200}, {  G3, 200},
+    {REST, 400},
 };
-inline constexpr size_t BGM_TETRIS_COUNT = 1;
+inline constexpr size_t BGM_TETRIS_COUNT = 33;
 
 inline constexpr Tone SFX_TETRIS_MOVE[] = {
     {C5, 30},
