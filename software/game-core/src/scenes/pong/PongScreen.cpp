@@ -46,7 +46,7 @@ void draw_mode_box(IDisplay& d, int16_t center_x, int16_t y, const char* label, 
     d.fill_rect(Rect{x, y, MODE_SELECT_BOX_W, MODE_SELECT_BOX_H}, fill);
     d.draw_rect(Rect{x, y, MODE_SELECT_BOX_W, MODE_SELECT_BOX_H}, border);
     TextRenderer::draw_text_centered(d, {center_x, static_cast<int16_t>(y + 2)}, label, border, 1,
-                                     BASIC_FONT_5X7);
+                                     COMPACT_FONT_3X5);
 }
 
 } // namespace
@@ -110,7 +110,10 @@ void PongScreen::update(IPlatform& platform, IScreenHost& host) {
 
     // 暂停：START/A 继续，B 返回菜单
     if (_paused) {
-        if (input.was_pressed(ButtonBits::START) || input.was_pressed(ButtonBits::A)) _paused = false;
+        if (input.was_pressed(ButtonBits::START) || input.was_pressed(ButtonBits::A)) {
+            _paused = false;
+            host.audio().resume_bgm();
+        }
         if (input.was_pressed(ButtonBits::B)) {
             host.switch_to(ScreenType::MENU);
             return;
@@ -152,12 +155,14 @@ void PongScreen::update(IPlatform& platform, IScreenHost& host) {
     // START 暂停（仅 PLAY / SERVE 阶段）
     if (_phase != Phase::GAME_OVER && input.was_pressed(ButtonBits::START)) {
         _paused = true;
+        host.audio().pause_bgm();
         return;
     }
 
     if (_phase == Phase::GAME_OVER) {
-        if (input.was_pressed(ButtonBits::START)) {
+        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
             reset_game();
+            if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_PONG, sounds::BGM_PONG_COUNT);
             return;
         }
         if (input.was_pressed(ButtonBits::B)) {
@@ -353,7 +358,7 @@ void PongScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
         TextRenderer::draw_text_centered(d, {40, MODE_SELECT_HINT_Y}, "L/R: SWITCH", HINT_COLOR, 1,
                                          COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(d, {40, static_cast<int16_t>(MODE_SELECT_HINT_Y + 8)},
-                                         "A: START  B: MENU", HINT_COLOR, 1, COMPACT_FONT_3X5);
+                                         "A/START  B: Menu", HINT_COLOR, 1, COMPACT_FONT_3X5);
         return;
     }
 
@@ -419,7 +424,7 @@ void PongScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
         d.fill_rect(Rect{PAUSE_RECT_X, PAUSE_RECT_Y, PAUSE_RECT_W, PAUSE_RECT_H}, OVERLAY_BG);
         d.draw_rect(Rect{PAUSE_RECT_X, PAUSE_RECT_Y, PAUSE_RECT_W, PAUSE_RECT_H}, MODE_COLOR);
         TextRenderer::draw_text_centered(d, {40, 28}, "PAUSED", MODE_COLOR, 1, BASIC_FONT_5X7);
-        TextRenderer::draw_text_centered(d, {40, 42}, "A: Resume", SCORE_COLOR, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(d, {40, 42}, "A/START: Resume", SCORE_COLOR, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(d, {40, 52}, "B: Menu", HINT_COLOR, 1, COMPACT_FONT_3X5);
     }
     if (_phase == Phase::GAME_OVER) {
@@ -429,7 +434,7 @@ void PongScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
         const char* title = left_won ? "P1 WINS!" : "P2 WINS!";
         d.draw_rect(Rect{END_RECT_X, END_RECT_Y, END_RECT_W, END_RECT_H}, title_c);
         TextRenderer::draw_text_centered(d, {40, 28}, title, title_c, 1, BASIC_FONT_5X7);
-        TextRenderer::draw_text_centered(d, {40, 42}, "START: Again", HINT_COLOR, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(d, {40, 42}, "A/START: Again", HINT_COLOR, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(d, {40, 52}, "B: Menu", HINT_COLOR, 1, COMPACT_FONT_3X5);
     }
 }

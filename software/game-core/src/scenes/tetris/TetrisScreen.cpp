@@ -44,19 +44,26 @@ bool TetrisScreen::collides(int8_t x, int8_t y, uint8_t piece, uint8_t rot) cons
 
 void TetrisScreen::try_rotate() {
     uint8_t new_rot = static_cast<uint8_t>((_current_rot + 1U) & 0x3U);
-    // 简单踢墙：先尝试 0/左/右 偏移，都失败再尝试上踢
-    const int8_t kicks[3] = {0, -1, 1};
-    for (signed char kick : kicks) {
-        int8_t nx = static_cast<int8_t>(_current_x + kick);
-        if (!collides(nx, _current_y, _current_piece, new_rot)) {
+    // 简化 SRS-style kick 列表：水平偏移 + 垂直偏移组合
+    // 7 个候选：center / ±1 / ±2 / up1 / up1+right1（I-piece 视觉居中提示）
+    const int8_t kicks[7][2] = {
+        { 0,  0},
+        {-1,  0},
+        { 1,  0},
+        {-2,  0},
+        { 2,  0},
+        { 0, -1},
+        { 1, -1},
+    };
+    for (auto& k : kicks) {
+        int8_t nx = static_cast<int8_t>(_current_x + k[0]);
+        int8_t ny = static_cast<int8_t>(_current_y + k[1]);
+        if (!collides(nx, ny, _current_piece, new_rot)) {
             _current_x = nx;
+            _current_y = ny;
             _current_rot = new_rot;
             return;
         }
-    }
-    if (!collides(_current_x, static_cast<int8_t>(_current_y - 1), _current_piece, new_rot)) {
-        _current_y = static_cast<int8_t>(_current_y - 1);
-        _current_rot = new_rot;
     }
 }
 
@@ -121,7 +128,7 @@ void TetrisScreen::spawn_piece() {
 }
 
 void TetrisScreen::lock_piece(IScreenHost& host) {
-    // 将方块写入堆叠
+    // 将方块写入堆叠（by < 0 或 by >= ROWS 的格子静默丢弃）
     for (int r = 0; r < 4; ++r) {
         for (int c = 0; c < 4; ++c) {
             if (!piece_cell(_current_piece, _current_rot, r, c)) continue;
@@ -132,6 +139,19 @@ void TetrisScreen::lock_piece(IScreenHost& host) {
             _stack[by * COLS + bx] = static_cast<uint8_t>(_current_piece + 1U);
         }
     }
+
+    // 死亡检测：遍历前 2 行，任一格子非空即 game over
+    // （覆盖 I/O piece 4×4 盒无 row 0 格子、仍能 spawn 进 row 1 空隙的 bug）
+    for (int r = 0; r < 2; ++r) {
+        for (int c = 0; c < COLS; ++c) {
+            if (_stack[r * COLS + c] != 0) {
+                _game_over = true;
+                goto end_dead_check;
+            }
+        }
+    }
+    end_dead_check:;
+
     // 检查并消除满行
     int cleared = 0;
     for (int r = 0; r < ROWS; ++r) {
@@ -179,6 +199,7 @@ void TetrisScreen::update(IPlatform& platform, IScreenHost& host) {
     if (_paused) {
         if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
             _paused = false;
+            host.audio().resume_bgm();
         }
         if (input.was_pressed(ButtonBits::B)) {
             host.switch_to(ScreenType::MENU);
@@ -188,7 +209,10 @@ void TetrisScreen::update(IPlatform& platform, IScreenHost& host) {
     }
 
     if (_game_over) {
-        if (input.was_pressed(ButtonBits::START)) reset_game();
+        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
+            reset_game();
+            if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_TETRIS, sounds::BGM_TETRIS_COUNT);
+        }
         if (input.was_pressed(ButtonBits::B)) {
             host.switch_to(ScreenType::MENU);
             return;
@@ -198,12 +222,14 @@ void TetrisScreen::update(IPlatform& platform, IScreenHost& host) {
 
     if (input.was_pressed(ButtonBits::START)) {
         _paused = true;
+        host.audio().pause_bgm();
         return;
     }
 
     // 游戏中按 B：先暂停，再在暂停中按 B 才退出
     if (input.was_pressed(ButtonBits::B)) {
         _paused = true;
+        host.audio().pause_bgm();
         return;
     }
 
@@ -275,7 +301,7 @@ void TetrisScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
     for (int c = 0; c <= COLS; ++c) {
         d.draw_v_line(static_cast<int16_t>(AREA_X + c * CELL), AREA_Y, AREA_H, COLOR_GRID);
     }
-    d.draw_rect(Rect{AREA_X, AREA_Y, AREA_W, AREA_H}, COLOR_BORDER);
+    d.draw_rect(Rect{AREA_X, AREA_Y, AREA_W + 1, AREA_H + 1}, COLOR_BORDER);
 
     // ── 已堆叠方块 ───────────────────────────────
     for (int r = 0; r < ROWS; ++r) {
@@ -298,6 +324,9 @@ void TetrisScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
             }
         }
     }
+
+    // ── 高度限制线（row 2 上沿，y=14，红色 1px 横线） ────────────
+    d.draw_h_line(AREA_X, static_cast<int16_t>(AREA_Y + 2 * CELL), AREA_W, COLOR_HEIGHT_LIMIT);
 
     // ── NEXT 预览（左侧 8×8 区） ───────────────────
     TextRenderer::draw_text(d, {4, 12}, "NEXT", COLOR_HINT, 1, COMPACT_FONT_3X5);
@@ -326,7 +355,7 @@ void TetrisScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
         d.fill_rect(Rect{PAUSE_RECT_X, PAUSE_RECT_Y, PAUSE_RECT_W, PAUSE_RECT_H}, COLOR_OVERLAY);
         d.draw_rect(Rect{PAUSE_RECT_X, PAUSE_RECT_Y, PAUSE_RECT_W, PAUSE_RECT_H}, COLOR_PAUSE);
         TextRenderer::draw_text_centered(d, {40, 28}, "PAUSED", COLOR_PAUSE, 1, BASIC_FONT_5X7);
-        TextRenderer::draw_text_centered(d, {40, 42}, "A: Resume", COLOR_PAUSE, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(d, {40, 42}, "A/START: Resume", COLOR_PAUSE, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(d, {40, 52}, "B: Menu", COLOR_HINT, 1, COMPACT_FONT_3X5);
     }
     if (_game_over) {
@@ -338,7 +367,7 @@ void TetrisScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
         std::snprintf(buf, sizeof(buf), "LV %u  N %u",
                       static_cast<unsigned>(_level), static_cast<unsigned>(_lines));
         TextRenderer::draw_text_centered(d, {40, 42}, buf, COLOR_HUD, 1, COMPACT_FONT_3X5);
-        TextRenderer::draw_text_centered(d, {40, 50}, "START: AGAIN", COLOR_HINT, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(d, {40, 50}, "A/START: Again", COLOR_HINT, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(d, {40, 58}, "B: Menu", COLOR_HINT, 1, COMPACT_FONT_3X5);
     }
 }

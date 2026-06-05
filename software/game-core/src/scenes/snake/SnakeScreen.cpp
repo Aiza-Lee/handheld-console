@@ -161,7 +161,10 @@ void SnakeScreen::update(IPlatform& platform, IScreenHost& host) {
     auto& input = platform.input();
 
     if (_paused) {
-        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) _paused = false;
+        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
+            _paused = false;
+            host.audio().resume_bgm();
+        }
         if (input.was_pressed(ButtonBits::B)) {
             host.switch_to(ScreenType::MENU);
             return;
@@ -170,10 +173,14 @@ void SnakeScreen::update(IPlatform& platform, IScreenHost& host) {
     }
     if (!_game_over && input.was_pressed(ButtonBits::START)) {
         _paused = true;
+        host.audio().pause_bgm();
         return;
     }
     if (_game_over) {
-        if (input.was_pressed(ButtonBits::START)) reset_game();
+        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
+            reset_game();
+            if (C::ENABLE_BGM) host.audio().set_bgm(sounds::BGM_SNAKE, sounds::BGM_SNAKE_COUNT);
+        }
         if (input.was_pressed(ButtonBits::B)) {
             host.switch_to(ScreenType::MENU);
             return;
@@ -272,14 +279,14 @@ void SnakeScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
         buf[6] = ' ';
         itoa_dec(static_cast<uint16_t>(_score), buf + 7, sizeof(buf) - 7);
         TextRenderer::draw_text_centered(d, {40, 42}, buf, C::SCORE_COLOR, 1, COMPACT_FONT_3X5);
-        TextRenderer::draw_text_centered(d, {40, 50}, "START: AGAIN", C::HINT_COLOR, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(d, {40, 50}, "A/START: Again", C::HINT_COLOR, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(d, {40, 58}, "B: Menu", C::HINT_COLOR, 1, COMPACT_FONT_3X5);
     }
     if (_paused) {
         d.fill_rect(Rect{C::PAUSE_RECT_X, C::PAUSE_RECT_Y, C::PAUSE_RECT_W, C::PAUSE_RECT_H}, C::PAUSE_BG);
         d.draw_rect(Rect{C::PAUSE_RECT_X, C::PAUSE_RECT_Y, C::PAUSE_RECT_W, C::PAUSE_RECT_H}, C::HEAD_COLOR);
         TextRenderer::draw_text_centered(d, {40, 28}, "PAUSED", C::PAUSE_TEXT, 1, BASIC_FONT_5X7);
-        TextRenderer::draw_text_centered(d, {40, 42}, "A: Resume", C::PAUSE_TEXT, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(d, {40, 42}, "A/START: Resume", C::PAUSE_TEXT, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(d, {40, 52}, "B: Menu", C::HINT_COLOR, 1, COMPACT_FONT_3X5);
     }
 }

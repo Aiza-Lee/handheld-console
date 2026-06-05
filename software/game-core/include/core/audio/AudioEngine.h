@@ -28,6 +28,7 @@ public:
             _channels[BGM_CHANNEL].active = false;
             return;
         }
+		_bgm_paused = false;
         Channel& ch = _channels[BGM_CHANNEL];
         ch.active = true;
         ch.tones = tones;
@@ -66,6 +67,13 @@ public:
     }
 
     void stop_bgm() { _channels[BGM_CHANNEL].active = false; }
+
+    // 暂停 BGM：fill_buffer 跳过 BGM channel；channel 状态（位置/相位）保留，
+    // 后续 resume_bgm() 从暂停点继续。
+    void pause_bgm() { _bgm_paused = true; }
+
+    // 恢复 BGM：从 pause_bgm() 的暂停点继续。
+    void resume_bgm() { _bgm_paused = false; }
 
     [[nodiscard]] bool is_playing() const {
         for (const auto& ch : _channels) {
@@ -125,7 +133,9 @@ public:
     void fill_buffer(int16_t* buf, size_t sample_count) {
         for (size_t i = 0; i < sample_count; ++i) {
             int32_t sum = 0;
-            for (auto& ch : _channels) {
+            for (int ch_idx = 0; ch_idx < CHANNEL_COUNT; ++ch_idx) {
+                if (ch_idx == BGM_CHANNEL && _bgm_paused) continue;
+                Channel& ch = _channels[ch_idx];
                 if (ch.active) {
                     sum += _sample(ch);
                     _advance(ch);
@@ -152,6 +162,7 @@ private:
     Channel _channels[CHANNEL_COUNT];
     uint8_t _bgm_volume_pct = 5;
     uint8_t _sfx_volume_pct = 10;
+    bool _bgm_paused = false; // BGM 暂停标志；true 时 fill_buffer 跳过 BGM channel
 
     // 纯整数方波：相位 < SAMPLE_RATE/2 输出 +amp，否则输出 -amp
     [[nodiscard]] int32_t _sample(const Channel& ch) const {

@@ -20,7 +20,7 @@ constexpr Color BOOT_BORDER = rgb565(25, 35, 60);
 
 constexpr int16_t STAR_COUNT = 16;
 constexpr const char* TITLE = "JLL Gamepad";
-constexpr const char* HINT = "Press any key";
+constexpr const char* HINT = "A/START: continue";
 
 // 布局
 constexpr int16_t TITLE_Y = 28;

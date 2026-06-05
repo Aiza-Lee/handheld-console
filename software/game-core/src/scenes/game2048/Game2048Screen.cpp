@@ -201,7 +201,10 @@ void Game2048Screen::update(IPlatform& platform, IScreenHost& host) {
     auto& input = platform.input();
 
     if (_paused) {
-        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) _paused = false;
+        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
+            _paused = false;
+            host.audio().resume_bgm();
+        }
         if (input.was_pressed(ButtonBits::B)) {
             host.switch_to(ScreenType::MENU);
             return;
@@ -211,8 +214,8 @@ void Game2048Screen::update(IPlatform& platform, IScreenHost& host) {
 
     if (_game_over) {
         if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
-			host.audio().set_bgm(sounds::BGM_2048, sounds::BGM_2048_COUNT);
             reset_game();
+            if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_2048, sounds::BGM_2048_COUNT);
             return;
         }
         if (input.was_pressed(ButtonBits::B)) {
@@ -224,6 +227,7 @@ void Game2048Screen::update(IPlatform& platform, IScreenHost& host) {
 
     if (input.was_pressed(ButtonBits::START)) {
         _paused = true;
+        host.audio().pause_bgm();
         return;
     }
 
@@ -247,7 +251,10 @@ void Game2048Screen::update(IPlatform& platform, IScreenHost& host) {
             // 检查胜利
             for (int8_t r = 0; r < GRID && !_won; ++r)
                 for (int8_t c = 0; c < GRID && !_won; ++c)
-                    if (_board[r][c] >= WIN_VALUE) _won = true;
+                    if (_board[r][c] >= WIN_VALUE) {
+                        _won = true;
+                        host.audio().pause_bgm();
+                    }
         }
     }
 
@@ -268,7 +275,7 @@ Color Game2048Screen::tile_color(uint16_t value) const {
         case 8: return rgb565(240, 165, 70);
         case 16: return rgb565(230, 110, 70);
         case 32: return rgb565(225, 200, 80);
-        case 64: return rgb565(150, 210, 90);
+        case 64: return rgb565(160, 195, 130); // 草绿（降饱和）
         case 128: return rgb565(95, 175, 220);
         case 256: return rgb565(80, 130, 215);
         case 512: return rgb565(130, 95, 200);
@@ -357,7 +364,7 @@ void Game2048Screen::render(IPlatform& platform, IScreenHost& /*host*/) {
         d.fill_rect(Rect{PAUSE_RECT_X, PAUSE_RECT_Y, PAUSE_RECT_W, PAUSE_RECT_H}, PAUSE_BG);
         d.draw_rect(Rect{PAUSE_RECT_X, PAUSE_RECT_Y, PAUSE_RECT_W, PAUSE_RECT_H}, PAUSE_BORDER);
         TextRenderer::draw_text_centered(d, {40, 28}, "PAUSED", PAUSE_TEXT, 1, BASIC_FONT_5X7);
-        TextRenderer::draw_text_centered(d, {40, 42}, "A: Resume", PAUSE_TEXT, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(d, {40, 42}, "A/START: Resume", PAUSE_TEXT, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(d, {40, 52}, "B: Menu", HINT_COLOR, 1, COMPACT_FONT_3X5);
     }
 
@@ -375,7 +382,7 @@ void Game2048Screen::render(IPlatform& platform, IScreenHost& /*host*/) {
         buf[6] = ' ';
         itoa_dec(static_cast<uint16_t>(_score > 9999 ? 9999 : _score), buf + 7, sizeof(buf) - 7);
         TextRenderer::draw_text_centered(d, {40, 42}, buf, Color::WHITE, 1, COMPACT_FONT_3X5);
-        TextRenderer::draw_text_centered(d, {40, 52}, "A: New Game", HINT_COLOR, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(d, {40, 52}, "A/START: New Game", HINT_COLOR, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(d, {40, 58}, "B: Menu", HINT_COLOR, 1, COMPACT_FONT_3X5);
     }
 }

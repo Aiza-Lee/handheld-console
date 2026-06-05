@@ -61,14 +61,17 @@ void PlaygroundScreen::update(IPlatform& platform, IScreenHost& host) {
 
     auto& input = platform.input();
 
+    // SELECT 始终可用（guide 覆盖层）
     if (input.was_pressed(ButtonBits::SELECT)) {
         host.push_screen(ScreenType::GUIDE);
         return;
     }
 
+    // START = 切 mode（Playground 例外：D-pad 是核心玩法瞄准器，无键可做"系统暂停"）
     if (input.was_pressed(ButtonBits::START)) {
-        _mode = static_cast<uint8_t>((_mode + 1) % MODE_COUNT);
+        _mode = static_cast<uint8_t>((_mode + 1U) % MODE_COUNT);
         host.audio().play_sfx(sounds::SFX_MODE_SWITCH, sounds::SFX_MODE_SWITCH_COUNT);
+        return;
     }
 
     if (input.was_pressed(ButtonBits::A)) {

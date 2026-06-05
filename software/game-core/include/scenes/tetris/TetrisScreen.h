@@ -13,12 +13,12 @@ constexpr bool ENABLE_BGM = true;
 
 // ── 网格尺寸 ──────────────────────────────────────────────
 constexpr int16_t COLS = 10;
-constexpr int16_t ROWS = 18;
+constexpr int16_t ROWS = 17;
 constexpr int16_t CELL = 4;
 constexpr int16_t AREA_W = COLS * CELL;  // 40
-constexpr int16_t AREA_H = ROWS * CELL;  // 72
+constexpr int16_t AREA_H = ROWS * CELL;  // 68
 constexpr int16_t AREA_X = 20;
-constexpr int16_t AREA_Y = 8;
+constexpr int16_t AREA_Y = 9;
 
 // ── HUD ──────────────────────────────────────────────────
 constexpr int16_t STATUS_H = 8;
@@ -54,6 +54,7 @@ constexpr Color COLOR_HINT = rgb565(80, 100, 120);
 constexpr Color COLOR_GAMEOVER = rgb565(255, 145, 190);
 constexpr Color COLOR_PAUSE = rgb565(100, 200, 140);
 constexpr Color COLOR_OVERLAY = rgb565(8, 12, 16);
+constexpr Color COLOR_HEIGHT_LIMIT = rgb565(255, 80, 80); // 高度限制线（危险警告）
 
 // ── 覆盖层尺寸 ────────────────────────────────────────────
 constexpr int16_t PAUSE_RECT_X = 10;

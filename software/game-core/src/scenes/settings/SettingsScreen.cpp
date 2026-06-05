@@ -96,6 +96,25 @@ void SettingsScreen::update(IPlatform& platform, IScreenHost& host) {
         host.audio().play_sfx(sounds::SFX_SELECT, sounds::SFX_SELECT_COUNT);
     }
 
+    // A = 调整值（增量），同 RIGHT 方向（BUTTONS.md § 2）
+    if (input.was_pressed(ButtonBits::A)) {
+        uint8_t vol = (_selected_row == 0) ? audio.bgm_volume() : audio.sfx_volume();
+        int16_t new_vol = std::min(std::max(static_cast<int16_t>(vol) + VOLUME_STEP, 0), 100);
+        if (_selected_row == 0) {
+            audio.set_bgm_volume(static_cast<uint8_t>(new_vol));
+        } else {
+            audio.set_sfx_volume(static_cast<uint8_t>(new_vol));
+        }
+        host.audio().play_sfx(sounds::SFX_SELECT, sounds::SFX_SELECT_COUNT);
+    }
+
+    // START = 保存退出（a11y 双键，与 B 等价；音量已实时生效）
+    if (input.was_pressed(ButtonBits::START)) {
+        host.audio().play_sfx(sounds::SFX_BACK, sounds::SFX_BACK_COUNT);
+        host.switch_to(ScreenType::MENU);
+        return;
+    }
+
     if (input.was_pressed(ButtonBits::B)) {
         host.audio().play_sfx(sounds::SFX_BACK, sounds::SFX_BACK_COUNT);
         host.switch_to(ScreenType::MENU);
@@ -146,9 +165,9 @@ void SettingsScreen::render(IPlatform& platform, IScreenHost& host) {
     }
 
     const auto hint_y = static_cast<int16_t>(ROW_START_Y + 2 * (ROW_H + ROW_GAP));
-    TextRenderer::draw_text_centered(display, {cx, hint_y}, "B: Back", HINT_COLOR, 1, COMPACT_FONT_3X5);
-    TextRenderer::draw_text_centered(display, {cx, static_cast<int16_t>(hint_y + 6)}, "L/R: Adjust", HINT_COLOR, 1,
-                                     COMPACT_FONT_3X5);
+    TextRenderer::draw_text_centered(display, {cx, hint_y}, "A/L/R: Adjust", HINT_COLOR, 1, COMPACT_FONT_3X5);
+    TextRenderer::draw_text_centered(display, {cx, static_cast<int16_t>(hint_y + 6)}, "B/START: Save+Exit", HINT_COLOR,
+                                     1, COMPACT_FONT_3X5);
 }
 
 void SettingsScreen::render_menu_preview(IDisplay& display, const Rect& box, uint32_t /*frame*/) {

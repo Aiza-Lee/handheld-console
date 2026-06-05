@@ -5,6 +5,7 @@
 #include "core/graphics/TextRenderer.h"
 #include "core/runtime/IScreenHost.h"
 #include "core/runtime/ScreenType.h"
+#include <algorithm>
 #include <cstdio>
 #include "core/audio/Sounds.h"
 
@@ -57,7 +58,7 @@ void InvadersScreen::reset_game() {
     _frame = 0;
     _move_timer = 0;
     int16_t interval = static_cast<int16_t>(INIT_MOVE_INTERVAL - (_level - 1) * LEVEL_SPEED_STEP);
-    if (interval < static_cast<int16_t>(MIN_MOVE_INTERVAL)) interval = static_cast<int16_t>(MIN_MOVE_INTERVAL);
+    interval = std::max(interval, static_cast<int16_t>(MIN_MOVE_INTERVAL));
     _move_interval = static_cast<uint32_t>(interval);
     _shoot_timer = 0;
     _dying_timer = 0;
@@ -139,7 +140,7 @@ void InvadersScreen::enemy_shoot(IScreenHost& host) {
 
 // ── 敌人移动 ──────────────────────────────────────────────────────
 
-void InvadersScreen::move_enemies(IScreenHost& host) {
+void InvadersScreen::move_enemies(IScreenHost&  /*host*/) {
     ++_move_timer;
     if (_move_timer < _move_interval) return;
     _move_timer = 0;
@@ -215,7 +216,7 @@ void InvadersScreen::move_bullets(IScreenHost& host) {
                     host.audio().play_sfx(sounds::SFX_EXPLOSION, sounds::SFX_EXPLOSION_COUNT);
                     _move_interval =
                         INIT_MOVE_INTERVAL - static_cast<uint32_t>((TOTAL_ENEMIES - _enemies_alive_count) / 4);
-                    if (_move_interval < MIN_MOVE_INTERVAL) _move_interval = MIN_MOVE_INTERVAL;
+                    _move_interval = std::max(_move_interval, MIN_MOVE_INTERVAL);
                     break;
                 }
             }
@@ -279,9 +280,9 @@ void InvadersScreen::move_bullets(IScreenHost& host) {
 // ── 护盾 ──────────────────────────────────────────────────────────
 
 void InvadersScreen::init_shields() {
-    for (int16_t s = 0; s < SHIELD_COUNT; ++s)
+    for (auto & _shield : _shields)
         for (int16_t sy = 0; sy < SHIELD_H; ++sy)
-            for (int16_t sx = 0; sx < SHIELD_W; ++sx) _shields[s][sy][sx] = true;
+            for (int16_t sx = 0; sx < SHIELD_W; ++sx) _shield[sy][sx] = true;
 }
 
 bool InvadersScreen::damage_shield(int16_t bx, int16_t by) {
@@ -328,8 +329,8 @@ void InvadersScreen::update_saucer(IScreenHost& host) {
             _saucer.points = SAUCER_SCORES[next_rng() % 5];
             uint32_t saucer_min = SAUCER_MIN_INTERVAL - static_cast<uint32_t>(_level * 8);
             uint32_t saucer_max = SAUCER_MAX_INTERVAL - static_cast<uint32_t>(_level * 20);
-            if (saucer_min < 90) saucer_min = 90;
-            if (saucer_max < saucer_min + 60) saucer_max = saucer_min + 60;
+            saucer_min = std::max<uint32_t>(saucer_min, 90);
+            saucer_max = std::max(saucer_max, saucer_min + 60);
             _saucer_timer = saucer_min + (next_rng() % (saucer_max - saucer_min));
         }
     }
@@ -430,7 +431,10 @@ void InvadersScreen::update(IPlatform& platform, IScreenHost& host) {
     const auto& input = platform.input();
 
     if (_paused) {
-        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) _paused = false;
+        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
+            _paused = false;
+            host.audio().resume_bgm();
+        }
         if (input.was_pressed(ButtonBits::B)) {
             host.switch_to(ScreenType::MENU);
             return;
@@ -442,15 +446,16 @@ void InvadersScreen::update(IPlatform& platform, IScreenHost& host) {
         case State::PLAYING: {
             if (input.is_down(ButtonBits::LEFT)) {
                 _player_x -= PLAYER_SPEED;
-                if (_player_x < PLAY_AREA_LEFT) _player_x = PLAY_AREA_LEFT;
+                _player_x = std::max(_player_x, PLAY_AREA_LEFT);
             }
             if (input.is_down(ButtonBits::RIGHT)) {
                 _player_x += PLAYER_SPEED;
-                if (_player_x > PLAY_AREA_RIGHT) _player_x = PLAY_AREA_RIGHT;
+                _player_x = std::min(_player_x, PLAY_AREA_RIGHT);
             }
             if (input.was_pressed(ButtonBits::A)) player_shoot(host);
             if (input.was_pressed(ButtonBits::START)) {
                 _paused = true;
+                host.audio().pause_bgm();
                 return;
             }
             move_enemies(host);
@@ -461,7 +466,7 @@ void InvadersScreen::update(IPlatform& platform, IScreenHost& host) {
             ++_shoot_timer;
             int16_t shoot_base =
                 static_cast<int16_t>(SHOOT_INTERVAL_BASE - (_level - 1) * SHOOT_INTERVAL_STEP_PER_LEVEL);
-            if (shoot_base < MIN_SHOOT_BASE) shoot_base = MIN_SHOOT_BASE;
+            shoot_base = std::max<uint32_t>(shoot_base, MIN_SHOOT_BASE);
             uint32_t shoot_threshold =
                 static_cast<uint32_t>(shoot_base + _enemies_alive_count * SHOOT_INTERVAL_PER_ENEMY);
             if (_shoot_timer >= shoot_threshold) {
@@ -491,9 +496,10 @@ void InvadersScreen::update(IPlatform& platform, IScreenHost& host) {
         }
         case State::GAME_OVER: {
             update_particles();
-            if (input.was_pressed(ButtonBits::START)) {
+            if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
                 _level = 1;
                 reset_game();
+                if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_INVADERS, sounds::BGM_INVADERS_COUNT);
             }
             if (input.was_pressed(ButtonBits::B)) {
                 host.switch_to(ScreenType::MENU);
@@ -587,7 +593,7 @@ void InvadersScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
         snprintf(buf, sizeof(buf), "SC:%d", _score);
         TextRenderer::draw_text_centered(display, {40, static_cast<int16_t>(oy + 18)}, buf, INV_TEXT, 1,
                                          COMPACT_FONT_3X5);
-        TextRenderer::draw_text_centered(display, {40, static_cast<int16_t>(oy + oh - 14)}, "START: AGAIN",
+        TextRenderer::draw_text_centered(display, {40, static_cast<int16_t>(oy + oh - 14)}, "A/START: Again",
                                          INV_HINT_COLOR, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(display, {40, static_cast<int16_t>(oy + oh - 6)}, "B: Menu", INV_HINT_COLOR, 1,
                                          COMPACT_FONT_3X5);
@@ -598,12 +604,12 @@ void InvadersScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
         display.fill_rect({PAUSE_RECT_X, PAUSE_RECT_Y, PAUSE_RECT_W, PAUSE_RECT_H}, PAUSE_BG);
         display.draw_rect({PAUSE_RECT_X, PAUSE_RECT_Y, PAUSE_RECT_W, PAUSE_RECT_H}, INV_PLAYER);
         TextRenderer::draw_text_centered(display, {40, 28}, "PAUSED", PAUSE_TEXT, 1, BASIC_FONT_5X7);
-        TextRenderer::draw_text_centered(display, {40, 42}, "A: Resume", PAUSE_TEXT, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(display, {40, 42}, "A/START: Resume", PAUSE_TEXT, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(display, {40, 52}, "B: Menu", INV_HINT_COLOR, 1, COMPACT_FONT_3X5);
     }
 }
 
-void InvadersScreen::render_menu_preview(IDisplay& display, const Rect& box, uint32_t frame) {
+void InvadersScreen::render_menu_preview(IDisplay& display, const Rect& box, uint32_t  /*frame*/) {
     const auto cx = static_cast<int16_t>(box.x + box.width / 2 - ENEMY_W / 2);
     const auto cy = static_cast<int16_t>(box.y + box.height / 2 - ENEMY_H / 2);
     const char* shape = ENEMY_SHAPES[0][0];

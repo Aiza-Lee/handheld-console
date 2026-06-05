@@ -86,17 +86,26 @@ void GrowBallScreen::update(IPlatform& platform, IScreenHost& host) {
     auto& input = platform.input();
 
     if (_paused) {
-        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) _paused = false;
+        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
+            _paused = false;
+            host.audio().resume_bgm();
+        }
         if (input.was_pressed(ButtonBits::B)) host.switch_to(ScreenType::MENU);
         return;
     }
     if (_victory) {
-        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) enter(platform, host);
+        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
+            enter(platform, host);
+            if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_GROWBALL, sounds::BGM_GROWBALL_COUNT);
+        }
         if (input.was_pressed(ButtonBits::B)) host.switch_to(ScreenType::MENU);
         return;
     }
     if (_game_over) {
-        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) enter(platform, host);
+        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
+            enter(platform, host);
+            if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_GROWBALL, sounds::BGM_GROWBALL_COUNT);
+        }
         if (input.was_pressed(ButtonBits::B)) host.switch_to(ScreenType::MENU);
         return;
     }
@@ -104,6 +113,7 @@ void GrowBallScreen::update(IPlatform& platform, IScreenHost& host) {
     // START = toggle pause
     if (input.was_pressed(ButtonBits::START)) {
         _paused = true;
+        host.audio().pause_bgm();
         return;
     }
 
@@ -245,21 +255,21 @@ void GrowBallScreen::render(IPlatform& platform, IScreenHost& host) {
         display.fill_rect({PAUSE_RECT_X, PAUSE_RECT_Y, PAUSE_RECT_W, PAUSE_RECT_H}, PAUSE_BG);
         display.draw_rect({PAUSE_RECT_X, PAUSE_RECT_Y, PAUSE_RECT_W, PAUSE_RECT_H}, PAUSE_TEXT);
         TextRenderer::draw_text_centered(display, {40, 28}, "PAUSED", PAUSE_TEXT, 1, BASIC_FONT_5X7);
-        TextRenderer::draw_text_centered(display, {40, 42}, "A: Resume", PAUSE_TEXT, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(display, {40, 42}, "A/START: Resume", PAUSE_TEXT, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(display, {40, 52}, "B: Menu", PAUSE_TEXT, 1, COMPACT_FONT_3X5);
     }
     if (_victory) {
         display.fill_rect({WIN_RECT_X, WIN_RECT_Y, WIN_RECT_W, WIN_RECT_H}, VICTORY_BG);
         display.draw_rect({WIN_RECT_X, WIN_RECT_Y, WIN_RECT_W, WIN_RECT_H}, VICTORY_TEXT);
         TextRenderer::draw_text_centered(display, {40, 28}, "YOU WIN!", VICTORY_TEXT, 1, BASIC_FONT_5X7);
-        TextRenderer::draw_text_centered(display, {40, 42}, "A: Again", Color::WHITE, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(display, {40, 42}, "A/START: Again", Color::WHITE, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(display, {40, 52}, "B: Menu", Color::WHITE, 1, COMPACT_FONT_3X5);
     }
     if (_game_over) {
         display.fill_rect({END_RECT_X, END_RECT_Y, END_RECT_W, END_RECT_H}, GAME_OVER_BG);
         display.draw_rect({END_RECT_X, END_RECT_Y, END_RECT_W, END_RECT_H}, GAME_OVER_TEXT);
         TextRenderer::draw_text_centered(display, {40, 28}, "GAME OVER", GAME_OVER_TEXT, 1, BASIC_FONT_5X7);
-        TextRenderer::draw_text_centered(display, {40, 42}, "A: Retry", Color::WHITE, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(display, {40, 42}, "A/START: Retry", Color::WHITE, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(display, {40, 52}, "B: Menu", Color::WHITE, 1, COMPACT_FONT_3X5);
     }
 }

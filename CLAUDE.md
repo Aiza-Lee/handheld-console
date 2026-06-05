@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> **新场景 / 模态 / 菜单 / 设置的按键设计前，请先读 [`BUTTONS.md`](BUTTONS.md)。**
+
 ## Repository Overview
 
 A handheld game console project with three layers:

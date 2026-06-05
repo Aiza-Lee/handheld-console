@@ -354,7 +354,10 @@ void PacmanScreen::update(IPlatform& platform, IScreenHost& host) {
     }
 
     if (_paused) {
-        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) _paused = false;
+        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
+            _paused = false;
+            host.audio().resume_bgm();
+        }
         if (input.was_pressed(ButtonBits::B)) {
             host.switch_to(ScreenType::MENU);
             return;
@@ -363,9 +366,10 @@ void PacmanScreen::update(IPlatform& platform, IScreenHost& host) {
     }
 
     if (_state == State::GAME_OVER) {
-        if (input.was_pressed(ButtonBits::START)) {
+        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
             _level = 0;
             reset_game();
+            if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_PACMAN, sounds::BGM_PACMAN_COUNT);
         }
         if (input.was_pressed(ButtonBits::B)) {
             host.switch_to(ScreenType::MENU);
@@ -376,6 +380,7 @@ void PacmanScreen::update(IPlatform& platform, IScreenHost& host) {
 
     if (_state == State::PLAYING && input.was_pressed(ButtonBits::START)) {
         _paused = true;
+        host.audio().pause_bgm();
         return;
     }
 
@@ -555,7 +560,7 @@ void PacmanScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
         display.fill_rect(Rect{WIN_RECT_X, WIN_RECT_Y, WIN_RECT_W, WIN_RECT_H}, BG_COLOR);
         display.draw_rect(Rect{WIN_RECT_X, WIN_RECT_Y, WIN_RECT_W, WIN_RECT_H}, WIN_COLOR);
         TextRenderer::draw_text_centered(display, {40, 28}, "YOU WIN!", WIN_COLOR, 1, BASIC_FONT_5X7);
-        TextRenderer::draw_text_centered(display, {40, 42}, "START: AGAIN", HINT_COLOR, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(display, {40, 42}, "A/START: Again", HINT_COLOR, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(display, {40, 52}, "B: Menu", HINT_COLOR, 1, COMPACT_FONT_3X5);
     }
 
@@ -566,7 +571,7 @@ void PacmanScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
         TextRenderer::draw_text_centered(display, {40, 28}, "GAME OVER", GHOST1_COL, 1, BASIC_FONT_5X7);
         std::snprintf(buf, sizeof(buf), "SCORE: %d", _score);
         TextRenderer::draw_text_centered(display, {40, 42}, buf, Color::WHITE, 1, COMPACT_FONT_3X5);
-        TextRenderer::draw_text_centered(display, {40, 50}, "START: AGAIN", HINT_COLOR, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(display, {40, 50}, "A/START: Again", HINT_COLOR, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(display, {40, 58}, "B: Menu", HINT_COLOR, 1, COMPACT_FONT_3X5);
     }
 
@@ -575,7 +580,7 @@ void PacmanScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
         display.fill_rect({PAUSE_RECT_X, PAUSE_RECT_Y, PAUSE_RECT_W, PAUSE_RECT_H}, PAUSE_BG);
         display.draw_rect({PAUSE_RECT_X, PAUSE_RECT_Y, PAUSE_RECT_W, PAUSE_RECT_H}, PAC_COLOR);
         TextRenderer::draw_text_centered(display, {40, 28}, "PAUSED", PAUSE_TEXT, 1, BASIC_FONT_5X7);
-        TextRenderer::draw_text_centered(display, {40, 42}, "A: Resume", PAUSE_TEXT, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(display, {40, 42}, "A/START: Resume", PAUSE_TEXT, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(display, {40, 52}, "B: Menu", HINT_COLOR, 1, COMPACT_FONT_3X5);
     }
 }

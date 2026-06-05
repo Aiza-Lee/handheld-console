@@ -490,14 +490,14 @@ inline constexpr size_t SFX_DEATH_BREAKOUT_COUNT = 4;
 // ── Invaders ──────────────────────────────────────────────────────
 
 inline constexpr Tone BGM_INVADERS[] = {
-    {  C2, 150},
-    {REST, 150},
-    { Cs2, 150},
-    {REST, 150},
-    {  D2, 150},
-    {REST, 150},
-    { Ds2, 150},
-    {REST, 150},
+    {  C2, 200},
+    {REST, 250},
+    { Cs2, 200},
+    {REST, 250},
+    {  D2, 200},
+    {REST, 250},
+    { Ds2, 200},
+    {REST, 250},
 };
 inline constexpr size_t BGM_INVADERS_COUNT = 8;
 

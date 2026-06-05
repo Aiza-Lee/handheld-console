@@ -301,7 +301,7 @@ void BreakoutScreen::draw_overlay(IDisplay& display) const {
         TextRenderer::draw_text_centered(display, {40, 28}, won ? "YOU WIN!" : "GAME OVER", c, 1, BASIC_FONT_5X7);
         std::snprintf(buf, sizeof(buf), "SC:%d", _score);
         TextRenderer::draw_text_centered(display, {40, 42}, buf, Color::WHITE, 1, COMPACT_FONT_3X5);
-        TextRenderer::draw_text_centered(display, {40, 50}, "START: AGAIN", HINT_COLOR, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(display, {40, 50}, "A/START: Again", HINT_COLOR, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(display, {40, 58}, "B: Menu", HINT_COLOR, 1, COMPACT_FONT_3X5);
     }
 
@@ -309,7 +309,7 @@ void BreakoutScreen::draw_overlay(IDisplay& display) const {
         display.fill_rect({PAUSE_RECT_X, PAUSE_RECT_Y, PAUSE_RECT_W, PAUSE_RECT_H}, PAUSE_BG);
         display.draw_rect({PAUSE_RECT_X, PAUSE_RECT_Y, PAUSE_RECT_W, PAUSE_RECT_H}, PADDLE_COLOR);
         TextRenderer::draw_text_centered(display, {40, 28}, "PAUSED", PAUSE_TEXT, 1, BASIC_FONT_5X7);
-        TextRenderer::draw_text_centered(display, {40, 42}, "A: Resume", PAUSE_TEXT, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(display, {40, 42}, "A/START: Resume", PAUSE_TEXT, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(display, {40, 52}, "B: Menu", HINT_COLOR, 1, COMPACT_FONT_3X5);
     }
 }
@@ -323,7 +323,10 @@ void BreakoutScreen::update(IPlatform& platform, IScreenHost& host) {
     if (_celebration > 0) --_celebration;
 
     if (_paused) {
-        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) _paused = false;
+        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
+            _paused = false;
+            host.audio().resume_bgm();
+        }
         if (input.was_pressed(ButtonBits::B)) {
             host.switch_to(ScreenType::MENU);
             return;
@@ -332,9 +335,10 @@ void BreakoutScreen::update(IPlatform& platform, IScreenHost& host) {
     }
 
     if (_state == State::GAME_OVER) {
-        if (input.was_pressed(ButtonBits::START)) {
+        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
             _level = 0;
             reset_game();
+            if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_BREAKOUT, sounds::BGM_BREAKOUT_COUNT);
         }
         if (input.was_pressed(ButtonBits::B)) {
             host.switch_to(ScreenType::MENU);
@@ -345,6 +349,7 @@ void BreakoutScreen::update(IPlatform& platform, IScreenHost& host) {
 
     if (input.was_pressed(ButtonBits::START)) {
         _paused = true;
+        host.audio().pause_bgm();
         return;
     }
 
