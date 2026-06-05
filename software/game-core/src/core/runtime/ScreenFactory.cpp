@@ -13,6 +13,8 @@
 #include "scenes/tetris/TetrisScreen.h"
 #include "scenes/game2048/Game2048Screen.h"
 #include "scenes/pong/PongScreen.h"
+#include "scenes/mp3/Mp3PlayerScreen.h"
+#include "scenes/developer/DeveloperScreen.h"
 
 namespace handheld {
 
@@ -31,6 +33,8 @@ std::unique_ptr<GameScreen> DefaultScreenFactory::create(ScreenType type) {
         case ScreenType::TETRIS: return std::make_unique<TetrisScreen>();
         case ScreenType::GAME_2048: return std::make_unique<Game2048Screen>();
         case ScreenType::PONG: return std::make_unique<PongScreen>();
+        case ScreenType::MP3: return std::make_unique<Mp3PlayerScreen>();
+        case ScreenType::DEVELOPER: return std::make_unique<DeveloperScreen>();
         default: return nullptr;
     }
 }

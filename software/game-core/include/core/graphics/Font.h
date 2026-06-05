@@ -72,6 +72,36 @@ inline constexpr GlyphBitmap GLYPH_X = {0x63, 0x14, 0x08, 0x14, 0x63};
 inline constexpr GlyphBitmap GLYPH_Y = {0x07, 0x08, 0x70, 0x08, 0x07};
 inline constexpr GlyphBitmap GLYPH_Z = {0x61, 0x51, 0x49, 0x45, 0x43};
 
+// ── 小写字母（x-height = 5 行 rows 2-6，ascender 升 row 0，descender 降 row 6）──
+// 数据来源：Adafruit GFX glcdfont.c（MIT 协议），与本字体同样使用 bit0 = top 的列主序约定。
+// 替换了原先手画的字模，'a/g/p/q' 等带下行/上行的字母现在比例正确。
+inline constexpr GlyphBitmap GLYPH_a = {0x20, 0x54, 0x54, 0x78, 0x40};
+inline constexpr GlyphBitmap GLYPH_b = {0x7F, 0x28, 0x44, 0x44, 0x38};
+inline constexpr GlyphBitmap GLYPH_c = {0x38, 0x44, 0x44, 0x44, 0x28};
+inline constexpr GlyphBitmap GLYPH_d = {0x38, 0x44, 0x44, 0x28, 0x7F};
+inline constexpr GlyphBitmap GLYPH_e = {0x38, 0x54, 0x54, 0x54, 0x18};
+inline constexpr GlyphBitmap GLYPH_f = {0x00, 0x08, 0x7E, 0x09, 0x02};
+inline constexpr GlyphBitmap GLYPH_g = {0x18, 0xA4, 0xA4, 0x9C, 0x78};
+inline constexpr GlyphBitmap GLYPH_h = {0x7F, 0x08, 0x04, 0x04, 0x78};
+inline constexpr GlyphBitmap GLYPH_i = {0x00, 0x44, 0x7D, 0x40, 0x00};
+inline constexpr GlyphBitmap GLYPH_j = {0x20, 0x40, 0x40, 0x3D, 0x00};
+inline constexpr GlyphBitmap GLYPH_k = {0x7F, 0x10, 0x28, 0x44, 0x00};
+inline constexpr GlyphBitmap GLYPH_l = {0x00, 0x41, 0x7F, 0x40, 0x00};
+inline constexpr GlyphBitmap GLYPH_m = {0x7C, 0x04, 0x78, 0x04, 0x78};
+inline constexpr GlyphBitmap GLYPH_n = {0x7C, 0x08, 0x04, 0x04, 0x78};
+inline constexpr GlyphBitmap GLYPH_o = {0x38, 0x44, 0x44, 0x44, 0x38};
+inline constexpr GlyphBitmap GLYPH_p = {0xFC, 0x18, 0x24, 0x24, 0x18};
+inline constexpr GlyphBitmap GLYPH_q = {0x18, 0x24, 0x24, 0x18, 0xFC};
+inline constexpr GlyphBitmap GLYPH_r = {0x7C, 0x08, 0x04, 0x04, 0x08};
+inline constexpr GlyphBitmap GLYPH_s = {0x48, 0x54, 0x54, 0x54, 0x24};
+inline constexpr GlyphBitmap GLYPH_t = {0x04, 0x04, 0x3F, 0x44, 0x24};
+inline constexpr GlyphBitmap GLYPH_u = {0x3C, 0x40, 0x40, 0x20, 0x7C};
+inline constexpr GlyphBitmap GLYPH_v = {0x1C, 0x20, 0x40, 0x20, 0x1C};
+inline constexpr GlyphBitmap GLYPH_w = {0x3C, 0x40, 0x30, 0x40, 0x3C};
+inline constexpr GlyphBitmap GLYPH_x = {0x44, 0x28, 0x10, 0x28, 0x44};
+inline constexpr GlyphBitmap GLYPH_y = {0x4C, 0x90, 0x90, 0x90, 0x7C};
+inline constexpr GlyphBitmap GLYPH_z = {0x44, 0x64, 0x54, 0x4C, 0x44};
+
 [[nodiscard]] constexpr char normalize_glyph_char(char c) {
     if (c >= 'a' && c <= 'z') {
         return static_cast<char>(c - ('a' - 'A'));
@@ -81,7 +111,7 @@ inline constexpr GlyphBitmap GLYPH_Z = {0x61, 0x51, 0x49, 0x45, 0x43};
 }
 
 [[nodiscard]] constexpr GlyphBitmap basic_glyph_5x7(char c) {
-    switch (normalize_glyph_char(c)) {
+    switch (c) {
         case ' ': return GLYPH_SPACE;
         case '!': return GLYPH_EXCLAMATION;
         case '"': return GLYPH_QUOTE;
@@ -134,6 +164,32 @@ inline constexpr GlyphBitmap GLYPH_Z = {0x61, 0x51, 0x49, 0x45, 0x43};
         case 'X': return GLYPH_X;
         case 'Y': return GLYPH_Y;
         case 'Z': return GLYPH_Z;
+        case 'a': return GLYPH_a;
+        case 'b': return GLYPH_b;
+        case 'c': return GLYPH_c;
+        case 'd': return GLYPH_d;
+        case 'e': return GLYPH_e;
+        case 'f': return GLYPH_f;
+        case 'g': return GLYPH_g;
+        case 'h': return GLYPH_h;
+        case 'i': return GLYPH_i;
+        case 'j': return GLYPH_j;
+        case 'k': return GLYPH_k;
+        case 'l': return GLYPH_l;
+        case 'm': return GLYPH_m;
+        case 'n': return GLYPH_n;
+        case 'o': return GLYPH_o;
+        case 'p': return GLYPH_p;
+        case 'q': return GLYPH_q;
+        case 'r': return GLYPH_r;
+        case 's': return GLYPH_s;
+        case 't': return GLYPH_t;
+        case 'u': return GLYPH_u;
+        case 'v': return GLYPH_v;
+        case 'w': return GLYPH_w;
+        case 'x': return GLYPH_x;
+        case 'y': return GLYPH_y;
+        case 'z': return GLYPH_z;
         case '_': return GLYPH_UNDERSCORE;
         default: return GLYPH_QUESTION;
     }

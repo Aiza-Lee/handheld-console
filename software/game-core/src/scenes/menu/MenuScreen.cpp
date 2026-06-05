@@ -9,6 +9,7 @@
 #include "scenes/tetris/TetrisScreen.h"
 #include "scenes/game2048/Game2048Screen.h"
 #include "scenes/pong/PongScreen.h"
+#include "scenes/mp3/Mp3PlayerScreen.h"
 
 #include <algorithm>
 #include "core/common/ButtonBits.h"
@@ -35,8 +36,10 @@ void draw_scroll_arrow(IDisplay& display, int16_t x, int16_t y, bool up, Color c
     }
 }
 
-// 场景 → 菜单预览回调
-MenuPreviewFn preview_for(ScreenType type) {
+} // namespace
+
+// 场景 → 菜单预览回调（公开，供其他屏幕如 DeveloperScreen 复用）
+menu::cfg::MenuPreviewFn render_menu_preview_for(ScreenType type) {
     switch (type) {
         case ScreenType::SETTINGS: return SettingsScreen::render_menu_preview;
         case ScreenType::PLAYGROUND: return PlaygroundScreen::render_menu_preview;
@@ -48,11 +51,10 @@ MenuPreviewFn preview_for(ScreenType type) {
         case ScreenType::TETRIS: return TetrisScreen::render_menu_preview;
         case ScreenType::GAME_2048: return Game2048Screen::render_menu_preview;
         case ScreenType::PONG: return PongScreen::render_menu_preview;
+        case ScreenType::MP3: return Mp3PlayerScreen::render_menu_preview;
         default: return nullptr;
     }
 }
-
-} // namespace
 
 void MenuScreen::enter(IPlatform& platform, IScreenHost& host) {
     platform.display().clear(Color::BLACK);
@@ -100,6 +102,11 @@ void MenuScreen::update(IPlatform& platform, IScreenHost& host) {
         _cursor = (_cursor + 1 >= ENTRY_COUNT) ? 0 : _cursor + 1;
         host.audio().play_sfx(sounds::SFX_SELECT, sounds::SFX_SELECT_COUNT);
     }
+    if (input.was_pressed(ButtonBits::B)) {
+        host.audio().stop_bgm();
+        host.switch_to(ScreenType::BOOT);
+        return;
+    }
     if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
         host.audio().play_sfx(sounds::SFX_CONFIRM, sounds::SFX_CONFIRM_COUNT);
         host.switch_to(ENTRIES[_cursor].screen_type);
@@ -134,7 +141,7 @@ void MenuScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
         const Rect box = {BOX_X, by, BOX_W, BOX_H};
         bool selected = (i == _cursor);
         const auto& entry = ENTRIES[i];
-        auto preview = preview_for(entry.screen_type);
+        auto preview = render_menu_preview_for(entry.screen_type);
 
         Color border_color =
             selected ? (((_frame / 12) % 2 == 0) ? MENU_SELECTED_BORDER : MENU_SELECTED_GLOW) : MENU_BOX_BORDER;

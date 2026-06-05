@@ -42,6 +42,8 @@ void BootScreen::enter(IPlatform& platform, IScreenHost& host) {
     init_stars();
     _stars_ready = true;
     _frame = 0;
+    _b_press_count = 0;
+    _last_b_ms = 0;
     host.audio().play_sfx(sounds::BOOT, sounds::BOOT_COUNT);
 }
 
@@ -49,9 +51,21 @@ void BootScreen::update(IPlatform& platform, IScreenHost& host) {
     ++_frame;
     update_stars();
     const auto& input = platform.input();
-    for (auto btn : {ButtonBits::UP, ButtonBits::DOWN, ButtonBits::LEFT, ButtonBits::RIGHT, ButtonBits::A,
-                     ButtonBits::B, ButtonBits::START, ButtonBits::SELECT}) {
+    const uint32_t now = platform.time().ticks_ms();
+
+    if (input.was_pressed(ButtonBits::SELECT)) {
+        if (now - _last_b_ms > DEV_TRIGGER_WINDOW_MS) _b_press_count = 0;
+        _last_b_ms = now;
+        ++_b_press_count;
+        if (_b_press_count >= DEV_TRIGGER_COUNT) {
+            _b_press_count = 0;
+            host.switch_to(ScreenType::DEVELOPER);
+        }
+        return;
+    }
+    for (auto btn : {ButtonBits::A, ButtonBits::START}) {
         if (input.was_pressed(btn)) {
+            _b_press_count = 0;
             host.switch_to(ScreenType::MENU);
             return;
         }

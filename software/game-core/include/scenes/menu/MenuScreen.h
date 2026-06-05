@@ -42,8 +42,9 @@ constexpr MenuEntry ENTRIES[] = {
     {   "Tetris",     ScreenType::TETRIS},
     {    "2048",   ScreenType::GAME_2048},
     {     "Pong",       ScreenType::PONG},
+    {"MP3 Player",    ScreenType::MP3},
 };
-constexpr std::size_t ENTRY_COUNT = 10;
+constexpr std::size_t ENTRY_COUNT = 11;
 
 // 布局
 constexpr int16_t BOX_X = 5;
@@ -88,6 +89,10 @@ private:
     void update_stars();
     uint32_t next_rng();
 };
+
+// 给定 ScreenType，返回对应的菜单预览回调；无预览时返回 nullptr
+// 公开供其他屏幕（如 DeveloperScreen 鸣谢屏）复用
+menu::cfg::MenuPreviewFn render_menu_preview_for(ScreenType type);
 
 } // namespace handheld
 

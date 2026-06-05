@@ -28,6 +28,10 @@ constexpr int16_t GLOW_Y = 35;
 constexpr int16_t RULE_Y = 43;
 constexpr int16_t HINT_Y = 50;
 
+// 隐藏 dev 屏触发：1.5 秒窗口内连按 B 5 次
+constexpr uint32_t DEV_TRIGGER_WINDOW_MS = 1500;
+constexpr uint8_t DEV_TRIGGER_COUNT = 5;
+
 } // namespace cfg
 } // namespace boot
 } // namespace handheld

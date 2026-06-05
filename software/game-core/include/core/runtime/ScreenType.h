@@ -20,6 +20,8 @@ enum class ScreenType : uint8_t {
     TETRIS,
     GAME_2048,
     PONG,
+    MP3,
+    DEVELOPER,
 };
 
 } // namespace handheld
