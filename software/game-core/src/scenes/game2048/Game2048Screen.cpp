@@ -390,10 +390,9 @@ void Game2048Screen::render(IPlatform& platform, IScreenHost& /*host*/) {
 // ── 菜单预览 ────────────────────────────────────────
 
 void Game2048Screen::render_menu_preview(IDisplay& display, const Rect& box, uint32_t frame) {
-    // 2x2 静态 tile，颜色随帧循环切换
     const auto cx = static_cast<int16_t>(box.x + box.width / 2);
     const auto cy = static_cast<int16_t>(box.y + box.height / 2);
-    const int16_t size = 5;
+    const int16_t size = 3;
     const int16_t gap = 1;
     Color palette[4] = {
         rgb565(220, 215, 200),
@@ -403,8 +402,8 @@ void Game2048Screen::render_menu_preview(IDisplay& display, const Rect& box, uin
     };
     for (int8_t r = 0; r < 2; ++r) {
         for (int8_t c = 0; c < 2; ++c) {
-            int16_t x = static_cast<int16_t>(cx - size - gap / 2 + c * (size + gap));
-            int16_t y = static_cast<int16_t>(cy - size - gap / 2 + r * (size + gap));
+            int16_t x = static_cast<int16_t>(cx - size - gap / 2 + c * (size + gap) - 1);
+            int16_t y = static_cast<int16_t>(cy - size - gap / 2 + r * (size + gap) - 1);
             uint8_t idx = static_cast<uint8_t>((r * 2 + c + (frame / 8)) % 4);
             display.fill_rect(Rect{x, y, size, size}, palette[idx]);
         }

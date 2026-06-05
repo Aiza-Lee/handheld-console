@@ -443,7 +443,7 @@ void PongScreen::render_menu_preview(IDisplay& display, const Rect& box, uint32_
     // 10x10 预览：左右挡板 + 弹跳的小球
     const auto cy = static_cast<int16_t>(box.y + box.height / 2);
     const auto left_x = static_cast<int16_t>(box.x + 1);
-    const auto right_x = static_cast<int16_t>(box.x + box.width - 2);
+    const auto right_x = static_cast<int16_t>(box.x + box.width - 1);
     // 挡板（中央偏短）
     for (int dy = -3; dy <= 3; ++dy) {
         display.draw_pixel(left_x, static_cast<int16_t>(cy + dy), Color::WHITE);
@@ -454,7 +454,7 @@ void PongScreen::render_menu_preview(IDisplay& display, const Rect& box, uint32_
     // 小球：根据 frame 在中间往复
     int phase = static_cast<int>((frame / 3) % 12);
     int bx_off = (phase < 6) ? phase : (11 - phase); // 0..5..0
-    auto bx = static_cast<int16_t>(box.x + 3 + bx_off);
+    auto bx = static_cast<int16_t>(box.x + 2 + bx_off);
     auto by = static_cast<int16_t>(cy + ((frame / 4) % 3) - 1);
     display.draw_pixel(bx, by, Color::WHITE);
     display.draw_pixel(static_cast<int16_t>(bx + 1), by, Color::WHITE);
