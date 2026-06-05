@@ -24,7 +24,7 @@ uint32_t TetrisScreen::next_rng() {
 }
 
 bool TetrisScreen::piece_cell(uint8_t piece, uint8_t rot, int row, int col) const {
-    return (PIECES[piece].rows[rot][row] >> col) & 1U;
+    return (PIECES[piece].rotations[rot].r[row] >> col) & 1U;
 }
 
 bool TetrisScreen::collides(int8_t x, int8_t y, uint8_t piece, uint8_t rot) const {
@@ -176,25 +176,33 @@ void TetrisScreen::update(IPlatform& platform, IScreenHost& host) {
     ++_frame;
     auto& input = platform.input();
 
-    // B 在任何状态下都返回菜单
-    if (input.was_pressed(ButtonBits::B)) {
-        host.switch_to(ScreenType::MENU);
-        return;
-    }
-
     if (_paused) {
         if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
             _paused = false;
+        }
+        if (input.was_pressed(ButtonBits::B)) {
+            host.switch_to(ScreenType::MENU);
+            return;
         }
         return;
     }
 
     if (_game_over) {
         if (input.was_pressed(ButtonBits::START)) reset_game();
+        if (input.was_pressed(ButtonBits::B)) {
+            host.switch_to(ScreenType::MENU);
+            return;
+        }
         return;
     }
 
     if (input.was_pressed(ButtonBits::START)) {
+        _paused = true;
+        return;
+    }
+
+    // 游戏中按 B：先暂停，再在暂停中按 B 才退出
+    if (input.was_pressed(ButtonBits::B)) {
         _paused = true;
         return;
     }
@@ -345,7 +353,7 @@ void TetrisScreen::render_menu_preview(IDisplay& display, const Rect& box, uint3
     constexpr int cell = 2;
     for (int r = 0; r < 3; ++r) {
         for (int c = 0; c < 3; ++c) {
-            if (((PIECES[t_piece].rows[0][r] >> c) & 1U) == 0) continue;
+            if (((PIECES[t_piece].rotations[0].r[r] >> c) & 1U) == 0) continue;
             display.fill_rect(Rect{static_cast<int16_t>(ox + c * cell),
                                    static_cast<int16_t>(oy + r * cell), cell, cell},
                               COLOR_T);

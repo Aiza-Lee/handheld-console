@@ -36,6 +36,17 @@ int16_t ai_step(int16_t ball_center_y, int16_t paddle_y, uint32_t& rng) {
     return step;
 }
 
+// 模式选择框：center_x 框中心 x，y 框顶 y，label 居中文字，selected 是否高亮
+void draw_mode_box(IDisplay& d, int16_t center_x, int16_t y, const char* label, bool selected) {
+    const int16_t x = static_cast<int16_t>(center_x - MODE_SELECT_BOX_W / 2);
+    Color border = selected ? MODE_COLOR : HINT_COLOR;
+    Color fill = selected ? OVERLAY_BG : COURT_COLOR;
+    d.fill_rect(Rect{x, y, MODE_SELECT_BOX_W, MODE_SELECT_BOX_H}, fill);
+    d.draw_rect(Rect{x, y, MODE_SELECT_BOX_W, MODE_SELECT_BOX_H}, border);
+    TextRenderer::draw_text_centered(d, {center_x, static_cast<int16_t>(y + 2)}, label, border, 1,
+                                     BASIC_FONT_5X7);
+}
+
 } // namespace
 
 // ── 生命周期 ────────────────────────────────────────
@@ -43,6 +54,9 @@ int16_t ai_step(int16_t ball_center_y, int16_t paddle_y, uint32_t& rng) {
 void PongScreen::enter(IPlatform& platform, IScreenHost& host) {
     platform.display().clear(COURT_COLOR);
     reset_game();
+    // 每次从菜单进入时先进入模式选择；reset_game() 默认 SERVE，
+    // 由 enter() 覆盖为 MODE_SELECT；游戏内 START 重玩则保留 SERVE。
+    _phase = Phase::MODE_SELECT;
     if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_PONG, sounds::BGM_PONG_COUNT);
 }
 
@@ -80,7 +94,7 @@ void PongScreen::update(IPlatform& platform, IScreenHost& host) {
     ++_frame;
     IInput& input = platform.input();
 
-    // 暂停：START 继续，B 返回菜单
+    // 暂停：START/A 继续，B 返回菜单
     if (_paused) {
         if (input.was_pressed(ButtonBits::START) || input.was_pressed(ButtonBits::A)) _paused = false;
         if (input.was_pressed(ButtonBits::B)) {
@@ -90,27 +104,50 @@ void PongScreen::update(IPlatform& platform, IScreenHost& host) {
         return;
     }
 
-    // 模式切换：任何阶段均可触发 SELECT
+    // 模式选择：LEFT/RIGHT 切换 1P/2P，A/START 确认进入 SERVE，B 返回菜单
+    if (_phase == Phase::MODE_SELECT) {
+        if (input.was_pressed(ButtonBits::LEFT) || input.was_pressed(ButtonBits::RIGHT)) {
+            _mode = (_mode == Mode::ONE_PLAYER) ? Mode::TWO_PLAYER : Mode::ONE_PLAYER;
+            host.audio().play_sfx(sounds::SFX_SELECT, sounds::SFX_SELECT_COUNT);
+        }
+        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
+            _phase = Phase::SERVE;
+            _serve_timer = SERVE_FRAMES;
+        }
+        if (input.was_pressed(ButtonBits::B)) {
+            host.switch_to(ScreenType::MENU);
+            return;
+        }
+        return;
+    }
+
+    // 游戏中（PLAY / SERVE）：B 先暂停，暂停中再按 B 才退出
+    if (_phase == Phase::PLAY || _phase == Phase::SERVE) {
+        if (input.was_pressed(ButtonBits::B)) {
+            _paused = true;
+            return;
+        }
+    }
+
+    // 模式实时切换：SELECT 在游戏中切换 1P ↔ 2P
     if (input.was_pressed(ButtonBits::SELECT)) {
         _mode = (_mode == Mode::ONE_PLAYER) ? Mode::TWO_PLAYER : Mode::ONE_PLAYER;
         host.audio().play_sfx(sounds::SFX_MODE_SWITCH, sounds::SFX_MODE_SWITCH_COUNT);
     }
 
-    // 暂停中按 START 暂停（仅 PLAY / SERVE 阶段）
+    // START 暂停（仅 PLAY / SERVE 阶段）
     if (_phase != Phase::GAME_OVER && input.was_pressed(ButtonBits::START)) {
         _paused = true;
-        return;
-    }
-
-    // B 返回菜单（任何阶段）
-    if (input.was_pressed(ButtonBits::B)) {
-        host.switch_to(ScreenType::MENU);
         return;
     }
 
     if (_phase == Phase::GAME_OVER) {
         if (input.was_pressed(ButtonBits::START)) {
             reset_game();
+            return;
+        }
+        if (input.was_pressed(ButtonBits::B)) {
+            host.switch_to(ScreenType::MENU);
             return;
         }
         return;
@@ -275,6 +312,21 @@ uint32_t PongScreen::next_rng() {
 void PongScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
     IDisplay& d = platform.display();
     d.clear(COURT_COLOR);
+
+    // 模式选择页：标题 + 两个选项框 + 操作提示
+    if (_phase == Phase::MODE_SELECT) {
+        TextRenderer::draw_text_centered(d, {40, MODE_SELECT_TITLE_Y}, "SELECT MODE", MODE_COLOR, 1,
+                                         BASIC_FONT_5X7);
+        draw_mode_box(d, MODE_SELECT_LEFT_CENTER_X, MODE_SELECT_BOX_Y, "1P",
+                      _mode == Mode::ONE_PLAYER);
+        draw_mode_box(d, MODE_SELECT_RIGHT_CENTER_X, MODE_SELECT_BOX_Y, "2P",
+                      _mode == Mode::TWO_PLAYER);
+        TextRenderer::draw_text_centered(d, {40, MODE_SELECT_HINT_Y}, "L/R: SWITCH", HINT_COLOR, 1,
+                                         COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(d, {40, static_cast<int16_t>(MODE_SELECT_HINT_Y + 8)},
+                                         "A: START  B: MENU", HINT_COLOR, 1, COMPACT_FONT_3X5);
+        return;
+    }
 
     // 中央虚线分隔
     for (int16_t y = 0; y < CANVAS_H; y += 4) {

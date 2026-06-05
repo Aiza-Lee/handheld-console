@@ -66,47 +66,54 @@ constexpr int16_t END_RECT_W = 60;
 constexpr int16_t END_RECT_H = 48;
 
 // ── 方块位掩码（4×4，低 4 位有效；bit 0 = 最左列）───────
+//
+// 每块只需定义 rot 0；rot 1/2/3 由编译期 rotate_cw() 派生，
+// 保证旋转几何上 100% 正确（手动写 4 套容易算错）。
+struct Grid4 {
+    uint16_t r[4];
+};
+
+// 4×4 网格 90° 顺时针：new[r'][c'] = old[3-c'][r']
+// 即每个 cell (r, c) → (c, 3-r)
+constexpr Grid4 rotate_cw(const Grid4& g) {
+    Grid4 out{};
+    for (int row = 0; row < 4; ++row) {
+        for (int col = 0; col < 4; ++col) {
+            if ((g.r[row] >> col) & 1U) {
+                out.r[col] |= static_cast<uint16_t>(1U << (3 - row));
+            }
+        }
+    }
+    return out;
+}
+
 struct PieceDef {
-    uint16_t rows[4][4]; // [rotation][row] = 该行 4 格的位掩码
+    Grid4 rotations[4]; // [rotation]
     Color color;
 };
 
+constexpr PieceDef make_piece(Grid4 r0, Color color) {
+    Grid4 r1 = rotate_cw(r0);
+    Grid4 r2 = rotate_cw(r1);
+    Grid4 r3 = rotate_cw(r2);
+    return PieceDef{{r0, r1, r2, r3}, color};
+}
+
 constexpr PieceDef PIECES[7] = {
-    // I（青色，4×4 旋转盒）
-    { { {0x0, 0xF, 0x0, 0x0},
-        {0x2, 0x2, 0x2, 0x2},
-        {0x0, 0xF, 0x0, 0x0},
-        {0x2, 0x2, 0x2, 0x2} }, COLOR_I },
-    // O（黄色，2×2 居中）
-    { { {0x0, 0x6, 0x6, 0x0},
-        {0x0, 0x6, 0x6, 0x0},
-        {0x0, 0x6, 0x6, 0x0},
-        {0x0, 0x6, 0x6, 0x0} }, COLOR_O },
-    // T（紫色，3×3）
-    { { {0x2, 0x7, 0x0, 0x0},
-        {0x2, 0x6, 0x2, 0x0},
-        {0x0, 0x7, 0x2, 0x0},
-        {0x2, 0x3, 0x2, 0x0} }, COLOR_T },
-    // S（绿色，3×3）
-    { { {0x6, 0xC, 0x0, 0x0},
-        {0x1, 0x3, 0x2, 0x0},
-        {0x6, 0xC, 0x0, 0x0},
-        {0x1, 0x3, 0x2, 0x0} }, COLOR_S },
-    // Z（红色，3×3）
-    { { {0x6, 0x3, 0x0, 0x0},
-        {0x2, 0x3, 0x1, 0x0},
-        {0x6, 0x3, 0x0, 0x0},
-        {0x2, 0x3, 0x1, 0x0} }, COLOR_Z },
-    // L（橙色，3×3）
-    { { {0x4, 0x7, 0x0, 0x0},
-        {0x2, 0x2, 0x3, 0x0},
-        {0x0, 0x7, 0x4, 0x0},
-        {0x6, 0x2, 0x2, 0x0} }, COLOR_L },
-    // J（蓝色，3×3）
-    { { {0x1, 0x7, 0x0, 0x0},
-        {0x3, 0x2, 0x2, 0x0},
-        {0x0, 0x7, 0x1, 0x0},
-        {0x2, 0x2, 0x6, 0x0} }, COLOR_J },
+    // I（青色）：横 4 格，旋转盒 4×4
+    make_piece(Grid4{{0, 0xF, 0, 0}}, COLOR_I),
+    // O（黄色）：2×2 居中，所有旋转相同
+    make_piece(Grid4{{0, 0x6, 0x6, 0}}, COLOR_O),
+    // T（紫色）：顶部 XXX，茎在中
+    make_piece(Grid4{{0x2, 0x7, 0, 0}}, COLOR_T),
+    // S（绿色）：顶行 .XX，底行 XX.
+    make_piece(Grid4{{0x6, 0xC, 0, 0}}, COLOR_S),
+    // Z（红色）：顶行 XX.，底行 .XX
+    make_piece(Grid4{{0x6, 0x3, 0, 0}}, COLOR_Z),
+    // L（橙色）：L 形
+    make_piece(Grid4{{0x4, 0x7, 0, 0}}, COLOR_L),
+    // J（蓝色）：J 形
+    make_piece(Grid4{{0x1, 0x7, 0, 0}}, COLOR_J),
 };
 
 } // namespace handheld::tetris::cfg

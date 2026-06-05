@@ -13,13 +13,13 @@ constexpr bool ENABLE_BGM = false;
 constexpr int16_t CANVAS_W = 80;
 constexpr int16_t CANVAS_H = 80;
 
-// 挡板：2 宽 × 20 高，居中 60px 行程
+// 挡板：2 宽 × 20 高，覆盖球可达的全部 y 范围（0..78）
 constexpr int16_t PADDLE_W = 2;
 constexpr int16_t PADDLE_H = 20;
 constexpr int16_t PADDLE_X_LEFT = 2;
 constexpr int16_t PADDLE_X_RIGHT = 76; // 76 + 2 = 78，恰好不超出画布
-constexpr int16_t PADDLE_Y_MIN = 10;
-constexpr int16_t PADDLE_Y_MAX = 50; // 50 + 20 = 70
+constexpr int16_t PADDLE_Y_MIN = 0;   // paddle 顶可达 y=0（球最顶）
+constexpr int16_t PADDLE_Y_MAX = 58;  // paddle 顶最高 58，底 = 78（球最底）
 constexpr int16_t PADDLE_SPEED = 2;
 
 // 球：2×2 像素方块
@@ -34,6 +34,15 @@ constexpr int16_t SERVE_FRAMES = 30;    // 得分后到自动发球的等待帧�
 
 // 模式
 constexpr int16_t WIN_SCORE = 5;
+
+// 模式选择阶段布局
+constexpr int16_t MODE_SELECT_TITLE_Y = 18;
+constexpr int16_t MODE_SELECT_BOX_W = 30;
+constexpr int16_t MODE_SELECT_BOX_H = 12;
+constexpr int16_t MODE_SELECT_BOX_Y = 38;            // 框顶 y
+constexpr int16_t MODE_SELECT_LEFT_CENTER_X = 23;   // 1P 框中心 x（8..38）
+constexpr int16_t MODE_SELECT_RIGHT_CENTER_X = 57;  // 2P 框中心 x（42..72，留 4px 间距）
+constexpr int16_t MODE_SELECT_HINT_Y = 64;
 
 // 颜色
 constexpr Color PADDLE_COLOR = Color::WHITE;
@@ -61,7 +70,7 @@ constexpr int16_t END_RECT_H = 40;
 constexpr int16_t SCORE_BASELINE_Y = 4; // 5×7 字体基线 y
 constexpr int16_t SCORE_LEFT_CENTER_X = 15;
 constexpr int16_t SCORE_RIGHT_CENTER_X = 65;
-constexpr int16_t MODE_INDICATOR_X = 75; // 3×5 字体起点 x（顶右）
+constexpr int16_t MODE_INDICATOR_X = 72; // 3×5 字体起点 x（"2P" 8px 宽，结束于 x=80）
 constexpr int16_t MODE_INDICATOR_Y = 4;
 
 } // namespace handheld::pong::cfg
@@ -77,10 +86,10 @@ public:
 
 private:
     enum class Mode : uint8_t { ONE_PLAYER, TWO_PLAYER };
-    enum class Phase : uint8_t { SERVE, PLAY, GAME_OVER };
+    enum class Phase : uint8_t { MODE_SELECT, SERVE, PLAY, GAME_OVER };
 
     Mode _mode = Mode::ONE_PLAYER;
-    Phase _phase = Phase::SERVE;
+    Phase _phase = Phase::MODE_SELECT;
     bool _paused = false;
 
     // 挡板 y 坐标
