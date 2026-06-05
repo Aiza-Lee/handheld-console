@@ -138,7 +138,9 @@ void SnakeScreen::move_snake(IScreenHost& host) {
         uint8_t old_speed = _speed;
         _speed = static_cast<uint8_t>(_score / C::SPEED_DIVISOR);
         if (_speed > old_speed) host.audio().play_sfx(sounds::SFX_SPEED_UP, sounds::SFX_SPEED_UP_COUNT);
-        host.audio().play_sfx(sounds::SFX_EAT, sounds::SFX_EAT_COUNT);
+		else {
+			host.audio().play_sfx(sounds::SFX_EAT, sounds::SFX_EAT_COUNT);
+		}
 
         uint32_t r = static_cast<uint32_t>(_speed);
         _interval = (r >= C::INITIAL_INTERVAL - C::MIN_INTERVAL) ? C::MIN_INTERVAL : C::INITIAL_INTERVAL - r;

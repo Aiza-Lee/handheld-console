@@ -150,8 +150,8 @@ private:
     };
 
     Channel _channels[CHANNEL_COUNT];
-    uint8_t _bgm_volume_pct = 10;
-    uint8_t _sfx_volume_pct = 50;
+    uint8_t _bgm_volume_pct = 5;
+    uint8_t _sfx_volume_pct = 10;
 
     // 纯整数方波：相位 < SAMPLE_RATE/2 输出 +amp，否则输出 -amp
     [[nodiscard]] int32_t _sample(const Channel& ch) const {

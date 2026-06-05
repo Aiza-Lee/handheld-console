@@ -200,6 +200,7 @@ void PacmanScreen::load_level(uint8_t level) {
     _pac_move_counter = 0;
     _ghost_move_counter = 0;
     _death_particle_count = 0;
+	_lives = INIT_LIVES;
     _state = State::PLAYING;
 }
 
