@@ -641,6 +641,88 @@ inline constexpr Tone SFX_TOGGLE_OFF[] = {
 };
 inline constexpr size_t SFX_TOGGLE_OFF_COUNT = 2;
 
+// ── Tetris ────────────────────────────────────────────────────────
+
+inline constexpr Tone BGM_TETRIS[] = {
+    {REST, 1000},
+};
+inline constexpr size_t BGM_TETRIS_COUNT = 1;
+
+inline constexpr Tone SFX_TETRIS_MOVE[] = {
+    {C5, 30},
+};
+inline constexpr size_t SFX_TETRIS_MOVE_COUNT = 1;
+
+inline constexpr Tone SFX_TETRIS_DROP[] = {
+    {A3, 50},
+};
+inline constexpr size_t SFX_TETRIS_DROP_COUNT = 1;
+
+inline constexpr Tone SFX_TETRIS_CLEAR[] = {
+    {E4, 60},
+    {G4, 60},
+    {C5, 80},
+};
+inline constexpr size_t SFX_TETRIS_CLEAR_COUNT = 3;
+
+inline constexpr Tone SFX_TETRIS_GAMEOVER[] = {
+    {A3, 150},
+    {F3, 150},
+    {D3, 300},
+};
+inline constexpr size_t SFX_TETRIS_GAMEOVER_COUNT = 3;
+
+// ── 2048 ──────────────────────────────────────────────────────────
+
+inline constexpr Tone BGM_2048[] = {
+    {REST, 1000},
+};
+inline constexpr size_t BGM_2048_COUNT = 1;
+
+inline constexpr Tone SFX_2048_MOVE[] = {
+    {C4, 40},
+};
+inline constexpr size_t SFX_2048_MOVE_COUNT = 1;
+
+inline constexpr Tone SFX_2048_MERGE[] = {
+    {E4, 40},
+    {G4, 50},
+};
+inline constexpr size_t SFX_2048_MERGE_COUNT = 2;
+
+inline constexpr Tone SFX_2048_GAMEOVER[] = {
+    {A3, 200},
+    {F3, 200},
+    {D3, 400},
+};
+inline constexpr size_t SFX_2048_GAMEOVER_COUNT = 3;
+
+// ── Pong ──────────────────────────────────────────────────────────
+
+inline constexpr Tone BGM_PONG[] = {
+    {REST, 1000},
+};
+inline constexpr size_t BGM_PONG_COUNT = 1;
+
+inline constexpr Tone SFX_PONG_HIT[] = {
+    {A4, 30},
+};
+inline constexpr size_t SFX_PONG_HIT_COUNT = 1;
+
+inline constexpr Tone SFX_PONG_SCORE[] = {
+    {E4, 80},
+    {C4, 80},
+};
+inline constexpr size_t SFX_PONG_SCORE_COUNT = 2;
+
+inline constexpr Tone SFX_PONG_WIN[] = {
+    {C4, 100},
+    {E4, 100},
+    {G4, 100},
+    {C5, 200},
+};
+inline constexpr size_t SFX_PONG_WIN_COUNT = 4;
+
 } // namespace sounds
 } // namespace handheld
 

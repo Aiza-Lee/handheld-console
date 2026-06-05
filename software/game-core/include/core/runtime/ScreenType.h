@@ -17,6 +17,9 @@ enum class ScreenType : uint8_t {
     BREAKOUT,
     INVADERS,
     GROW_BALL,
+    TETRIS,
+    GAME_2048,
+    PONG,
 };
 
 } // namespace handheld

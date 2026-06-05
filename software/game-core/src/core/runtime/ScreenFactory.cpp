@@ -10,6 +10,9 @@
 #include "scenes/invaders/InvadersScreen.h"
 #include "scenes/growball/GrowBallScreen.h"
 #include "scenes/settings/SettingsScreen.h"
+#include "scenes/tetris/TetrisScreen.h"
+#include "scenes/game2048/Game2048Screen.h"
+#include "scenes/pong/PongScreen.h"
 
 namespace handheld {
 
@@ -25,6 +28,9 @@ std::unique_ptr<GameScreen> DefaultScreenFactory::create(ScreenType type) {
         case ScreenType::BREAKOUT: return std::make_unique<BreakoutScreen>();
         case ScreenType::INVADERS: return std::make_unique<InvadersScreen>();
         case ScreenType::GROW_BALL: return std::make_unique<GrowBallScreen>();
+        case ScreenType::TETRIS: return std::make_unique<TetrisScreen>();
+        case ScreenType::GAME_2048: return std::make_unique<Game2048Screen>();
+        case ScreenType::PONG: return std::make_unique<PongScreen>();
         default: return nullptr;
     }
 }

@@ -6,6 +6,9 @@
 #include "scenes/playground/PlaygroundScreen.h"
 #include "scenes/settings/SettingsScreen.h"
 #include "scenes/snake/SnakeScreen.h"
+#include "scenes/tetris/TetrisScreen.h"
+#include "scenes/game2048/Game2048Screen.h"
+#include "scenes/pong/PongScreen.h"
 
 #include <algorithm>
 #include "core/common/ButtonBits.h"
@@ -42,6 +45,9 @@ MenuPreviewFn preview_for(ScreenType type) {
         case ScreenType::BREAKOUT: return BreakoutScreen::render_menu_preview;
         case ScreenType::INVADERS: return InvadersScreen::render_menu_preview;
         case ScreenType::GROW_BALL: return GrowBallScreen::render_menu_preview;
+        case ScreenType::TETRIS: return TetrisScreen::render_menu_preview;
+        case ScreenType::GAME_2048: return Game2048Screen::render_menu_preview;
+        case ScreenType::PONG: return PongScreen::render_menu_preview;
         default: return nullptr;
     }
 }

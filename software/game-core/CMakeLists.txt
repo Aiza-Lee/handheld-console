@@ -13,6 +13,9 @@ set(GAME_CORE_SOURCES
 		src/scenes/settings/SettingsScreen.cpp
 		src/scenes/growball/GrowBallScreen.cpp
 	src/scenes/growball/GrowBallWorld.cpp
+	src/scenes/tetris/TetrisScreen.cpp
+	src/scenes/game2048/Game2048Screen.cpp
+	src/scenes/pong/PongScreen.cpp
 )
 
 add_library(game_core STATIC

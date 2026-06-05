@@ -39,8 +39,11 @@ constexpr MenuEntry ENTRIES[] = {
     {  "Breakout",   ScreenType::BREAKOUT},
     {  "Invaders",   ScreenType::INVADERS},
     { "Grow Ball",  ScreenType::GROW_BALL},
+    {   "Tetris",     ScreenType::TETRIS},
+    {    "2048",   ScreenType::GAME_2048},
+    {     "Pong",       ScreenType::PONG},
 };
-constexpr std::size_t ENTRY_COUNT = 7;
+constexpr std::size_t ENTRY_COUNT = 10;
 
 // 布局
 constexpr int16_t BOX_X = 5;
