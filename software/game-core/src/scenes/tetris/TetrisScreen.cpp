@@ -3,11 +3,11 @@
 #include "core/audio/Sounds.h"
 #include "core/common/ButtonBits.h"
 #include "core/graphics/Font.h"
-#include "core/graphics/NumberRenderer.h"
 #include "core/graphics/TextRenderer.h"
 #include "core/runtime/IScreenHost.h"
 #include "core/runtime/ScreenType.h"
 
+#include <algorithm>
 #include <cstdio>
 
 namespace handheld {
@@ -46,8 +46,8 @@ void TetrisScreen::try_rotate() {
     uint8_t new_rot = static_cast<uint8_t>((_current_rot + 1U) & 0x3U);
     // 简单踢墙：先尝试 0/左/右 偏移，都失败再尝试上踢
     const int8_t kicks[3] = {0, -1, 1};
-    for (int i = 0; i < 3; ++i) {
-        int8_t nx = static_cast<int8_t>(_current_x + kicks[i]);
+    for (signed char kick : kicks) {
+        int8_t nx = static_cast<int8_t>(_current_x + kick);
         if (!collides(nx, _current_y, _current_piece, new_rot)) {
             _current_x = nx;
             _current_rot = new_rot;
@@ -86,7 +86,7 @@ void TetrisScreen::reset_game() {
     _rng = 12345;
     _gravity_counter = 0;
     _gravity_interval = INIT_INTERVAL;
-    for (int i = 0; i < COLS * ROWS; ++i) _stack[i] = 0;
+    for (unsigned char & i : _stack) i = 0;
     refill_bag();
     _next_piece = pop_bag();
     spawn_piece();
@@ -160,7 +160,7 @@ void TetrisScreen::lock_piece(IScreenHost& host) {
         _level = static_cast<uint8_t>(1 + _lines / SPEED_STEP_LINES);
         uint32_t new_interval = INIT_INTERVAL -
                                 static_cast<uint32_t>(_lines / SPEED_STEP_LINES) * SPEED_DECREMENT;
-        if (new_interval < MIN_INTERVAL) new_interval = MIN_INTERVAL;
+        new_interval = std::max(new_interval, MIN_INTERVAL);
         _gravity_interval = new_interval;
         host.audio().play_sfx(sounds::SFX_TETRIS_CLEAR, sounds::SFX_TETRIS_CLEAR_COUNT);
     }
@@ -334,12 +334,12 @@ void TetrisScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
         d.draw_rect(Rect{END_RECT_X, END_RECT_Y, END_RECT_W, END_RECT_H}, COLOR_GAMEOVER);
         TextRenderer::draw_text_centered(d, {40, 22}, "GAME OVER", COLOR_GAMEOVER, 1, BASIC_FONT_5X7);
         std::snprintf(buf, sizeof(buf), "SCORE %u", static_cast<unsigned>(_score));
-        TextRenderer::draw_text_centered(d, {40, 38}, buf, COLOR_HUD, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(d, {40, 34}, buf, COLOR_HUD, 1, COMPACT_FONT_3X5);
         std::snprintf(buf, sizeof(buf), "LV %u  N %u",
                       static_cast<unsigned>(_level), static_cast<unsigned>(_lines));
-        TextRenderer::draw_text_centered(d, {40, 46}, buf, COLOR_HUD, 1, COMPACT_FONT_3X5);
-        TextRenderer::draw_text_centered(d, {40, 54}, "START: AGAIN", COLOR_HINT, 1, COMPACT_FONT_3X5);
-        TextRenderer::draw_text_centered(d, {40, 62}, "B: Menu", COLOR_HINT, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(d, {40, 42}, buf, COLOR_HUD, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(d, {40, 50}, "START: AGAIN", COLOR_HINT, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(d, {40, 58}, "B: Menu", COLOR_HINT, 1, COMPACT_FONT_3X5);
     }
 }
 

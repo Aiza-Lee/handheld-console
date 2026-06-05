@@ -1,5 +1,7 @@
 #include "scenes/game2048/Game2048Screen.h"
 
+#include <algorithm>
+
 #include "core/audio/Sounds.h"
 #include "core/common/ButtonBits.h"
 #include "core/graphics/Color.h"
@@ -29,39 +31,56 @@ struct SlideResult {
 // 就地压缩并合并一行，reverse=true 时从高端累积。
 // 规则：先压缩、再合并相邻等值、最后再次压缩补零；
 // 每个 tile 在一次移动中只能参与一次合并。
+//
+// 关键：reverse=true 时必须**从右到左**读 buf，**从右到左**写 out
+// （与 forward 路径对称）。原实现从左到右读、从右到左写，会导致
+// 无合并时整行顺序被反转 —— 表现为棋盘全满时按 DOWN/RIGHT 出现"镜像"。
 SlideResult slide_line(uint16_t line[GRID], bool reverse) {
     SlideResult r;
     uint16_t buf[GRID];
     for (int8_t i = 0; i < GRID; ++i) buf[i] = line[i];
 
     uint16_t out[GRID] = {0, 0, 0, 0};
-    int8_t in_pos = 0;
-    int8_t out_pos = 0;
-    while (in_pos < GRID) {
-        if (buf[in_pos] == 0) {
-            ++in_pos;
-            continue;
+
+    if (!reverse) {
+        // LEFT / UP：从左到右读，从左到右写（顺序天然保留）
+        int8_t in_pos = 0;
+        int8_t out_pos = 0;
+        while (in_pos < GRID) {
+            if (buf[in_pos] == 0) {
+                ++in_pos;
+                continue;
+            }
+            int8_t next = static_cast<int8_t>(in_pos + 1);
+            while (next < GRID && buf[next] == 0) ++next;
+            if (next < GRID && buf[next] == buf[in_pos]) {
+                out[out_pos++] = static_cast<uint16_t>(buf[in_pos] * 2);
+                r.gained += buf[in_pos] * 2;
+                in_pos = static_cast<int8_t>(next + 1);
+            } else {
+                out[out_pos++] = buf[in_pos];
+                in_pos = next;
+            }
         }
-        int8_t next = static_cast<int8_t>(in_pos + 1);
-        while (next < GRID && buf[next] == 0) ++next;
-        if (next < GRID && buf[next] == buf[in_pos]) {
-            uint16_t merged = static_cast<uint16_t>(buf[in_pos] * 2);
-            if (reverse) {
-                out[GRID - 1 - out_pos] = merged;
-            } else {
-                out[out_pos] = merged;
+    } else {
+        // RIGHT / DOWN：从右到左读，从右到左写（顺序天然保留）
+        int8_t in_pos = static_cast<int8_t>(GRID - 1);
+        int8_t out_pos = static_cast<int8_t>(GRID - 1);
+        while (in_pos >= 0) {
+            if (buf[in_pos] == 0) {
+                --in_pos;
+                continue;
             }
-            r.gained += merged;
-            ++out_pos;
-            in_pos = static_cast<int8_t>(next + 1);
-        } else {
-            if (reverse) {
-                out[GRID - 1 - out_pos] = buf[in_pos];
+            int8_t next = static_cast<int8_t>(in_pos - 1);
+            while (next >= 0 && buf[next] == 0) --next;
+            if (next >= 0 && buf[next] == buf[in_pos]) {
+                out[out_pos--] = static_cast<uint16_t>(buf[in_pos] * 2);
+                r.gained += buf[in_pos] * 2;
+                in_pos = static_cast<int8_t>(next - 1);
             } else {
-                out[out_pos] = buf[in_pos];
+                out[out_pos--] = buf[in_pos];
+                in_pos = next;
             }
-            ++out_pos;
-            in_pos = next;
         }
     }
 
@@ -192,6 +211,7 @@ void Game2048Screen::update(IPlatform& platform, IScreenHost& host) {
 
     if (_game_over) {
         if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
+			host.audio().set_bgm(sounds::BGM_2048, sounds::BGM_2048_COUNT);
             reset_game();
             return;
         }
@@ -234,6 +254,7 @@ void Game2048Screen::update(IPlatform& platform, IScreenHost& host) {
     // 游戏结束判定
     if (!_game_over && !can_move()) {
         _game_over = true;
+		host.audio().stop_bgm();
         host.audio().play_sfx(sounds::SFX_2048_GAMEOVER, sounds::SFX_2048_GAMEOVER_COUNT);
     }
 }
@@ -292,29 +313,23 @@ void Game2048Screen::render(IPlatform& platform, IScreenHost& /*host*/) {
     char buf[20];
     buf[0] = 'S';
     buf[1] = 'C';
-    buf[2] = 'O';
-    buf[3] = 'R';
-    buf[4] = 'E';
-    buf[5] = ':';
-    buf[6] = ' ';
-    itoa_dec(static_cast<uint16_t>(_score > 9999 ? 9999 : _score), buf + 7, sizeof(buf) - 7);
+    buf[2] = ':';
+    itoa_dec(static_cast<uint16_t>(_score > 9999 ? 9999 : _score), buf + 3, sizeof(buf) - 3);
     TextRenderer::draw_text(d, {4, 4}, buf, HUD_TEXT, 1, COMPACT_FONT_3X5);
 
     // 顶部右侧显示最高 tile 值
     uint16_t best = 0;
     for (int8_t r = 0; r < GRID; ++r)
         for (int8_t c = 0; c < GRID; ++c)
-            if (_board[r][c] > best) best = _board[r][c];
+            best = std::max(_board[r][c], best);
     buf[0] = 'B';
-    buf[1] = 'E';
-    buf[2] = 'S';
-    buf[3] = 'T';
-    buf[4] = ':';
-    buf[5] = ' ';
-    itoa_dec(best, buf + 6, sizeof(buf) - 6);
+    buf[1] = 'S';
+    buf[2] = 'T';
+    buf[3] = ':';
+    itoa_dec(best, buf + 4, sizeof(buf) - 4);
     Size bsz = TextRenderer::measure_text(buf, 1, COMPACT_FONT_3X5);
     TextRenderer::draw_text(d,
-                            Point{static_cast<int16_t>(78 - bsz.width), 4},
+                            Point{static_cast<int16_t>(76 - bsz.width), 4},
                             buf, HUD_TEXT, 1, COMPACT_FONT_3X5);
 
     // ── 棋盘背景 ───────────────────────────────────
