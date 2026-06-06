@@ -32,6 +32,9 @@ public:
     void pop_screen() override;
     [[nodiscard]] AudioEngine& audio() override { return _audio_engine; }
     [[nodiscard]] uint32_t frame_time_ms() const { return _frame_time_ms; }
+    [[nodiscard]] GameScreen* top_screen() const {
+        return _stack_size > 0 ? _stack[_stack_size - 1].get() : nullptr;
+    }
 
 private:
     enum class PendingOp { NONE, SWITCH, PUSH, POP };

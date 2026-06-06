@@ -165,6 +165,10 @@ public:
     void render(IPlatform& platform, IScreenHost& host) override;
     static void render_menu_preview(IDisplay& display, const Rect& box, uint32_t frame);
 
+    // 测试/调试用入口：直接查询或触发分裂
+    [[nodiscard]] int16_t ball_count() const { return _ball_count; }
+    void split_balls();
+
 private:
     enum class State : uint8_t { ATTACHED, ACTIVE, GAME_OVER };
 
@@ -204,7 +208,6 @@ private:
     uint32_t next_rng();
     void launch_ball();
     void spawn_triple(int8_t x, int8_t y);
-    void split_balls();
     void move_balls(IScreenHost& host);
     bool step_ball(Ball& b, IScreenHost& host);
     void spawn_powerup(int16_t row, int16_t col);

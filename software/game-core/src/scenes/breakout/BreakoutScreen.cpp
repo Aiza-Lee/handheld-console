@@ -88,23 +88,25 @@ void BreakoutScreen::spawn_triple(int8_t x, int8_t y) {
 }
 
 void BreakoutScreen::split_balls() {
-    for (int16_t i = 0; i < MAX_BALLS; ++i) {
+    if (_ball_count <= 0 || _ball_count >= MAX_BALLS) return;
+    int16_t room = MAX_BALLS - _ball_count;
+    int16_t to_clone = (_ball_count <= room) ? _ball_count : room;
+
+    int16_t next_slot = 0;
+    for (int16_t i = 0; i < MAX_BALLS && to_clone > 0; ++i) {
         if (!_balls[i].active) continue;
-        if (_ball_count >= MAX_BALLS) break;
-
-        // 找一个空闲槽位
         int16_t slot = -1;
-        for (int16_t s = 0; s < MAX_BALLS; ++s)
-            if (!_balls[s].active) {
-                slot = s;
-                break;
-            }
+        for (int16_t s = next_slot; s < MAX_BALLS; ++s) {
+            if (!_balls[s].active) { slot = s; break; }
+        }
         if (slot < 0) break;
-
         auto& orig = _balls[i];
         auto& clone = _balls[slot];
-        clone = {orig.x, orig.y, static_cast<int8_t>(-orig.vx), orig.vy, orig.x, orig.y, true};
+        clone = {orig.x, orig.y, static_cast<int8_t>(-orig.vx), orig.vy,
+                 orig.x, orig.y, true};
         ++_ball_count;
+        --to_clone;
+        next_slot = slot + 1;
     }
 }
 
