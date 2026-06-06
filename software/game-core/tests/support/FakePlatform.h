@@ -9,11 +9,14 @@
 #include "platform/interfaces/IInput.h"
 #include "platform/interfaces/IPlatform.h"
 #include "platform/interfaces/IPower.h"
-#include "platform/interfaces/IAssetProvider.h"
+#include "platform/interfaces/IStorage.h"
 #include "platform/interfaces/ITime.h"
 
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
+#include <map>
+#include <vector>
 
 namespace handheld {
 
@@ -87,14 +90,55 @@ private:
     uint32_t _ticks_ms = 0;
 };
 
-class FakeAssetProvider final : public IAssetProvider {
+class FakeStorage final : public IStorage {
 public:
-    bool get(uint16_t /*asset_id*/, const void*& out_data, uint32_t& out_size) const override {
-        out_data = nullptr;
-        out_size = 0;
-        return false;
+    Status read(uint16_t key, void* buf, uint32_t size) const override {
+        const auto it = _store.find(key);
+        if (it == _store.end()) return Status::NOT_FOUND;
+        if (it->second.size() != size) return Status::INVALID_SIZE;
+        std::memcpy(buf, it->second.data(), size);
+        return Status::OK;
     }
-    bool exists(uint16_t /*asset_id*/) const override { return false; }
+
+    Status write(uint16_t key, const void* buf, uint32_t size) override {
+        const auto* p = static_cast<const uint8_t*>(buf);
+        _store[key] = std::vector<uint8_t>(p, p + size);
+        ++_write_count;
+        return Status::OK;
+    }
+
+    Status commit() override { return Status::OK; }
+
+    Status erase(uint16_t key) override {
+        _store.erase(key);
+        return Status::OK;
+    }
+
+    [[nodiscard]] bool exists(uint16_t key) const override { return _store.count(key) > 0; }
+
+    [[nodiscard]] uint32_t size_of(uint16_t key) const override {
+        const auto it = _store.find(key);
+        return (it == _store.end()) ? 0u : static_cast<uint32_t>(it->second.size());
+    }
+
+    // ── 测试钩子 ──
+    // 预置"出厂值"（不会自动进入 _store）
+    void set_default(uint16_t key, const void* data, uint32_t size) {
+        const auto* p = static_cast<const uint8_t*>(data);
+        _defaults[key] = std::vector<uint8_t>(p, p + size);
+    }
+
+    // 把 _defaults 复制到 _store，模拟"开机读到 flash 已有值"
+    void seed_defaults() { _store = _defaults; }
+
+    void clear_all() { _store.clear(); }
+
+    [[nodiscard]] uint32_t write_count() const { return _write_count; }
+
+private:
+    std::map<uint16_t, std::vector<uint8_t>> _store;
+    std::map<uint16_t, std::vector<uint8_t>> _defaults;
+    uint32_t _write_count = 0;
 };
 
 class FakePlatform final : public IPlatform {
@@ -107,10 +151,11 @@ public:
     [[nodiscard]] size_t samples_written() const { return _samples_written; }
     IPower& power() override { return _power; }
     ITime& time() override { return _time; }
-    IAssetProvider& assets() override { return _assets; }
+    IStorage& storage() override { return _storage; }
 
     FakeDisplay& fake_display() { return _display; }
     FakeInput& fake_input() { return _input; }
+    FakeStorage& fake_storage() { return _storage; }
 
 private:
     FakeDisplay _display;
@@ -118,7 +163,7 @@ private:
     size_t _samples_written = 0;
     FakePower _power;
     FakeTime _time;
-    FakeAssetProvider _assets;
+    FakeStorage _storage;
 };
 
 } // namespace handheld

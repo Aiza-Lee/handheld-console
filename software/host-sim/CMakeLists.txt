@@ -8,9 +8,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 enable_testing()
 
-# 仓库根路径（供 AssetHelpers.cmake 使用）
-set(REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
-
 add_subdirectory(
 	${CMAKE_CURRENT_SOURCE_DIR}/../game-core
 	${CMAKE_CURRENT_BINARY_DIR}/game-core

@@ -38,7 +38,7 @@ ctest -R game-core-smoke
 
 ### Platform Abstraction
 
-All hardware services are behind interfaces in `include/platform/interfaces/`. `IPlatform` is the composed facade that provides `IDisplay`, `IInput`, `IPower`, `ITime`, `IStorage`, `IAssetProvider`, and `write_audio_samples()`. Three platform implementations exist:
+All hardware services are behind interfaces in `include/platform/interfaces/`. `IPlatform` is the composed facade that provides `IDisplay`, `IInput`, `IPower`, `ITime`, `IStorage`, and `write_audio_samples()`. Three platform implementations exist:
 
 | Implementation | Location | Use |
 |---|---|---|
@@ -85,73 +85,6 @@ Screens request transitions via `IScreenHost`:
 ## Testing
 
 Smoke tests are standalone executables (no test framework), each with its own `main()` using `assert()`. Tests link `game_core` and use `FakePlatform` with configurable `FakeInput` (call `fake_input().set_button()` before `tick()`). Each test is registered with CTest via `add_game_core_smoke_test()` in `tests/CMakeLists.txt`.
-
-## Asset Pipeline
-
-二进制资产（精灵图、关卡数据、音效）通过编译时管线转为 C++ `const` 数组，直接链接进固件。
-
-资产和工具已迁移至 `software/game-core/` 内，使 game-core 自包含。外部消费者只需拉取 game-core 即可获得完整资产管线。
-
-### 目录约定
-
-```
-software/game-core/
-  assets/              ← 原始资产文件
-    sprites/           ← 精灵数据 (.raw / .bin / 任意格式)
-    levels/            ← 关卡数据
-  tools/               ← 转换脚本
-    asset_convert.py   ← 二进制 → C++ 数组
-  src/assets/generated/   ← 预生成的 C++ 文件（提交到 git，供 CCS 直接使用）
-  cmake/AssetHelpers.cmake  ← CMake 函数 add_assets()
-```
-
-### 注册资产
-
-在平台 CMakeLists 中调用 `add_assets()`：
-
-```cmake
-# software/host-sim/sdl/CMakeLists.txt
-set(GAME_CORE_ROOT "${HOST_SIM_ROOT_DIR}/../game-core")
-include(${GAME_CORE_ROOT}/cmake/AssetHelpers.cmake)
-
-add_assets(TARGET host-sim-sdl
-    ASSETS
-        SPRITE_ENEMY    1    ${GAME_CORE_ROOT}/assets/sprites/enemy.raw
-        MAZE_01         2    ${GAME_CORE_ROOT}/assets/levels/maze_01.map
-)
-```
-
-每个资产三元组 = `名称 数字ID 文件路径`。名称将成为 C++ 常量名，ID 用于运行时查找。
-
-### 构建时自动生成
-
-| 生成文件 | 说明 |
-|---|---|
-| `_assets/<NAME>.cpp` | `extern "C" alignas(4) const unsigned char` 数组 |
-| `_assets/AssetId.h` | `namespace handheld::asset { constexpr uint16_t NAME = ID; }` |
-| `_assets/asset_registry.cpp` | `extern const AssetEntry builtin_assets[]` 汇总表 |
-
-`<NAME>.cpp` 按需增量编译，只重做改过的资产。`alignas(4)` 保证 ARM 访问安全。
-
-### 在 C++ 中使用
-
-```cpp
-#include "AssetId.h"  // 由 add_assets() 生成
-
-void MyScreen::render(IPlatform& platform, IScreenHost&) {
-    const void* data;
-    uint32_t size;
-    if (platform.assets().get(handheld::asset::SPRITE_ENEMY, data, size)) {
-        auto* pixels = static_cast<const Color*>(data);
-        display.draw_bitmap({x, y}, pixels, 16, 16);
-    }
-}
-```
-
-### 背后工具
-
-- `software/game-core/tools/asset_convert.py` — 读取任意二进制文件，补齐到 4 字节，输出 `extern "C"` C++ 数组
-- `software/game-core/cmake/AssetHelpers.cmake` — CMake 函数 `add_assets()`，驱动转换 + 文件生成
 
 ## Audio
 

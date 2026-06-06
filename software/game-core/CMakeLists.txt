@@ -1,7 +1,6 @@
 set(GAME_CORE_SOURCES
 	src/core/runtime/ScreenRunner.cpp
 	src/core/runtime/ScreenFactory.cpp
-	src/core/assets/BuiltinAssetProvider.cpp
 	src/scenes/boot/BootScreen.cpp
 	src/scenes/menu/MenuScreen.cpp
 	src/scenes/playground/PlaygroundGuideScreen.cpp

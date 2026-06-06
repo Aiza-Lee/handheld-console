@@ -3,9 +3,11 @@
 #include "core/common/ButtonBits.h"
 #include "core/graphics/Color.h"
 #include "core/graphics/TextRenderer.h"
+#include "core/persistence/StorageKeys.h"
 #include "core/runtime/IScreenHost.h"
 #include "core/runtime/ScreenType.h"
 #include "core/audio/Sounds.h"
+#include "platform/interfaces/IStorage.h"
 #include <algorithm>
 #include <cstdio>
 #include <stdint.h>
@@ -51,6 +53,17 @@ void SettingsScreen::enter(IPlatform& platform, IScreenHost& host) {
     platform.display().clear(BG);
     _selected_row = 0;
     _frame = 0;
+
+    // 从持久化恢复音量；首次启动 NOT_FOUND 时保留 AudioEngine 的默认值
+    auto& storage = platform.storage();
+    uint8_t v = 0;
+    if (storage.read(storage::KEY_BGM_VOLUME, &v, sizeof(v)) == IStorage::Status::OK) {
+        host.audio().set_bgm_volume(v);
+    }
+    if (storage.read(storage::KEY_SFX_VOLUME, &v, sizeof(v)) == IStorage::Status::OK) {
+        host.audio().set_sfx_volume(v);
+    }
+
     host.audio().set_bgm(sounds::BGM_SETTINGS, sounds::BGM_SETTINGS_COUNT);
 }
 
@@ -110,12 +123,24 @@ void SettingsScreen::update(IPlatform& platform, IScreenHost& host) {
 
     // START = 保存退出（a11y 双键，与 B 等价；音量已实时生效）
     if (input.was_pressed(ButtonBits::START)) {
+        auto& storage = platform.storage();
+        uint8_t bgm = host.audio().bgm_volume();
+        uint8_t sfx = host.audio().sfx_volume();
+        storage.write(storage::KEY_BGM_VOLUME, &bgm, sizeof(bgm));
+        storage.write(storage::KEY_SFX_VOLUME, &sfx, sizeof(sfx));
+        storage.commit();
         host.audio().play_sfx(sounds::SFX_BACK, sounds::SFX_BACK_COUNT);
         host.switch_to(ScreenType::MENU);
         return;
     }
 
     if (input.was_pressed(ButtonBits::B)) {
+        auto& storage = platform.storage();
+        uint8_t bgm = host.audio().bgm_volume();
+        uint8_t sfx = host.audio().sfx_volume();
+        storage.write(storage::KEY_BGM_VOLUME, &bgm, sizeof(bgm));
+        storage.write(storage::KEY_SFX_VOLUME, &sfx, sizeof(sfx));
+        storage.commit();
         host.audio().play_sfx(sounds::SFX_BACK, sounds::SFX_BACK_COUNT);
         host.switch_to(ScreenType::MENU);
     }
