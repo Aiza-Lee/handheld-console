@@ -279,9 +279,7 @@ void SnakeScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
     if (_paused) {
         d.fill_rect(Rect{C::PAUSE_RECT_X, C::PAUSE_RECT_Y, C::PAUSE_RECT_W, C::PAUSE_RECT_H}, C::PAUSE_BG);
         d.draw_rect(Rect{C::PAUSE_RECT_X, C::PAUSE_RECT_Y, C::PAUSE_RECT_W, C::PAUSE_RECT_H}, C::HEAD_COLOR);
-        TextRenderer::draw_text_centered(d, {40, 28}, "PAUSED", C::PAUSE_TEXT, 1, BASIC_FONT_5X7);
-        TextRenderer::draw_text_centered(d, {40, 42}, "A/START: Resume", C::PAUSE_TEXT, 1, COMPACT_FONT_3X5);
-        TextRenderer::draw_text_centered(d, {40, 52}, "B: Menu", C::HINT_COLOR, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_pause_overlay(d, 40, 28, C::PAUSE_TEXT, C::HINT_COLOR);
     }
 }
 

@@ -119,6 +119,16 @@ public:
         itoa_dec(value, buf);
         draw_text(display, {static_cast<int16_t>(x), static_cast<int16_t>(y)}, buf, color, 1, font);
     }
+
+    // 标准 4 行暂停覆盖层，水平居中 (cx, cy)。所有 8 个屏幕的版本完全相同。
+    static void draw_pause_overlay(IDisplay& display, int cx, int cy, Color title_color, Color hint_color) {
+        draw_text_centered(display, {static_cast<int16_t>(cx), static_cast<int16_t>(cy)},
+                           "PAUSED", title_color, 1, BASIC_FONT_5X7);
+        draw_text_centered(display, {static_cast<int16_t>(cx), static_cast<int16_t>(cy + 14)},
+                           "A/START: Resume", hint_color, 1, COMPACT_FONT_3X5);
+        draw_text_centered(display, {static_cast<int16_t>(cx), static_cast<int16_t>(cy + 24)},
+                           "B: Menu", hint_color, 1, COMPACT_FONT_3X5);
+    }
 };
 
 } // namespace handheld

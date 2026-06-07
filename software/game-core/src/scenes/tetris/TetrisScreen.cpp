@@ -345,9 +345,7 @@ void TetrisScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
     if (_paused) {
         d.fill_rect(Rect{PAUSE_RECT_X, PAUSE_RECT_Y, PAUSE_RECT_W, PAUSE_RECT_H}, COLOR_OVERLAY);
         d.draw_rect(Rect{PAUSE_RECT_X, PAUSE_RECT_Y, PAUSE_RECT_W, PAUSE_RECT_H}, COLOR_PAUSE);
-        TextRenderer::draw_text_centered(d, {40, 28}, "PAUSED", COLOR_PAUSE, 1, BASIC_FONT_5X7);
-        TextRenderer::draw_text_centered(d, {40, 42}, "A/START: Resume", COLOR_PAUSE, 1, COMPACT_FONT_3X5);
-        TextRenderer::draw_text_centered(d, {40, 52}, "B: Menu", COLOR_HINT, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_pause_overlay(d, 40, 28, COLOR_PAUSE, COLOR_HINT);
     }
     if (_game_over) {
         d.fill_rect(Rect{END_RECT_X, END_RECT_Y, END_RECT_W, END_RECT_H}, COLOR_OVERLAY);

@@ -581,9 +581,7 @@ void PacmanScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
     if (_paused) {
         display.fill_rect({PAUSE_RECT_X, PAUSE_RECT_Y, PAUSE_RECT_W, PAUSE_RECT_H}, PAUSE_BG);
         display.draw_rect({PAUSE_RECT_X, PAUSE_RECT_Y, PAUSE_RECT_W, PAUSE_RECT_H}, PAC_COLOR);
-        TextRenderer::draw_text_centered(display, {40, 28}, "PAUSED", PAUSE_TEXT, 1, BASIC_FONT_5X7);
-        TextRenderer::draw_text_centered(display, {40, 42}, "A/START: Resume", PAUSE_TEXT, 1, COMPACT_FONT_3X5);
-        TextRenderer::draw_text_centered(display, {40, 52}, "B: Menu", HINT_COLOR, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_pause_overlay(display, 40, 28, PAUSE_TEXT, HINT_COLOR);
     }
 }
 
