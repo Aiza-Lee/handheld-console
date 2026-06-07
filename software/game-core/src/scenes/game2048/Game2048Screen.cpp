@@ -297,7 +297,7 @@ void Game2048Screen::draw_tile(IDisplay& d, int8_t row, int8_t col, uint16_t val
 
 void Game2048Screen::draw_number(IDisplay& d, int16_t cx, int16_t cy, uint16_t value) const {
     char buf[8];
-    itoa_dec(value, buf, sizeof(buf));
+    itoa_dec(value, buf);
     Color text_color = tile_text_dark(value) ? TILE_TEXT_DARK : TILE_TEXT_LIGHT;
     Size sz = TextRenderer::measure_text(buf, 1, COMPACT_FONT_3X5);
     Point origin{static_cast<int16_t>(cx - sz.width / 2), static_cast<int16_t>(cy - sz.height / 2)};
@@ -315,7 +315,7 @@ void Game2048Screen::render(IPlatform& platform, IScreenHost& /*host*/) {
     buf[0] = 'S';
     buf[1] = 'C';
     buf[2] = ':';
-    itoa_dec(static_cast<uint16_t>(_score > 9999 ? 9999 : _score), buf + 3, sizeof(buf) - 3);
+    itoa_dec(static_cast<uint16_t>(_score > 9999 ? 9999 : _score), buf + 3);
     TextRenderer::draw_text(d, {4, 4}, buf, HUD_TEXT, 1, COMPACT_FONT_3X5);
 
     // 顶部右侧显示最高 tile 值
@@ -327,7 +327,7 @@ void Game2048Screen::render(IPlatform& platform, IScreenHost& /*host*/) {
     buf[1] = 'S';
     buf[2] = 'T';
     buf[3] = ':';
-    itoa_dec(best, buf + 4, sizeof(buf) - 4);
+    itoa_dec(best, buf + 4);
     Size bsz = TextRenderer::measure_text(buf, 1, COMPACT_FONT_3X5);
     TextRenderer::draw_text(d,
                             Point{static_cast<int16_t>(76 - bsz.width), 4},
@@ -374,7 +374,7 @@ void Game2048Screen::render(IPlatform& platform, IScreenHost& /*host*/) {
         buf[4] = 'E';
         buf[5] = ':';
         buf[6] = ' ';
-        itoa_dec(static_cast<uint16_t>(_score > 9999 ? 9999 : _score), buf + 7, sizeof(buf) - 7);
+        itoa_dec(static_cast<uint16_t>(_score > 9999 ? 9999 : _score), buf + 7);
         TextRenderer::draw_text_centered(d, {40, 42}, buf, Color::WHITE, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(d, {40, 52}, "A/START: New Game", HINT_COLOR, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(d, {40, 58}, "B: Menu", HINT_COLOR, 1, COMPACT_FONT_3X5);

@@ -378,8 +378,8 @@ void PongScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
     // 顶 HUD：分数（左右）+ 模式指示（右上）
     char lbuf[4];
     char rbuf[4];
-    itoa_dec(static_cast<uint16_t>(_left_score), lbuf, sizeof(lbuf));
-    itoa_dec(static_cast<uint16_t>(_right_score), rbuf, sizeof(rbuf));
+    itoa_dec(static_cast<uint16_t>(_left_score), lbuf);
+    itoa_dec(static_cast<uint16_t>(_right_score), rbuf);
     TextRenderer::draw_text_centered(d, {SCORE_LEFT_CENTER_X, SCORE_BASELINE_Y}, lbuf, SCORE_COLOR, 1,
                                      BASIC_FONT_5X7);
     TextRenderer::draw_text_centered(d, {SCORE_RIGHT_CENTER_X, SCORE_BASELINE_Y}, rbuf, SCORE_COLOR, 1,
@@ -390,8 +390,8 @@ void PongScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
     // 底 HUD：合并为单行 "RALLY 03  SPD 2" 居中
     char rally_buf[8];
     char speed_buf[8];
-    itoa_dec(static_cast<uint16_t>(_rally_count), rally_buf, sizeof(rally_buf));
-    itoa_dec(static_cast<uint16_t>(_ball_speed), speed_buf, sizeof(speed_buf));
+    itoa_dec(static_cast<uint16_t>(_rally_count), rally_buf);
+    itoa_dec(static_cast<uint16_t>(_ball_speed), speed_buf);
 
     // 拼接 "RALLY " + rally + "  SPD " + speed
     char hud_line[24];

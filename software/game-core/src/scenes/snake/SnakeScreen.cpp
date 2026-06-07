@@ -210,13 +210,13 @@ void SnakeScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
     buf[0] = 'S';
     buf[1] = 'C';
     buf[2] = ':';
-    itoa_dec(static_cast<uint16_t>(_score), buf + 3, sizeof(buf) - 3);
+    itoa_dec(static_cast<uint16_t>(_score), buf + 3);
     TextRenderer::draw_text(d, {2, 1}, buf, C::SCORE_COLOR, 1, COMPACT_FONT_3X5);
     buf[0] = 'S';
     buf[1] = 'P';
     buf[2] = 'D';
     buf[3] = ':';
-    itoa_dec(_speed, buf + 4, sizeof(buf) - 4);
+    itoa_dec(_speed, buf + 4);
     TextRenderer::draw_text(d, {42, 1}, buf, C::SCORE_COLOR, 1, COMPACT_FONT_3X5);
 
     // 网格
@@ -273,7 +273,7 @@ void SnakeScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
         buf[4] = 'E';
         buf[5] = ':';
         buf[6] = ' ';
-        itoa_dec(static_cast<uint16_t>(_score), buf + 7, sizeof(buf) - 7);
+        itoa_dec(static_cast<uint16_t>(_score), buf + 7);
         TextRenderer::draw_text_centered(d, {40, 42}, buf, C::SCORE_COLOR, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(d, {40, 50}, "A/START: Again", C::HINT_COLOR, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(d, {40, 58}, "B: Menu", C::HINT_COLOR, 1, COMPACT_FONT_3X5);

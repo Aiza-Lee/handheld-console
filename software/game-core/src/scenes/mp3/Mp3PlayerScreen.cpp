@@ -9,8 +9,6 @@
 #include "core/runtime/IScreenHost.h"
 #include "core/runtime/ScreenType.h"
 
-#include <cstdio>
-
 namespace handheld {
 
 using namespace mp3::cfg;
@@ -94,13 +92,18 @@ void Mp3PlayerScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
 
     // 3. 屏幕内文字
     if (mp3::TRACK_COUNT > 0) {
-        char header[16];
-        snprintf(header, sizeof(header), "TRACK %u/%u",
-                 static_cast<unsigned>(_track_idx + 1),
-                 static_cast<unsigned>(mp3::TRACK_COUNT));
         TextRenderer::draw_text(display, {static_cast<int16_t>(SCREEN_X + 3),
                                           static_cast<int16_t>(SCREEN_Y + 2)},
-                                header, SCREEN_FG, 1, BASIC_FONT_5X7);
+                                "TRACK", SCREEN_FG, 1, BASIC_FONT_5X7);
+        TextRenderer::draw_uint(display, static_cast<int16_t>(SCREEN_X + 28),
+                                static_cast<int16_t>(SCREEN_Y + 2),
+                                static_cast<uint32_t>(_track_idx + 1), SCREEN_FG, BASIC_FONT_5X7);
+        TextRenderer::draw_text(display, {static_cast<int16_t>(SCREEN_X + 38),
+                                          static_cast<int16_t>(SCREEN_Y + 2)},
+                                "/", SCREEN_FG, 1, BASIC_FONT_5X7);
+        TextRenderer::draw_uint(display, static_cast<int16_t>(SCREEN_X + 44),
+                                static_cast<int16_t>(SCREEN_Y + 2),
+                                static_cast<uint32_t>(mp3::TRACK_COUNT), SCREEN_FG, BASIC_FONT_5X7);
         TextRenderer::draw_text(display, {static_cast<int16_t>(SCREEN_X + 3),
                                           static_cast<int16_t>(SCREEN_Y + 12)},
                                 mp3::TRACKS[_track_idx].name, SCREEN_FG, 1, COMPACT_FONT_3X5);

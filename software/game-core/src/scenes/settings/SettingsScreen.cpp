@@ -7,7 +7,6 @@
 #include "core/runtime/ScreenType.h"
 #include "core/audio/Sounds.h"
 #include <algorithm>
-#include <cstdio>
 #include <stdint.h>
 
 namespace handheld {
@@ -152,10 +151,8 @@ void SettingsScreen::render(IPlatform& platform, IScreenHost& host) {
         const auto bar_y = static_cast<int16_t>(ry + (ROW_H - BAR_H) / 2);
         draw_progress_bar(display, BAR_X, bar_y, volumes[i]);
 
-        char pct_buf[5];
-        std::snprintf(pct_buf, sizeof(pct_buf), "%u%%", volumes[i]);
-        TextRenderer::draw_text(display, {static_cast<int16_t>(BAR_X + BAR_W + 3), label_y}, pct_buf,
-                                sel ? ROW_SELECTED : ROW_TEXT, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_uint(display, static_cast<int16_t>(BAR_X + BAR_W + 3), label_y, volumes[i],
+                                sel ? ROW_SELECTED : ROW_TEXT, COMPACT_FONT_3X5);
     }
 
     const auto hint_y = static_cast<int16_t>(ROW_START_Y + 2 * (ROW_H + ROW_GAP));

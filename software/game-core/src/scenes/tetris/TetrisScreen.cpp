@@ -8,7 +8,6 @@
 #include "core/runtime/ScreenType.h"
 
 #include <algorithm>
-#include <cstdio>
 
 namespace handheld {
 
@@ -278,16 +277,15 @@ void TetrisScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
     d.clear(COLOR_BG);
 
     // ── HUD（顶部 8px） ────────────────────────────
-    char buf[16];
     // 分数
-    std::snprintf(buf, sizeof(buf), "S:%u", static_cast<unsigned>(_score));
-    TextRenderer::draw_text(d, {2, 2}, buf, COLOR_HUD, 1, COMPACT_FONT_3X5);
+    TextRenderer::draw_text(d, {2, 2}, "S:", COLOR_HUD, 1, COMPACT_FONT_3X5);
+    TextRenderer::draw_uint(d, 10, 2, _score, COLOR_HUD, COMPACT_FONT_3X5);
     // 等级
-    std::snprintf(buf, sizeof(buf), "L:%u", static_cast<unsigned>(_level));
-    TextRenderer::draw_text(d, {36, 2}, buf, COLOR_HUD, 1, COMPACT_FONT_3X5);
+    TextRenderer::draw_text(d, {36, 2}, "L:", COLOR_HUD, 1, COMPACT_FONT_3X5);
+    TextRenderer::draw_uint(d, 44, 2, _level, COLOR_HUD, COMPACT_FONT_3X5);
     // 消行
-    std::snprintf(buf, sizeof(buf), "N:%u", static_cast<unsigned>(_lines));
-    TextRenderer::draw_text(d, {60, 2}, buf, COLOR_HUD, 1, COMPACT_FONT_3X5);
+    TextRenderer::draw_text(d, {60, 2}, "N:", COLOR_HUD, 1, COMPACT_FONT_3X5);
+    TextRenderer::draw_uint(d, 68, 2, _lines, COLOR_HUD, COMPACT_FONT_3X5);
 
     // ── 网格线（淡色背景格） ──────────────────────
     for (int r = 0; r <= ROWS; ++r) {
@@ -357,11 +355,12 @@ void TetrisScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
         d.fill_rect(Rect{END_RECT_X, END_RECT_Y, END_RECT_W, END_RECT_H}, COLOR_OVERLAY);
         d.draw_rect(Rect{END_RECT_X, END_RECT_Y, END_RECT_W, END_RECT_H}, COLOR_GAMEOVER);
         TextRenderer::draw_text_centered(d, {40, 22}, "GAME OVER", COLOR_GAMEOVER, 1, BASIC_FONT_5X7);
-        std::snprintf(buf, sizeof(buf), "SCORE %u", static_cast<unsigned>(_score));
-        TextRenderer::draw_text_centered(d, {40, 34}, buf, COLOR_HUD, 1, COMPACT_FONT_3X5);
-        std::snprintf(buf, sizeof(buf), "LV %u  N %u",
-                      static_cast<unsigned>(_level), static_cast<unsigned>(_lines));
-        TextRenderer::draw_text_centered(d, {40, 42}, buf, COLOR_HUD, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text(d, {10, 34}, "SCORE ", COLOR_HUD, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_uint(d, 34, 34, _score, COLOR_HUD, COMPACT_FONT_3X5);
+        TextRenderer::draw_text(d, {6, 42}, "LV ", COLOR_HUD, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_uint(d, 18, 42, _level, COLOR_HUD, COMPACT_FONT_3X5);
+        TextRenderer::draw_text(d, {30, 42}, "  N ", COLOR_HUD, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_uint(d, 48, 42, _lines, COLOR_HUD, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(d, {40, 50}, "A/START: Again", COLOR_HINT, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(d, {40, 58}, "B: Menu", COLOR_HINT, 1, COMPACT_FONT_3X5);
     }

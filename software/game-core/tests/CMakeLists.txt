@@ -17,6 +17,7 @@ endfunction()
 
 add_game_core_smoke_test(game-core-smoke ScreenRunnerSmoke.cpp)
 add_game_core_smoke_test(game-core-text-smoke TextRendererSmoke.cpp)
+add_game_core_smoke_test(game-core-number-smoke NumberRendererSmoke.cpp)
 add_game_core_smoke_test(game-core-snake-smoke SnakeSmoke.cpp)
 add_game_core_smoke_test(game-core-pacman-smoke PacmanSmoke.cpp)
 add_game_core_smoke_test(game-core-breakout-smoke BreakoutSmoke.cpp)

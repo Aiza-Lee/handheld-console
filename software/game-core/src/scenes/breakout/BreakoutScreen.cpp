@@ -8,7 +8,6 @@
 #include "core/runtime/IScreenHost.h"
 #include "core/runtime/ScreenType.h"
 #include <algorithm>
-#include <cstdio>
 
 namespace handheld {
 
@@ -282,26 +281,25 @@ void BreakoutScreen::draw_bricks(IDisplay& display) const {
 // ── 渲染：状态栏 ────────────────────────────────
 
 void BreakoutScreen::draw_status_bar(IDisplay& display) const {
-    char buf[20];
-    std::snprintf(buf, sizeof(buf), "LV%d %d", _level + 1, _score);
-    TextRenderer::draw_text(display, {2, 0}, buf, Color::WHITE, 1, COMPACT_FONT_3X5);
-    std::snprintf(buf, sizeof(buf), "%d", _ball_count);
+    TextRenderer::draw_text(display, {2, 0}, "LV", Color::WHITE, 1, COMPACT_FONT_3X5);
+    TextRenderer::draw_int(display, 10, 0, _level + 1, Color::WHITE, COMPACT_FONT_3X5);
+    TextRenderer::draw_text(display, {18, 0}, " ", Color::WHITE, 1, COMPACT_FONT_3X5);
+    TextRenderer::draw_int(display, 22, 0, _score, Color::WHITE, COMPACT_FONT_3X5);
     Color ball_color = (_ball_count > 3) ? TRIPLE_COLOR : Color::WHITE;
-    TextRenderer::draw_text(display, {72, 0}, buf, ball_color, 1, COMPACT_FONT_3X5);
+    TextRenderer::draw_int(display, 72, 0, _ball_count, ball_color, COMPACT_FONT_3X5);
 }
 
 // ── 渲染：覆盖层（最后绘制，盖住所有游戏元素）───
 
 void BreakoutScreen::draw_overlay(IDisplay& display) const {
-    char buf[20];
     if (_state == State::GAME_OVER) {
         bool won = (_celebration > 0);
         Color c = won ? WIN_COLOR : BRICK_COLORS[0];
         display.fill_rect(Rect{END_RECT_X, END_RECT_Y, END_RECT_W, END_RECT_H}, BG_COLOR);
         display.draw_rect(Rect{END_RECT_X, END_RECT_Y, END_RECT_W, END_RECT_H}, c);
         TextRenderer::draw_text_centered(display, {40, 28}, won ? "YOU WIN!" : "GAME OVER", c, 1, BASIC_FONT_5X7);
-        std::snprintf(buf, sizeof(buf), "SC:%d", _score);
-        TextRenderer::draw_text_centered(display, {40, 42}, buf, Color::WHITE, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text(display, {20, 42}, "SC:", Color::WHITE, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_int(display, 32, 42, _score, Color::WHITE, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(display, {40, 50}, "A/START: Again", HINT_COLOR, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(display, {40, 58}, "B: Menu", HINT_COLOR, 1, COMPACT_FONT_3X5);
     }

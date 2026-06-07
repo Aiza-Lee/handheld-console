@@ -6,7 +6,6 @@
 #include "core/runtime/IScreenHost.h"
 #include "core/runtime/ScreenType.h"
 #include <algorithm>
-#include <cstdio>
 #include "core/audio/Sounds.h"
 
 namespace handheld {
@@ -512,11 +511,10 @@ void InvadersScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
 
     // 状态栏
     display.fill_rect({0, 0, SCREEN_WIDTH, STATUS_H}, INV_STATUS_BG);
-    char buf[16];
-    snprintf(buf, sizeof(buf), "SC:%d", _score);
-    TextRenderer::draw_text(display, {2, 1}, buf, INV_TEXT, 1, COMPACT_FONT_3X5);
-    snprintf(buf, sizeof(buf), "LV%d", _level);
-    TextRenderer::draw_text(display, {46, 1}, buf, INV_TEXT, 1, COMPACT_FONT_3X5);
+    TextRenderer::draw_text(display, {2, 1}, "SC:", INV_TEXT, 1, COMPACT_FONT_3X5);
+    TextRenderer::draw_int(display, 14, 1, _score, INV_TEXT, COMPACT_FONT_3X5);
+    TextRenderer::draw_text(display, {46, 1}, "LV", INV_TEXT, 1, COMPACT_FONT_3X5);
+    TextRenderer::draw_int(display, 54, 1, _level, INV_TEXT, COMPACT_FONT_3X5);
 
     for (int8_t i = 0; i < _lives; ++i) {
         int16_t lx = static_cast<int16_t>(60 + i * 7);
@@ -544,9 +542,7 @@ void InvadersScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
     // 神秘飞船
     draw_saucer(display);
     if (_saucer_score_display > 0) {
-        snprintf(buf, sizeof(buf), "%d", _saucer.points);
-        TextRenderer::draw_text_centered(display, {_saucer_score_x, _saucer_score_y}, buf, SAUCER_COLOR, 1,
-                                         COMPACT_FONT_3X5);
+        TextRenderer::draw_int(display, _saucer_score_x, _saucer_score_y, _saucer.points, SAUCER_COLOR, COMPACT_FONT_3X5);
     }
 
     // 子弹
@@ -572,8 +568,8 @@ void InvadersScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
     if (_state == State::LEVEL_CLEAR) {
         display.fill_rect({10, 20, 60, 28}, INV_BG);
         display.draw_rect({10, 20, 60, 28}, INV_BULLET);
-        snprintf(buf, sizeof(buf), "LEVEL %d", _level);
-        TextRenderer::draw_text_centered(display, {40, 30}, buf, INV_BULLET, 1, BASIC_FONT_5X7);
+        TextRenderer::draw_text(display, {16, 30}, "LEVEL", INV_BULLET, 1, BASIC_FONT_5X7);
+        TextRenderer::draw_int(display, 46, 30, _level, INV_BULLET, BASIC_FONT_5X7);
         TextRenderer::draw_text_centered(display, {40, 42}, "CLEAR!", INV_TEXT, 1, COMPACT_FONT_3X5);
     }
 
@@ -586,9 +582,8 @@ void InvadersScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
         const char* msg = (_enemies_alive_count == 0) ? "YOU WIN!" : "GAME OVER";
         TextRenderer::draw_text_centered(display, {40, static_cast<int16_t>(oy + 10)}, msg,
                                          (_enemies_alive_count == 0) ? INV_BULLET : INV_WARN_COLOR, 1, BASIC_FONT_5X7);
-        snprintf(buf, sizeof(buf), "SC:%d", _score);
-        TextRenderer::draw_text_centered(display, {40, static_cast<int16_t>(oy + 18)}, buf, INV_TEXT, 1,
-                                         COMPACT_FONT_3X5);
+        TextRenderer::draw_text(display, {22, static_cast<int16_t>(oy + 18)}, "SC:", INV_TEXT, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_int(display, 34, static_cast<int16_t>(oy + 18), _score, INV_TEXT, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(display, {40, static_cast<int16_t>(oy + oh - 14)}, "A/START: Again",
                                          INV_HINT_COLOR, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(display, {40, static_cast<int16_t>(oy + oh - 6)}, "B: Menu", INV_HINT_COLOR, 1,

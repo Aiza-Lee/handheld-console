@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
-#include <cstdio>
 #include "core/audio/Sounds.h"
 
 namespace handheld {
@@ -240,11 +239,11 @@ void GrowBallScreen::render(IPlatform& platform, IScreenHost& host) {
     }
 
     // HUD: score / target
-    char buf[24];
     int const score = static_cast<int>(_world.player().radius * 10);
     int const target = TARGET_SCORE;
-    snprintf(buf, sizeof(buf), "%d/%d", score, target);
-    TextRenderer::draw_text(display, {0, 0}, buf, Color::WHITE, 1, COMPACT_FONT_3X5);
+    TextRenderer::draw_int(display, 0, 0, score, Color::WHITE, COMPACT_FONT_3X5);
+    TextRenderer::draw_text(display, {4, 0}, "/", Color::WHITE, 1, COMPACT_FONT_3X5);
+    TextRenderer::draw_int(display, 8, 0, target, Color::WHITE, COMPACT_FONT_3X5);
 
     if (_paused) {
         display.fill_rect({PAUSE_RECT_X, PAUSE_RECT_Y, PAUSE_RECT_W, PAUSE_RECT_H}, PAUSE_BG);

@@ -6,7 +6,6 @@
 #include "core/graphics/TextRenderer.h"
 #include "core/runtime/IScreenHost.h"
 #include "core/runtime/ScreenType.h"
-#include <cstdio>
 #include "core/audio/Sounds.h"
 
 namespace handheld {
@@ -470,9 +469,14 @@ void PacmanScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
 
     // ── 状态栏（顶部）──────────────────────────────────────
     // display.fill_rect(Rect{0, 0, 80, STATUS_H}, STATUS_BG);
-    char buf[20];
-    std::snprintf(buf, sizeof(buf), "%s %d", LEVELS[_level].name, _score);
-    TextRenderer::draw_text(display, {2, 1}, buf, Color::WHITE, 1, COMPACT_FONT_3X5);
+    {
+        const char* name = LEVELS[_level].name;
+        const int16_t name_w = TextRenderer::measure_text(name, 1, COMPACT_FONT_3X5).width;
+        const int16_t space_w = TextRenderer::measure_text(" ", 1, COMPACT_FONT_3X5).width;
+        TextRenderer::draw_text(display, {2, 1}, name, Color::WHITE, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text(display, {static_cast<int16_t>(2 + name_w), 1}, " ", Color::WHITE, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_int(display, static_cast<int16_t>(2 + name_w + space_w), 1, _score, Color::WHITE);
+    }
     for (int8_t i = 0; i < _lives; ++i)
         display.fill_rect(Rect{static_cast<int16_t>(66 + (i * 5)), 2, 3, 3}, PAC_COLOR);
 
@@ -565,8 +569,10 @@ void PacmanScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
         display.fill_rect(Rect{END_RECT_X, END_RECT_Y, END_RECT_W, END_RECT_H}, BG_COLOR);
         display.draw_rect(Rect{END_RECT_X, END_RECT_Y, END_RECT_W, END_RECT_H}, GHOST1_COL);
         TextRenderer::draw_text_centered(display, {40, 28}, "GAME OVER", GHOST1_COL, 1, BASIC_FONT_5X7);
-        std::snprintf(buf, sizeof(buf), "SCORE: %d", _score);
-        TextRenderer::draw_text_centered(display, {40, 42}, buf, Color::WHITE, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text(display, {10, 42}, "SCORE:", Color::WHITE, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_int(display,
+                               static_cast<int16_t>(10 + TextRenderer::measure_text("SCORE:", 1, COMPACT_FONT_3X5).width),
+                               42, _score, Color::WHITE);
         TextRenderer::draw_text_centered(display, {40, 50}, "A/START: Again", HINT_COLOR, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(display, {40, 58}, "B: Menu", HINT_COLOR, 1, COMPACT_FONT_3X5);
     }
