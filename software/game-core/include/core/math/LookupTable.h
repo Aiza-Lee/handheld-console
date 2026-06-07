@@ -29,28 +29,28 @@ constexpr double constexpr_sin(double x) {
     return result;
 }
 
-// 生成 256 项正弦查找表，范围 [-32767, 32767]
-constexpr std::array<int16_t, 256> make_sin_lut() {
-    std::array<int16_t, 256> table{};
-    constexpr double SCALE = 32767.0;
+// 生成 256 项正弦查找表，范围 [-127, 127]
+constexpr std::array<int8_t, 256> make_sin_lut() {
+    std::array<int8_t, 256> table{};
+    constexpr double SCALE = 127.0;
     constexpr double STEP = 2.0 * 3.14159265358979323846 / 256.0;
     for (int i = 0; i < 256; ++i) {
         double v = constexpr_sin(static_cast<double>(i) * STEP) * SCALE;
-        table[i] = static_cast<int16_t>(static_cast<int>(v + (v >= 0.0 ? 0.5 : -0.5)));
+        table[i] = static_cast<int8_t>(static_cast<int>(v + (v >= 0.0 ? 0.5 : -0.5)));
     }
     return table;
 }
 
-inline constexpr std::array<int16_t, 256> SIN_LUT = make_sin_lut();
+inline constexpr std::array<int8_t, 256> SIN_LUT = make_sin_lut();
 
-// sin(2*pi*phase/256) * scale / 32768  (phase in [0,255], scale = amplitude)
-inline int16_t sin_lut(uint8_t phase, int16_t scale) { return static_cast<int32_t>(SIN_LUT[phase]) * scale / 32768; }
+// sin(2*pi*phase/256) * scale / 128  (phase in [0,255], scale = amplitude)
+inline int16_t sin_lut(uint8_t phase, int16_t scale) { return static_cast<int32_t>(SIN_LUT[phase]) * scale / 128; }
 
-// cos(2*pi*phase/256) * scale / 32768  (cos = sin shifted by 64 = 90 degrees)
+// cos(2*pi*phase/256) * scale / 128  (cos = sin shifted by 64 = 90 degrees)
 inline int16_t cos_lut(uint8_t phase, int16_t scale) { return sin_lut(static_cast<uint8_t>(phase + 64U), scale); }
 
 // 归一化到 [-1.0, 1.0]，用于浮点场景
-inline double sin_lut_double(uint8_t phase) { return static_cast<double>(SIN_LUT[phase]) / 32768.0; }
+inline double sin_lut_double(uint8_t phase) { return static_cast<double>(SIN_LUT[phase]) / 128.0; }
 
 inline double cos_lut_double(uint8_t phase) { return sin_lut_double(static_cast<uint8_t>(phase + 64U)); }
 
