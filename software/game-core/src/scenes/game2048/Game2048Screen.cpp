@@ -10,6 +10,7 @@
 #include "core/graphics/TextRenderer.h"
 #include "core/runtime/IScreenHost.h"
 #include "core/runtime/ScreenType.h"
+#include "core/math/Prng.h"
 
 namespace handheld {
 
@@ -117,10 +118,7 @@ void Game2048Screen::reset_game() {
 }
 
 uint32_t Game2048Screen::next_rng() {
-    _rng ^= _rng << 13U;
-    _rng ^= _rng >> 17U;
-    _rng ^= _rng << 5U;
-    return _rng;
+    return xorshift32(_rng);
 }
 
 void Game2048Screen::spawn_tile() {

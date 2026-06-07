@@ -9,6 +9,7 @@
 #include "core/runtime/IScreenHost.h"
 #include "core/runtime/ScreenType.h"
 #include "core/math/LookupTable.h"
+#include "core/math/Prng.h"
 
 namespace handheld {
 
@@ -75,10 +76,7 @@ void SnakeScreen::reset_game() {
 }
 
 uint32_t SnakeScreen::next_rng() {
-    _rng ^= _rng << 13U;
-    _rng ^= _rng >> 17U;
-    _rng ^= _rng << 5U;
-    return _rng;
+    return xorshift32(_rng);
 }
 
 bool SnakeScreen::occupied(int8_t x, int8_t y) const {

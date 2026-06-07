@@ -6,6 +6,7 @@
 #include "core/graphics/TextRenderer.h"
 #include "core/runtime/IScreenHost.h"
 #include "core/runtime/ScreenType.h"
+#include "core/math/Prng.h"
 
 #include <algorithm>
 
@@ -16,10 +17,7 @@ using namespace tetris::cfg;
 // ── 工具函数 ──────────────────────────────────────────────
 
 uint32_t TetrisScreen::next_rng() {
-    _rng ^= _rng << 13U;
-    _rng ^= _rng >> 17U;
-    _rng ^= _rng << 5U;
-    return _rng;
+    return xorshift32(_rng);
 }
 
 bool TetrisScreen::piece_cell(uint8_t piece, uint8_t rot, int row, int col) const {

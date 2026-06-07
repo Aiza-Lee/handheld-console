@@ -7,6 +7,7 @@
 #include "core/graphics/TextRenderer.h"
 #include "core/runtime/IScreenHost.h"
 #include "core/runtime/ScreenType.h"
+#include "core/math/Prng.h"
 #include <algorithm>
 
 namespace handheld {
@@ -17,10 +18,7 @@ namespace bg = breakout;
 // ── RNG ─────────────────────────────────────────
 
 uint32_t BreakoutScreen::next_rng() {
-    _rng ^= _rng << 13U;
-    _rng ^= _rng >> 17U;
-    _rng ^= _rng << 5U;
-    return _rng;
+    return xorshift32(_rng);
 }
 
 // ── 生命周期 ────────────────────────────────────
