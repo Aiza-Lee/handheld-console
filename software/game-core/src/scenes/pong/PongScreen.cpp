@@ -59,7 +59,6 @@ void PongScreen::enter(IPlatform& platform, IScreenHost& host) {
     // 每次从菜单进入时先进入模式选择；reset_game() 默认 SERVE，
     // 由 enter() 覆盖为 MODE_SELECT；游戏内 START 重玩则保留 SERVE。
     _phase = Phase::MODE_SELECT;
-    if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_PONG, sounds::BGM_PONG_COUNT);
 }
 
 void PongScreen::reset_game() {
@@ -112,7 +111,6 @@ void PongScreen::update(IPlatform& platform, IScreenHost& host) {
     if (_paused) {
         if (input.was_pressed(ButtonBits::START) || input.was_pressed(ButtonBits::A)) {
             _paused = false;
-            host.audio().resume_bgm();
         }
         if (input.was_pressed(ButtonBits::B)) {
             host.switch_to(ScreenType::MENU);
@@ -155,14 +153,12 @@ void PongScreen::update(IPlatform& platform, IScreenHost& host) {
     // START 暂停（仅 PLAY / SERVE 阶段）
     if (_phase != Phase::GAME_OVER && input.was_pressed(ButtonBits::START)) {
         _paused = true;
-        host.audio().pause_bgm();
         return;
     }
 
     if (_phase == Phase::GAME_OVER) {
         if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
             reset_game();
-            if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_PONG, sounds::BGM_PONG_COUNT);
             return;
         }
         if (input.was_pressed(ButtonBits::B)) {

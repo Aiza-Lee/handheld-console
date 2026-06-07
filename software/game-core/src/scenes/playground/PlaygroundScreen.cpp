@@ -52,7 +52,7 @@ void PlaygroundScreen::enter(IPlatform& platform, IScreenHost& host) {
     _accent_phase = 0;
     _stars_ready = false;
     display.clear(BACKDROP);
-    if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_PLAYGROUND, sounds::BGM_PLAYGROUND_COUNT);
+    // if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_PLAYGROUND, sounds::BGM_PLAYGROUND_COUNT);
 }
 
 void PlaygroundScreen::update(IPlatform& platform, IScreenHost& host) {

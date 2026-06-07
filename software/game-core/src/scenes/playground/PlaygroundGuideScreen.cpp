@@ -10,7 +10,7 @@ namespace handheld {
 
 void PlaygroundGuideScreen::enter(IPlatform& platform, IScreenHost& host) {
     platform.display().clear(Color::BLACK);
-    if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_GUIDE, sounds::BGM_GUIDE_COUNT);
+    // if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_GUIDE, sounds::BGM_GUIDE_COUNT);
 }
 
 void PlaygroundGuideScreen::update(IPlatform& platform, IScreenHost& host) {

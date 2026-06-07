@@ -30,7 +30,6 @@ void BreakoutScreen::enter(IPlatform& platform, IScreenHost& host) {
     platform.display().clear(BG_COLOR);
     _level = 0;
     reset_game();
-    if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_BREAKOUT, sounds::BGM_BREAKOUT_COUNT);
 }
 
 void BreakoutScreen::reset_game() {
@@ -327,7 +326,6 @@ void BreakoutScreen::update(IPlatform& platform, IScreenHost& host) {
     if (_paused) {
         if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
             _paused = false;
-            host.audio().resume_bgm();
         }
         if (input.was_pressed(ButtonBits::B)) {
             host.switch_to(ScreenType::MENU);
@@ -340,7 +338,6 @@ void BreakoutScreen::update(IPlatform& platform, IScreenHost& host) {
         if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
             _level = 0;
             reset_game();
-            if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_BREAKOUT, sounds::BGM_BREAKOUT_COUNT);
         }
         if (input.was_pressed(ButtonBits::B)) {
             host.switch_to(ScreenType::MENU);
@@ -351,7 +348,6 @@ void BreakoutScreen::update(IPlatform& platform, IScreenHost& host) {
 
     if (input.was_pressed(ButtonBits::START)) {
         _paused = true;
-        host.audio().pause_bgm();
         return;
     }
 

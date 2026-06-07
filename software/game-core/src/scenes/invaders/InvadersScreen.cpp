@@ -35,7 +35,6 @@ void InvadersScreen::enter(IPlatform& platform, IScreenHost& host) {
     _score = 0;
     _level = 1;
     reset_game();
-    if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_INVADERS, sounds::BGM_INVADERS_COUNT);
 }
 
 void InvadersScreen::reset_game() {
@@ -433,7 +432,6 @@ void InvadersScreen::update(IPlatform& platform, IScreenHost& host) {
     if (_paused) {
         if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
             _paused = false;
-            host.audio().resume_bgm();
         }
         if (input.was_pressed(ButtonBits::B)) {
             host.switch_to(ScreenType::MENU);
@@ -455,7 +453,6 @@ void InvadersScreen::update(IPlatform& platform, IScreenHost& host) {
             if (input.was_pressed(ButtonBits::A)) player_shoot(host);
             if (input.was_pressed(ButtonBits::START)) {
                 _paused = true;
-                host.audio().pause_bgm();
                 return;
             }
             move_enemies(host);
@@ -499,7 +496,6 @@ void InvadersScreen::update(IPlatform& platform, IScreenHost& host) {
             if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
                 _level = 1;
                 reset_game();
-                if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_INVADERS, sounds::BGM_INVADERS_COUNT);
             }
             if (input.was_pressed(ButtonBits::B)) {
                 host.switch_to(ScreenType::MENU);

@@ -81,7 +81,6 @@ void TetrisScreen::draw_cell(IDisplay& d, int col, int row, Color color) const {
 void TetrisScreen::enter(IPlatform& platform, IScreenHost& host) {
     reset_game();
     platform.display().clear(COLOR_BG);
-    if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_TETRIS, sounds::BGM_TETRIS_COUNT);
 }
 
 void TetrisScreen::reset_game() {
@@ -199,7 +198,6 @@ void TetrisScreen::update(IPlatform& platform, IScreenHost& host) {
     if (_paused) {
         if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
             _paused = false;
-            host.audio().resume_bgm();
         }
         if (input.was_pressed(ButtonBits::B)) {
             host.switch_to(ScreenType::MENU);
@@ -211,7 +209,6 @@ void TetrisScreen::update(IPlatform& platform, IScreenHost& host) {
     if (_game_over) {
         if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
             reset_game();
-            if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_TETRIS, sounds::BGM_TETRIS_COUNT);
         }
         if (input.was_pressed(ButtonBits::B)) {
             host.switch_to(ScreenType::MENU);
@@ -222,14 +219,12 @@ void TetrisScreen::update(IPlatform& platform, IScreenHost& host) {
 
     if (input.was_pressed(ButtonBits::START)) {
         _paused = true;
-        host.audio().pause_bgm();
         return;
     }
 
     // 游戏中按 B：先暂停，再在暂停中按 B 才退出
     if (input.was_pressed(ButtonBits::B)) {
         _paused = true;
-        host.audio().pause_bgm();
         return;
     }
 

@@ -11,7 +11,6 @@ set(HOST_SIM_SDL_SOURCES
 	SdlPlatformDisplay.cpp
 	SdlPlatformInput.cpp
 	SdlPlatformPower.cpp
-	SdlPlatformStorage.cpp
 	SdlPlatformTime.cpp
 )
 

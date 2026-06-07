@@ -8,8 +8,6 @@
 
 namespace handheld::game2048::cfg {
 
-constexpr bool ENABLE_BGM = true;
-
 // ── 棋盘尺寸 ─────────────────────────────────────────
 constexpr int8_t GRID = 4;        // 4x4
 constexpr int16_t CELL = 16;      // 每格 16 像素

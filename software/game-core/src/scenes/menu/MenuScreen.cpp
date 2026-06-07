@@ -3,13 +3,13 @@
 #include "scenes/growball/GrowBallScreen.h"
 #include "scenes/invaders/InvadersScreen.h"
 #include "scenes/pacman/PacmanScreen.h"
-#include "scenes/playground/PlaygroundScreen.h"
 #include "scenes/settings/SettingsScreen.h"
 #include "scenes/snake/SnakeScreen.h"
 #include "scenes/tetris/TetrisScreen.h"
 #include "scenes/game2048/Game2048Screen.h"
 #include "scenes/pong/PongScreen.h"
-#include "scenes/mp3/Mp3PlayerScreen.h"
+// #include "scenes/playground/PlaygroundScreen.h"
+// #include "scenes/mp3/Mp3PlayerScreen.h"
 
 #include <algorithm>
 #include "core/common/ButtonBits.h"
@@ -42,7 +42,7 @@ void draw_scroll_arrow(IDisplay& display, int16_t x, int16_t y, bool up, Color c
 menu::cfg::MenuPreviewFn render_menu_preview_for(ScreenType type) {
     switch (type) {
         case ScreenType::SETTINGS: return SettingsScreen::render_menu_preview;
-        case ScreenType::PLAYGROUND: return PlaygroundScreen::render_menu_preview;
+        // case ScreenType::PLAYGROUND: return PlaygroundScreen::render_menu_preview;
         case ScreenType::SNAKE: return SnakeScreen::render_menu_preview;
         case ScreenType::PACMAN: return PacmanScreen::render_menu_preview;
         case ScreenType::BREAKOUT: return BreakoutScreen::render_menu_preview;
@@ -51,7 +51,7 @@ menu::cfg::MenuPreviewFn render_menu_preview_for(ScreenType type) {
         case ScreenType::TETRIS: return TetrisScreen::render_menu_preview;
         case ScreenType::GAME_2048: return Game2048Screen::render_menu_preview;
         case ScreenType::PONG: return PongScreen::render_menu_preview;
-        case ScreenType::MP3: return Mp3PlayerScreen::render_menu_preview;
+        // case ScreenType::MP3: return Mp3PlayerScreen::render_menu_preview;
         default: return nullptr;
     }
 }

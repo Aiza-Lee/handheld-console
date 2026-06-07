@@ -7,8 +7,6 @@
 
 namespace handheld::pong::cfg {
 
-constexpr bool ENABLE_BGM = false;
-
 // 画布（与硬件一致）
 constexpr int16_t CANVAS_W = 80;
 constexpr int16_t CANVAS_H = 80;

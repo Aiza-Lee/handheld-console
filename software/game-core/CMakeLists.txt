@@ -3,8 +3,9 @@ set(GAME_CORE_SOURCES
 	src/core/runtime/ScreenFactory.cpp
 	src/scenes/boot/BootScreen.cpp
 	src/scenes/menu/MenuScreen.cpp
-	src/scenes/playground/PlaygroundGuideScreen.cpp
-		src/scenes/playground/PlaygroundScreen.cpp
+	# Temporarily disabled to reduce firmware size (exceeds flash by 17KB):
+	#	src/scenes/playground/PlaygroundGuideScreen.cpp
+	#	src/scenes/playground/PlaygroundScreen.cpp
 		src/scenes/snake/SnakeScreen.cpp
 		src/scenes/pacman/PacmanScreen.cpp
 		src/scenes/breakout/BreakoutScreen.cpp
@@ -15,7 +16,7 @@ set(GAME_CORE_SOURCES
 	src/scenes/tetris/TetrisScreen.cpp
 	src/scenes/game2048/Game2048Screen.cpp
 	src/scenes/pong/PongScreen.cpp
-	src/scenes/mp3/Mp3PlayerScreen.cpp
+	#	src/scenes/mp3/Mp3PlayerScreen.cpp
 	src/scenes/developer/DeveloperScreen.cpp
 )
 

@@ -52,7 +52,6 @@ void SnakeScreen::enqueue_dir(Direction d) {
 void SnakeScreen::enter(IPlatform& platform, IScreenHost& host) {
     reset_game();
     platform.display().clear(C::BG_COLOR);
-    if (C::ENABLE_BGM) host.audio().set_bgm(sounds::BGM_SNAKE, sounds::BGM_SNAKE_COUNT);
 }
 
 void SnakeScreen::reset_game() {
@@ -163,7 +162,6 @@ void SnakeScreen::update(IPlatform& platform, IScreenHost& host) {
     if (_paused) {
         if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
             _paused = false;
-            host.audio().resume_bgm();
         }
         if (input.was_pressed(ButtonBits::B)) {
             host.switch_to(ScreenType::MENU);
@@ -173,13 +171,11 @@ void SnakeScreen::update(IPlatform& platform, IScreenHost& host) {
     }
     if (!_game_over && input.was_pressed(ButtonBits::START)) {
         _paused = true;
-        host.audio().pause_bgm();
         return;
     }
     if (_game_over) {
         if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
             reset_game();
-            if (C::ENABLE_BGM) host.audio().set_bgm(sounds::BGM_SNAKE, sounds::BGM_SNAKE_COUNT);
         }
         if (input.was_pressed(ButtonBits::B)) {
             host.switch_to(ScreenType::MENU);

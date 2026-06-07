@@ -7,7 +7,6 @@
 #include "platform/interfaces/IDisplay.h"
 #include "platform/interfaces/IInput.h"
 #include "platform/interfaces/IPower.h"
-#include "platform/interfaces/IStorage.h"
 #include "platform/interfaces/ITime.h"
 
 namespace handheld {
@@ -40,9 +39,6 @@ public:
 
     // 返回时间服务
     virtual ITime& time() = 0;
-
-    // 返回持久化存储服务（用户设置、音量、高分等）
-    virtual IStorage& storage() = 0;
 };
 
 } // namespace handheld

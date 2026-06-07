@@ -100,7 +100,6 @@ SlideResult slide_line(uint16_t line[GRID], bool reverse) {
 void Game2048Screen::enter(IPlatform& platform, IScreenHost& host) {
     reset_game();
     platform.display().clear(BG_COLOR);
-    if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_2048, sounds::BGM_2048_COUNT);
 }
 
 void Game2048Screen::reset_game() {
@@ -203,7 +202,6 @@ void Game2048Screen::update(IPlatform& platform, IScreenHost& host) {
     if (_paused) {
         if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
             _paused = false;
-            host.audio().resume_bgm();
         }
         if (input.was_pressed(ButtonBits::B)) {
             host.switch_to(ScreenType::MENU);
@@ -215,7 +213,6 @@ void Game2048Screen::update(IPlatform& platform, IScreenHost& host) {
     if (_game_over) {
         if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
             reset_game();
-            if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_2048, sounds::BGM_2048_COUNT);
             return;
         }
         if (input.was_pressed(ButtonBits::B)) {
@@ -227,7 +224,6 @@ void Game2048Screen::update(IPlatform& platform, IScreenHost& host) {
 
     if (input.was_pressed(ButtonBits::START)) {
         _paused = true;
-        host.audio().pause_bgm();
         return;
     }
 
@@ -253,7 +249,6 @@ void Game2048Screen::update(IPlatform& platform, IScreenHost& host) {
                 for (int8_t c = 0; c < GRID && !_won; ++c)
                     if (_board[r][c] >= WIN_VALUE) {
                         _won = true;
-                        host.audio().pause_bgm();
                     }
         }
     }
@@ -261,7 +256,6 @@ void Game2048Screen::update(IPlatform& platform, IScreenHost& host) {
     // 游戏结束判定
     if (!_game_over && !can_move()) {
         _game_over = true;
-		host.audio().stop_bgm();
         host.audio().play_sfx(sounds::SFX_2048_GAMEOVER, sounds::SFX_2048_GAMEOVER_COUNT);
     }
 }

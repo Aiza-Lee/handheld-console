@@ -2,7 +2,6 @@
 
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_scancode.h"
-#include "SDL3/SDL_storage.h"
 #include "SDL3/SDL_surface.h"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_audio.h>
@@ -89,21 +88,10 @@ SdlPlatform::SdlPlatform(Size display_size, int window_scale) : _display(display
 
     _display.bind(*_renderer, *_texture);
 
-    // 打开用户存储 —— Linux 落到 ~/.local/share/handheld-console/host-sim/。
-    // props = 0 表示没有额外属性；ready() 立即为 true（generic backend 直通文件系统）。
-    _sdl_storage = SDL_OpenUserStorage("handheld-console", "host-sim", 0);
-    if (_sdl_storage) {
-        _storage.bind(_sdl_storage);
-    }
-
     _last_frame_tick = _time.ticks_ms();
 }
 
 SdlPlatform::~SdlPlatform() {
-    if (_sdl_storage) {
-        SDL_CloseStorage(_sdl_storage);
-        _sdl_storage = nullptr;
-    }
     if (_audio_stream) {
         SDL_DestroyAudioStream(_audio_stream);
         _audio_stream = nullptr;
@@ -159,8 +147,6 @@ void SdlPlatform::write_audio_samples(const int16_t* data, size_t count) {
 IPower& SdlPlatform::power() { return _power; }
 
 ITime& SdlPlatform::time() { return _time; }
-
-IStorage& SdlPlatform::storage() { return _storage; }
 
 void SdlPlatform::_handle_event(const SDL_Event& event) {
     switch (event.type) {

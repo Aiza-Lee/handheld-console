@@ -97,7 +97,6 @@ void PacmanScreen::enter(IPlatform& platform, IScreenHost& host) {
     _level = 0;
     reset_game();
     platform.display().clear(BG_COLOR);
-    if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_PACMAN, sounds::BGM_PACMAN_COUNT);
 }
 
 uint32_t PacmanScreen::next_rng() {
@@ -356,7 +355,6 @@ void PacmanScreen::update(IPlatform& platform, IScreenHost& host) {
     if (_paused) {
         if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
             _paused = false;
-            host.audio().resume_bgm();
         }
         if (input.was_pressed(ButtonBits::B)) {
             host.switch_to(ScreenType::MENU);
@@ -369,7 +367,6 @@ void PacmanScreen::update(IPlatform& platform, IScreenHost& host) {
         if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
             _level = 0;
             reset_game();
-            if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_PACMAN, sounds::BGM_PACMAN_COUNT);
         }
         if (input.was_pressed(ButtonBits::B)) {
             host.switch_to(ScreenType::MENU);
@@ -380,7 +377,6 @@ void PacmanScreen::update(IPlatform& platform, IScreenHost& host) {
 
     if (_state == State::PLAYING && input.was_pressed(ButtonBits::START)) {
         _paused = true;
-        host.audio().pause_bgm();
         return;
     }
 

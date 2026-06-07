@@ -9,8 +9,6 @@
 
 namespace handheld::tetris::cfg {
 
-constexpr bool ENABLE_BGM = true;
-
 // ── 网格尺寸 ──────────────────────────────────────────────
 constexpr int16_t COLS = 10;
 constexpr int16_t ROWS = 17;

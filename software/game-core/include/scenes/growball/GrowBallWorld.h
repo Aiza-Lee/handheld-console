@@ -6,9 +6,6 @@
 
 namespace handheld::growball::cfg {
 
-// ── 音频 ─────────────────────────────────────────────────────────
-constexpr bool ENABLE_BGM = false;
-
 // ── 显示（与硬件 80×80 匹配）─────────────────────────────────────
 constexpr int16_t SCREEN_WIDTH = 80;
 constexpr int16_t SCREEN_HEIGHT = 80;

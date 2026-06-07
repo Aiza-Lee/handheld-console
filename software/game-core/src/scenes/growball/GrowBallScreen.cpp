@@ -75,7 +75,6 @@ void GrowBallScreen::draw_circle_outline(IDisplay& display, int16_t cx, int16_t 
 // --- lifecycle ---
 
 void GrowBallScreen::enter(IPlatform& platform, IScreenHost& host) {
-    if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_GROWBALL, sounds::BGM_GROWBALL_COUNT);
     _world.init(platform.time().ticks_ms());
     _paused = false;
     _victory = false;
@@ -88,7 +87,6 @@ void GrowBallScreen::update(IPlatform& platform, IScreenHost& host) {
     if (_paused) {
         if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
             _paused = false;
-            host.audio().resume_bgm();
         }
         if (input.was_pressed(ButtonBits::B)) host.switch_to(ScreenType::MENU);
         return;
@@ -96,7 +94,6 @@ void GrowBallScreen::update(IPlatform& platform, IScreenHost& host) {
     if (_victory) {
         if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
             enter(platform, host);
-            if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_GROWBALL, sounds::BGM_GROWBALL_COUNT);
         }
         if (input.was_pressed(ButtonBits::B)) host.switch_to(ScreenType::MENU);
         return;
@@ -104,7 +101,6 @@ void GrowBallScreen::update(IPlatform& platform, IScreenHost& host) {
     if (_game_over) {
         if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
             enter(platform, host);
-            if (ENABLE_BGM) host.audio().set_bgm(sounds::BGM_GROWBALL, sounds::BGM_GROWBALL_COUNT);
         }
         if (input.was_pressed(ButtonBits::B)) host.switch_to(ScreenType::MENU);
         return;
@@ -113,7 +109,6 @@ void GrowBallScreen::update(IPlatform& platform, IScreenHost& host) {
     // START = toggle pause
     if (input.was_pressed(ButtonBits::START)) {
         _paused = true;
-        host.audio().pause_bgm();
         return;
     }
 

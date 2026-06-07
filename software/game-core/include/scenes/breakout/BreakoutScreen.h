@@ -10,9 +10,6 @@
 
 namespace handheld::breakout::cfg {
 
-// 音频
-constexpr bool ENABLE_BGM = false;
-
 // 颜色
 constexpr Color BRICK_COLORS[5] = {
     rgb565(200, 60, 60), rgb565(200, 110, 30), rgb565(190, 180, 40), rgb565(40, 150, 60), rgb565(50, 80, 190),

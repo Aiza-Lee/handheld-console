@@ -18,7 +18,6 @@ void DeveloperScreen::enter(IPlatform& platform, IScreenHost& host) {
     // 从屏幕上方开始滚入；负值表示文字初始位于屏幕顶部之外
     _scroll_y = static_cast<int16_t>(-platform.display().height());
     _frame = 0;
-    host.audio().stop_bgm();
 }
 
 void DeveloperScreen::update(IPlatform& platform, IScreenHost& host) {
