@@ -1,11 +1,54 @@
 #include "core/runtime/ScreenRunner.h"
-#include "core/runtime/ScreenFactory.h"
+
+#include "core/runtime/GameScreen.h"
+#include "scenes/boot/BootScreen.h"
+#include "scenes/menu/MenuScreen.h"
+#include "scenes/snake/SnakeScreen.h"
+#include "scenes/pacman/PacmanScreen.h"
+#include "scenes/breakout/BreakoutScreen.h"
+#include "scenes/invaders/InvadersScreen.h"
+#include "scenes/growball/GrowBallScreen.h"
+#include "scenes/settings/SettingsScreen.h"
+#include "scenes/tetris/TetrisScreen.h"
+#include "scenes/game2048/Game2048Screen.h"
+#include "scenes/pong/PongScreen.h"
+#include "scenes/developer/DeveloperScreen.h"
+// Temporarily disabled to reduce firmware size:
+// #include "scenes/playground/PlaygroundGuideScreen.h"
+// #include "scenes/playground/PlaygroundScreen.h"
+// #include "scenes/mp3/Mp3PlayerScreen.h"
 
 namespace handheld {
 
-ScreenRunner::ScreenRunner(IPlatform& platform, IScreenFactory& factory, ScreenType initial_screen,
-                           uint32_t frame_time_ms) :
-    _platform(platform), _factory(factory), _pending_type(initial_screen), _pending_op(PendingOp::SWITCH),
+namespace {
+
+ScreenRunner::MakeScreenFn g_make_screen_override = nullptr;
+
+std::unique_ptr<GameScreen> make_screen(ScreenType type) {
+    switch (type) {
+        case ScreenType::BOOT: return std::make_unique<BootScreen>();
+        case ScreenType::MENU: return std::make_unique<MenuScreen>();
+        case ScreenType::SETTINGS: return std::make_unique<SettingsScreen>();
+        case ScreenType::SNAKE: return std::make_unique<SnakeScreen>();
+        case ScreenType::PACMAN: return std::make_unique<PacmanScreen>();
+        case ScreenType::BREAKOUT: return std::make_unique<BreakoutScreen>();
+        case ScreenType::INVADERS: return std::make_unique<InvadersScreen>();
+        case ScreenType::GROW_BALL: return std::make_unique<GrowBallScreen>();
+        case ScreenType::TETRIS: return std::make_unique<TetrisScreen>();
+        case ScreenType::GAME_2048: return std::make_unique<Game2048Screen>();
+        case ScreenType::PONG: return std::make_unique<PongScreen>();
+        case ScreenType::DEVELOPER: return std::make_unique<DeveloperScreen>();
+        // Disabled: GUIDE, PLAYGROUND, MP3 (kept in enum for binary compat)
+        default: return nullptr;
+    }
+}
+
+} // namespace
+
+void ScreenRunner::set_make_screen_override(MakeScreenFn fn) { g_make_screen_override = fn; }
+
+ScreenRunner::ScreenRunner(IPlatform& platform, ScreenType initial_screen, uint32_t frame_time_ms) :
+    _platform(platform), _pending_type(initial_screen), _pending_op(PendingOp::SWITCH),
     _frame_time_ms(frame_time_ms) {}
 
 // ---- IScreenHost 实现 ----
@@ -37,7 +80,9 @@ void ScreenRunner::_apply_pending() {
             }
             _stack_size = 0;
 
-            auto screen = _factory.create(_pending_type);
+            auto screen = g_make_screen_override
+                              ? g_make_screen_override(_pending_type)
+                              : make_screen(_pending_type);
             if (!screen) return;
             _stack[0] = std::move(screen);
             _stack_size = 1;
@@ -54,7 +99,9 @@ void ScreenRunner::_apply_pending() {
             if (_stack_size > 0 && _entered) {
                 _stack[_stack_size - 1]->suspend(_platform, *this);
             }
-            auto screen = _factory.create(_pending_type);
+            auto screen = g_make_screen_override
+                              ? g_make_screen_override(_pending_type)
+                              : make_screen(_pending_type);
             if (!screen) {
                 _pending_op = PendingOp::NONE;
                 break;

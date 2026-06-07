@@ -11,14 +11,17 @@
 
 namespace handheld {
 
-class IScreenFactory;
-
 // 驱动屏幕生命周期、输入采样和单帧提交。
 // 屏幕以栈组织：只有栈顶屏幕接收 update/render，
 // 下层屏幕保持挂起状态（suspend/resume）。
 class ScreenRunner : public IScreenHost {
 public:
-    ScreenRunner(IPlatform& platform, IScreenFactory& factory, ScreenType initial_screen, uint32_t frame_time_ms = 33);
+    // 测试钩子：注入一个替代 make_screen 的工厂函数。
+    // 生产代码无需调用；测试可通过此函数将测试屏幕注入 ScreenRunner。
+    using MakeScreenFn = std::unique_ptr<GameScreen> (*)(ScreenType);
+    static void set_make_screen_override(MakeScreenFn fn);
+
+    ScreenRunner(IPlatform& platform, ScreenType initial_screen, uint32_t frame_time_ms = 33);
     ScreenRunner(const ScreenRunner&) = delete;
     ScreenRunner(ScreenRunner&&) = delete;
     ScreenRunner& operator=(const ScreenRunner&) = delete;
@@ -45,7 +48,6 @@ private:
     static constexpr size_t K_MAX_AUDIO_SAMPLES = AudioEngine::SAMPLE_RATE * 100 / 1000;
 
     IPlatform& _platform;
-    IScreenFactory& _factory;
     std::array<std::unique_ptr<GameScreen>, K_MAX_SCREENS> _stack{};
     uint8_t _stack_size = 0;
     ScreenType _pending_type;

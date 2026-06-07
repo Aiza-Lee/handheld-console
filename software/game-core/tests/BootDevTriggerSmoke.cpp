@@ -1,5 +1,4 @@
 #include "core/runtime/ScreenRunner.h"
-#include "core/runtime/ScreenFactory.h"
 #include "core/runtime/ScreenType.h"
 #include "core/common/ButtonBits.h"
 #include "tests/support/FakePlatform.h"
@@ -19,9 +18,8 @@ int main() {
     // 测试 1: 5 次 B 在 1.5s 窗口内连按 → 触发 dev 屏幕
     // ================================================================
     {
-        handheld::DefaultScreenFactory factory;
         handheld::FakePlatform platform({80, 80});
-        handheld::ScreenRunner runner(platform, factory, handheld::ScreenType::BOOT);
+        handheld::ScreenRunner runner(platform, handheld::ScreenType::BOOT);
 
         // boot 启动后音频 BGM 不会立即产生 samples（play_sfx 是单次）。
         // 模拟 5 次 B 快速按：每 100ms 一次
@@ -44,9 +42,8 @@ int main() {
     // 测试 2: B 按太慢（间隔 > 1.5s）不会触发 dev，留在 BOOT
     // ================================================================
     {
-        handheld::DefaultScreenFactory factory;
         handheld::FakePlatform platform({80, 80});
-        handheld::ScreenRunner runner(platform, factory, handheld::ScreenType::BOOT);
+        handheld::ScreenRunner runner(platform, handheld::ScreenType::BOOT);
 
         // 按 5 次但每次间隔 2s（> 1.5s 窗口），应保持 BOOT
         for (int i = 0; i < 5; ++i) {

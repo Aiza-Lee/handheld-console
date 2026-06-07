@@ -1,5 +1,4 @@
 #include "core/runtime/ScreenRunner.h"
-#include "core/runtime/ScreenFactory.h"
 #include "core/runtime/ScreenType.h"
 #include "core/common/ButtonBits.h"
 #include "core/graphics/Color.h"
@@ -14,9 +13,8 @@ int main() {
     // 测试 1: Tetris 屏幕启动后能正常渲染多帧
     // ================================================================
     {
-        DefaultScreenFactory factory;
         FakePlatform platform({80, 80});
-        ScreenRunner runner(platform, factory, ScreenType::TETRIS);
+        ScreenRunner runner(platform, ScreenType::TETRIS);
 
         runner.tick();
         assert(platform.fake_display().present_count() == 1);
@@ -32,9 +30,8 @@ int main() {
     // 测试 2: 方向键输入不会触发游戏结束（仅在边界被忽略）
     // ================================================================
     {
-        DefaultScreenFactory factory;
         FakePlatform platform({80, 80});
-        ScreenRunner runner(platform, factory, ScreenType::TETRIS);
+        ScreenRunner runner(platform, ScreenType::TETRIS);
 
         runner.tick();
 
@@ -54,9 +51,8 @@ int main() {
     // 测试 3: 按 B 切换到菜单，菜单接管后继续 tick 不崩溃
     // ================================================================
     {
-        DefaultScreenFactory factory;
         FakePlatform platform({80, 80});
-        ScreenRunner runner(platform, factory, ScreenType::TETRIS);
+        ScreenRunner runner(platform, ScreenType::TETRIS);
 
         for (int i = 0; i < 5; ++i) {
             runner.tick();

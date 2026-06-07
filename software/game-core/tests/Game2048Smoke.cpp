@@ -1,5 +1,4 @@
 #include "core/runtime/ScreenRunner.h"
-#include "core/runtime/ScreenFactory.h"
 #include "core/runtime/ScreenType.h"
 #include "core/graphics/Color.h"
 #include "core/common/ButtonBits.h"
@@ -12,9 +11,8 @@ int main() {
     // 测试 1: 2048 屏幕启动后能正常渲染多帧
     // ================================================================
     {
-        handheld::DefaultScreenFactory factory;
         handheld::FakePlatform platform({80, 80});
-        handheld::ScreenRunner runner(platform, factory, handheld::ScreenType::GAME_2048);
+        handheld::ScreenRunner runner(platform, handheld::ScreenType::GAME_2048);
 
         runner.tick();
         assert(platform.fake_display().present_count() == 1);
@@ -30,9 +28,8 @@ int main() {
     // 测试 2: 方向输入不会导致崩溃
     // ================================================================
     {
-        handheld::DefaultScreenFactory factory;
         handheld::FakePlatform platform({80, 80});
-        handheld::ScreenRunner runner(platform, factory, handheld::ScreenType::GAME_2048);
+        handheld::ScreenRunner runner(platform, handheld::ScreenType::GAME_2048);
 
         runner.tick();
         assert(platform.fake_display().present_count() == 1);
@@ -62,9 +59,8 @@ int main() {
     // 测试 3: 大量操作后屏幕仍能稳定运行
     // ================================================================
     {
-        handheld::DefaultScreenFactory factory;
         handheld::FakePlatform platform({80, 80});
-        handheld::ScreenRunner runner(platform, factory, handheld::ScreenType::GAME_2048);
+        handheld::ScreenRunner runner(platform, handheld::ScreenType::GAME_2048);
 
         runner.tick();
 

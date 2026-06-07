@@ -1,5 +1,4 @@
 #include "core/common/ButtonBits.h"
-#include "core/runtime/ScreenFactory.h"
 #include "core/runtime/ScreenRunner.h"
 #include "core/runtime/ScreenType.h"
 #include "tests/support/FakePlatform.h"
@@ -23,9 +22,8 @@ int main() {
     // 测试 1：进入 PONG 屏幕并运行 50 帧，应平稳渲染
     // ================================================================
     {
-        DefaultScreenFactory factory;
         FakePlatform platform({80, 80});
-        ScreenRunner runner(platform, factory, ScreenType::PONG);
+        ScreenRunner runner(platform, ScreenType::PONG);
 
         runner.tick();
         assert(platform.fake_display().present_count() == 1);
@@ -39,9 +37,8 @@ int main() {
     // 测试 2：P1 持续按 UP/DOWN，无崩溃
     // ================================================================
     {
-        DefaultScreenFactory factory;
         FakePlatform platform({80, 80});
-        ScreenRunner runner(platform, factory, ScreenType::PONG);
+        ScreenRunner runner(platform, ScreenType::PONG);
 
         runner.tick();
 
@@ -65,9 +62,8 @@ int main() {
     // 测试 3：按 SELECT 切换 1P ↔ 2P 模式，再多跑一些帧不崩溃
     // ================================================================
     {
-        DefaultScreenFactory factory;
         FakePlatform platform({80, 80});
-        ScreenRunner runner(platform, factory, ScreenType::PONG);
+        ScreenRunner runner(platform, ScreenType::PONG);
 
         runner.tick();
 
@@ -106,9 +102,8 @@ int main() {
     //   - 验证 200 帧内不崩溃
     // ================================================================
     {
-        DefaultScreenFactory factory;
         FakePlatform platform({80, 80});
-        ScreenRunner runner(platform, factory, ScreenType::PONG);
+        ScreenRunner runner(platform, ScreenType::PONG);
 
         runner.tick();
 

@@ -1,5 +1,4 @@
 #include "core/runtime/ScreenRunner.h"
-#include "core/runtime/ScreenFactory.h"
 #include "core/runtime/ScreenType.h"
 #include "core/common/ButtonBits.h"
 #include "tests/support/FakePlatform.h"
@@ -7,8 +6,7 @@
 
 int main() {
     handheld::FakePlatform platform({80, 80});
-    handheld::DefaultScreenFactory factory;
-    handheld::ScreenRunner runner(platform, factory, handheld::ScreenType::GROW_BALL);
+    handheld::ScreenRunner runner(platform, handheld::ScreenType::GROW_BALL);
 
     runner.tick();
     assert(platform.fake_display().present_count() == 1);

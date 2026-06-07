@@ -1,5 +1,4 @@
 #include "core/runtime/ScreenRunner.h"
-#include "core/runtime/ScreenFactory.h"
 #include "core/runtime/ScreenType.h"
 #include "core/graphics/Color.h"
 #include "tests/support/FakePlatform.h"
@@ -65,17 +64,16 @@ private:
     bool* _exited_flag;
 };
 
-// ---- 工厂：序列调用决定了返回哪种屏幕 ----
-class TestScreenFactory : public handheld::IScreenFactory {
-public:
+// ---- 测试工厂状态机：序列调用决定返回哪种屏幕 ----
+struct TestScreens {
     enum Mode {
         SWITCH_TEST,   // BOOT → BootTestScreen → MENU → MenuTestScreen → PLAYGROUND → GameTestScreen
         PUSH_POP_TEST, // PLAYGROUND → GameTestScreen → push → OverlayScreen → pop
     };
 
-    explicit TestScreenFactory(Mode mode) : _mode(mode) {}
+    explicit TestScreens(Mode mode) : _mode(mode) {}
 
-    std::unique_ptr<handheld::GameScreen> create(ScreenType type) override {
+    std::unique_ptr<handheld::GameScreen> create(ScreenType type) {
         _call_count++;
         switch (_mode) {
             case SWITCH_TEST:
@@ -102,6 +100,13 @@ private:
     Mode _mode;
 };
 
+// 当前测试的工厂（供覆盖的 make_screen 闭包访问）
+TestScreens* g_current_factory = nullptr;
+
+std::unique_ptr<handheld::GameScreen> test_make_screen(ScreenType type) {
+    return g_current_factory->create(type);
+}
+
 } // namespace
 
 int main() {
@@ -109,9 +114,12 @@ int main() {
     // 测试 1: switch_to — BOOT → MENU → PLAYGROUND 完整链
     // ================================================================
     {
+        TestScreens factory(TestScreens::SWITCH_TEST);
+        g_current_factory = &factory;
+        handheld::ScreenRunner::set_make_screen_override(test_make_screen);
+
         handheld::FakePlatform platform({80, 80});
-        TestScreenFactory factory(TestScreenFactory::SWITCH_TEST);
-        handheld::ScreenRunner runner(platform, factory, ScreenType::BOOT);
+        handheld::ScreenRunner runner(platform, ScreenType::BOOT);
 
         // tick 1: Boot enters, update → switch_to(MENU), render, present
         runner.tick();
@@ -129,9 +137,12 @@ int main() {
     // 测试 2: push_screen → pop_screen（栈行为）
     // ================================================================
     {
+        TestScreens factory(TestScreens::PUSH_POP_TEST);
+        g_current_factory = &factory;
+        handheld::ScreenRunner::set_make_screen_override(test_make_screen);
+
         handheld::FakePlatform platform({80, 80});
-        TestScreenFactory factory(TestScreenFactory::PUSH_POP_TEST);
-        handheld::ScreenRunner runner(platform, factory, ScreenType::PLAYGROUND);
+        handheld::ScreenRunner runner(platform, ScreenType::PLAYGROUND);
 
         // tick 1: Game enters, update → push_screen
         runner.tick();
@@ -156,9 +167,12 @@ int main() {
     // 测试 3: pop_screen 在栈深度为 1 时是 no-op
     // ================================================================
     {
-        TestScreenFactory factory(TestScreenFactory::SWITCH_TEST);
+        TestScreens factory(TestScreens::SWITCH_TEST);
+        g_current_factory = &factory;
+        handheld::ScreenRunner::set_make_screen_override(test_make_screen);
+
         handheld::FakePlatform platform({80, 80});
-        handheld::ScreenRunner runner(platform, factory, ScreenType::BOOT);
+        handheld::ScreenRunner runner(platform, ScreenType::BOOT);
 
         // tick 1: Boot → switch_to(MENU)
         runner.tick();
@@ -171,6 +185,9 @@ int main() {
         // 中检查到 stack.size() <= 1 时不做任何操作
         assert(platform.fake_display().present_count() == 3);
     }
+
+    // 清理：清除测试钩子（以防其他测试链接同一翻译单元）
+    handheld::ScreenRunner::set_make_screen_override(nullptr);
 
     return 0;
 }

@@ -1,5 +1,4 @@
 #include "core/runtime/ScreenRunner.h"
-#include "core/runtime/ScreenFactory.h"
 #include "core/runtime/ScreenType.h"
 #include "core/graphics/Color.h"
 #include "tests/support/FakePlatform.h"
@@ -11,9 +10,8 @@ int main() {
     // 测试 1: Snake 屏幕启动后能正常渲染多帧
     // ================================================================
     {
-        handheld::DefaultScreenFactory factory;
         handheld::FakePlatform platform({80, 80});
-        handheld::ScreenRunner runner(platform, factory, handheld::ScreenType::SNAKE);
+        handheld::ScreenRunner runner(platform, handheld::ScreenType::SNAKE);
 
         runner.tick();
         assert(platform.fake_display().present_count() == 1);
@@ -29,9 +27,8 @@ int main() {
     // 测试 2: 方向输入不会导致 180° 翻转
     // ================================================================
     {
-        handheld::DefaultScreenFactory factory;
         handheld::FakePlatform platform({80, 80});
-        handheld::ScreenRunner runner(platform, factory, handheld::ScreenType::SNAKE);
+        handheld::ScreenRunner runner(platform, handheld::ScreenType::SNAKE);
 
         runner.tick();
 
@@ -50,9 +47,8 @@ int main() {
     // 测试 3: 碰撞后 GAME OVER，按 START 可重新开始
     // ================================================================
     {
-        handheld::DefaultScreenFactory factory;
         handheld::FakePlatform platform({80, 80});
-        handheld::ScreenRunner runner(platform, factory, handheld::ScreenType::SNAKE);
+        handheld::ScreenRunner runner(platform, handheld::ScreenType::SNAKE);
 
         // 蛇朝右，一直走直到撞墙
         for (int i = 0; i < 200; ++i) {

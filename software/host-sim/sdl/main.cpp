@@ -1,6 +1,5 @@
 #include "sdl/SdlPlatform.h"
 #include "core/runtime/ScreenRunner.h"
-#include "core/runtime/ScreenFactory.h"
 #include "core/runtime/ScreenType.h"
 
 #include <exception>
@@ -9,9 +8,8 @@
 int main() {
     try {
         handheld::SdlPlatform platform;
-        handheld::DefaultScreenFactory factory;
         constexpr uint32_t FRAME_TIME_MS = 50;
-        handheld::ScreenRunner runner(platform, factory, handheld::ScreenType::BOOT, FRAME_TIME_MS);
+        handheld::ScreenRunner runner(platform, handheld::ScreenType::BOOT, FRAME_TIME_MS);
 
         while (platform.is_running()) {
             platform.process_events();

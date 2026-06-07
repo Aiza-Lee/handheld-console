@@ -1,5 +1,4 @@
 #include "core/runtime/ScreenRunner.h"
-#include "core/runtime/ScreenFactory.h"
 #include "core/runtime/ScreenType.h"
 #include "tests/support/FakePlatform.h"
 
@@ -7,8 +6,7 @@
 
 int main() {
     handheld::FakePlatform platform;
-    handheld::DefaultScreenFactory factory;
-    handheld::ScreenRunner runner(platform, factory, handheld::ScreenType::BOOT);
+    handheld::ScreenRunner runner(platform, handheld::ScreenType::BOOT);
 
     runner.tick();
 

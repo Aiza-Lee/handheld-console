@@ -1,5 +1,4 @@
 #include "core/runtime/ScreenRunner.h"
-#include "core/runtime/ScreenFactory.h"
 #include "core/runtime/ScreenType.h"
 #include "core/common/ButtonBits.h"
 #include "tests/support/FakePlatform.h"
@@ -11,9 +10,8 @@ int main() {
     // 测试 1: Developer 屏幕启动后能正常渲染多帧，滚动到末尾不崩溃
     // ================================================================
     {
-        handheld::DefaultScreenFactory factory;
         handheld::FakePlatform platform({80, 80});
-        handheld::ScreenRunner runner(platform, factory, handheld::ScreenType::DEVELOPER);
+        handheld::ScreenRunner runner(platform, handheld::ScreenType::DEVELOPER);
 
         // 跑满滚动周期（~80 帧滚动完）+ 余量
         for (int i = 0; i < 200; ++i) runner.tick();
@@ -24,9 +22,8 @@ int main() {
     // 测试 2: 任意时候按 B/A/START 都不崩溃
     // ================================================================
     {
-        handheld::DefaultScreenFactory factory;
         handheld::FakePlatform platform({80, 80});
-        handheld::ScreenRunner runner(platform, factory, handheld::ScreenType::DEVELOPER);
+        handheld::ScreenRunner runner(platform, handheld::ScreenType::DEVELOPER);
 
         for (int i = 0; i < 10; ++i) runner.tick();
 

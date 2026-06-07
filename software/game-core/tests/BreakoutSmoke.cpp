@@ -1,5 +1,4 @@
 #include "core/runtime/ScreenRunner.h"
-#include "core/runtime/ScreenFactory.h"
 #include "core/runtime/ScreenType.h"
 #include "core/graphics/Color.h"
 #include "scenes/breakout/BreakoutScreen.h"
@@ -10,9 +9,8 @@
 int main() {
     // 测试 1: Breakout 启动和基本渲染
     {
-        handheld::DefaultScreenFactory factory;
         handheld::FakePlatform platform({80, 80});
-        handheld::ScreenRunner runner(platform, factory, handheld::ScreenType::BREAKOUT);
+        handheld::ScreenRunner runner(platform, handheld::ScreenType::BREAKOUT);
 
         runner.tick();
         assert(platform.fake_display().present_count() == 1);
@@ -25,9 +23,8 @@ int main() {
 
     // 测试 2: 发射球并运行（模拟按 A + 拍子移动）
     {
-        handheld::DefaultScreenFactory factory;
         handheld::FakePlatform platform({80, 80});
-        handheld::ScreenRunner runner(platform, factory, handheld::ScreenType::BREAKOUT);
+        handheld::ScreenRunner runner(platform, handheld::ScreenType::BREAKOUT);
 
         runner.tick();
 
@@ -48,9 +45,8 @@ int main() {
 
     // 测试 3: 等待 GAME OVER 后重启
     {
-        handheld::DefaultScreenFactory factory;
         handheld::FakePlatform platform({80, 80});
-        handheld::ScreenRunner runner(platform, factory, handheld::ScreenType::BREAKOUT);
+        handheld::ScreenRunner runner(platform, handheld::ScreenType::BREAKOUT);
 
         runner.tick();
 
@@ -78,9 +74,8 @@ int main() {
     //   旧实现有索引爆炸 bug：1 球→16 球（一次 split 把 MAX_BALLS 吃满）。
     //   新实现：连续 split 应该是 1→2→4→8→16→16。
     {
-        handheld::DefaultScreenFactory factory;
         handheld::FakePlatform platform({80, 80});
-        handheld::ScreenRunner runner(platform, factory, handheld::ScreenType::BREAKOUT);
+        handheld::ScreenRunner runner(platform, handheld::ScreenType::BREAKOUT);
 
         runner.tick();
 

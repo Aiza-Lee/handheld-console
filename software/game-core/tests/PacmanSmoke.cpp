@@ -1,5 +1,4 @@
 #include "core/runtime/ScreenRunner.h"
-#include "core/runtime/ScreenFactory.h"
 #include "core/runtime/ScreenType.h"
 #include "core/graphics/Color.h"
 #include "tests/support/FakePlatform.h"
@@ -9,9 +8,8 @@
 int main() {
     // 测试: Pac-Man 启动、运行、GAME OVER 后重启
     {
-        handheld::DefaultScreenFactory factory;
         handheld::FakePlatform platform({80, 80});
-        handheld::ScreenRunner runner(platform, factory, handheld::ScreenType::PACMAN);
+        handheld::ScreenRunner runner(platform, handheld::ScreenType::PACMAN);
 
         runner.tick();
         assert(platform.fake_display().present_count() == 1);
@@ -35,9 +33,8 @@ int main() {
 
     // 测试: 方向键输入
     {
-        handheld::DefaultScreenFactory factory;
         handheld::FakePlatform platform({80, 80});
-        handheld::ScreenRunner runner(platform, factory, handheld::ScreenType::PACMAN);
+        handheld::ScreenRunner runner(platform, handheld::ScreenType::PACMAN);
 
         runner.tick();
         platform.fake_input().set_button(handheld::ButtonBits::RIGHT, true);

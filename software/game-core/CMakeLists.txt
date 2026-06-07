@@ -1,6 +1,5 @@
 set(GAME_CORE_SOURCES
 	src/core/runtime/ScreenRunner.cpp
-	src/core/runtime/ScreenFactory.cpp
 	src/scenes/boot/BootScreen.cpp
 	src/scenes/menu/MenuScreen.cpp
 	# Temporarily disabled to reduce firmware size (exceeds flash by 17KB):
