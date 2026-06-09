@@ -64,35 +64,6 @@ public:
         }
     }
 
-    void draw_line(int16_t x0, int16_t y0, int16_t x1, int16_t y1, Color color) {
-        int32_t currentX = x0;
-        int32_t currentY = y0;
-        const int32_t targetX = x1;
-        const int32_t targetY = y1;
-        const int32_t deltaX = (targetX >= currentX) ? (targetX - currentX) : (currentX - targetX);
-        const int32_t deltaY = (targetY >= currentY) ? (targetY - currentY) : (currentY - targetY);
-        const int32_t stepX = (currentX < targetX) ? 1 : -1;
-        const int32_t stepY = (currentY < targetY) ? 1 : -1;
-        int32_t error = deltaX - deltaY;
-
-        while (true) {
-            draw_pixel(static_cast<int16_t>(currentX), static_cast<int16_t>(currentY), color);
-            if (currentX == targetX && currentY == targetY) {
-                return;
-            }
-
-            const int32_t doubledError = error * 2;
-            if (doubledError > -deltaY) {
-                error -= deltaY;
-                currentX += stepX;
-            }
-            if (doubledError < deltaX) {
-                error += deltaX;
-                currentY += stepY;
-            }
-        }
-    }
-
     void draw_rect(const Rect& rect, Color color) {
         if (rect.empty()) {
             return;
