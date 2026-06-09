@@ -1,8 +1,7 @@
 #include "scenes/pong/PongScreen.h"
 
-#include <algorithm>
-
 #include "core/audio/Sounds.h"
+#include "core/common/Algorithm.h"
 #include "core/common/ButtonBits.h"
 #include "core/graphics/Color.h"
 #include "core/graphics/Font.h"
@@ -209,8 +208,8 @@ void PongScreen::update(IPlatform& platform, IScreenHost& host) {
 void PongScreen::update_p1_input(IInput& input) {
     if (input.is_down(ButtonBits::UP)) _left_paddle_y -= PADDLE_SPEED;
     if (input.is_down(ButtonBits::DOWN)) _left_paddle_y += PADDLE_SPEED;
-    _left_paddle_y = std::max(_left_paddle_y, PADDLE_Y_MIN);
-    _left_paddle_y = std::min(_left_paddle_y, PADDLE_Y_MAX);
+    _left_paddle_y = handheld::max(_left_paddle_y, PADDLE_Y_MIN);
+    _left_paddle_y = handheld::min(_left_paddle_y, PADDLE_Y_MAX);
 }
 
 void PongScreen::update_p2_input(IInput& input) {
@@ -221,16 +220,16 @@ void PongScreen::update_p2_input(IInput& input) {
     if (input.is_down(ButtonBits::B)) {
 		_right_paddle_y += PADDLE_SPEED;
     }
-    _right_paddle_y = std::max(_right_paddle_y, PADDLE_Y_MIN);
-    _right_paddle_y = std::min(_right_paddle_y, PADDLE_Y_MAX);
+    _right_paddle_y = handheld::max(_right_paddle_y, PADDLE_Y_MIN);
+    _right_paddle_y = handheld::min(_right_paddle_y, PADDLE_Y_MAX);
 }
 
 void PongScreen::update_ai() {
     int16_t ball_center_y = static_cast<int16_t>(_ball_y + BALL_SIZE / 2);
     int16_t step = ai_step(ball_center_y, _right_paddle_y, _rng);
     _right_paddle_y = static_cast<int16_t>(_right_paddle_y + step);
-    _right_paddle_y = std::max(_right_paddle_y, PADDLE_Y_MIN);
-    _right_paddle_y = std::min(_right_paddle_y, PADDLE_Y_MAX);
+    _right_paddle_y = handheld::max(_right_paddle_y, PADDLE_Y_MIN);
+    _right_paddle_y = handheld::min(_right_paddle_y, PADDLE_Y_MAX);
 }
 
 // ── 球物理 ──────────────────────────────────────────
@@ -266,8 +265,8 @@ void PongScreen::move_ball(IScreenHost& host) {
             _ball_vx = static_cast<int16_t>(-_ball_vx);
             int16_t diff = static_cast<int16_t>((_ball_y + BALL_SIZE / 2) - (_left_paddle_y + PADDLE_H / 2));
             int16_t new_vy = diff / 3;
-            new_vy = std::min<int>(new_vy, 2);
-            new_vy = std::max<int>(new_vy, -2);
+            new_vy = handheld::min<int>(new_vy, 2);
+            new_vy = handheld::max<int>(new_vy, -2);
             if (new_vy == 0) new_vy = (_ball_vy != 0) ? _ball_vy : 1;
             _ball_vy = new_vy;
             on_paddle_hit();
@@ -282,8 +281,8 @@ void PongScreen::move_ball(IScreenHost& host) {
             _ball_vx = static_cast<int16_t>(-_ball_vx);
             int16_t diff = static_cast<int16_t>((_ball_y + BALL_SIZE / 2) - (_right_paddle_y + PADDLE_H / 2));
             int16_t new_vy = diff / 3;
-            new_vy = std::min<int>(new_vy, 2);
-            new_vy = std::max<int>(new_vy, -2);
+            new_vy = handheld::min<int>(new_vy, 2);
+            new_vy = handheld::max<int>(new_vy, -2);
             if (new_vy == 0) new_vy = (_ball_vy != 0) ? _ball_vy : 1;
             _ball_vy = new_vy;
             on_paddle_hit();

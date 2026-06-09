@@ -1,8 +1,7 @@
 #include "scenes/game2048/Game2048Screen.h"
 
-#include <algorithm>
-
 #include "core/audio/Sounds.h"
+#include "core/common/Algorithm.h"
 #include "core/common/ButtonBits.h"
 #include "core/graphics/Color.h"
 #include "core/graphics/Font.h"
@@ -320,7 +319,7 @@ void Game2048Screen::render(IPlatform& platform, IScreenHost& /*host*/) {
     uint16_t best = 0;
     for (int8_t r = 0; r < GRID; ++r)
         for (int8_t c = 0; c < GRID; ++c)
-            best = std::max(_board[r][c], best);
+            best = handheld::max(_board[r][c], best);
     buf[0] = 'B';
     buf[1] = 'S';
     buf[2] = 'T';

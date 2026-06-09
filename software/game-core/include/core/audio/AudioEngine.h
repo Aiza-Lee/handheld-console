@@ -2,8 +2,8 @@
 #define CORE_AUDIO_AUDIO_ENGINE_H
 
 #include "core/audio/Sounds.h"
+#include "core/common/Algorithm.h"
 
-#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 
@@ -88,14 +88,14 @@ public:
     [[nodiscard]] uint8_t sfx_volume() const { return _sfx_volume_pct; }
 
     void set_bgm_volume(uint8_t pct) {
-        _bgm_volume_pct = std::min(pct, static_cast<uint8_t>(100));
+        _bgm_volume_pct = handheld::min(pct, static_cast<uint8_t>(100));
         if (_channels[BGM_CHANNEL].active) {
             _channels[BGM_CHANNEL].amp = static_cast<int32_t>(_bgm_volume_pct) * 280;
         }
     }
 
     void set_sfx_volume(uint8_t pct) {
-        _sfx_volume_pct = std::min(pct, static_cast<uint8_t>(100));
+        _sfx_volume_pct = handheld::min(pct, static_cast<uint8_t>(100));
         for (int i = SFX_CHANNEL_START; i < CHANNEL_COUNT; ++i) {
             if (_channels[i].active) {
                 _channels[i].amp = static_cast<int32_t>(_sfx_volume_pct) * 280;
@@ -141,8 +141,8 @@ public:
                     _advance(ch);
                 }
             }
-            sum = std::min(sum, 32767);
-            sum = std::max(sum, -32768);
+            sum = handheld::min(sum, 32767);
+            sum = handheld::max(sum, -32768);
             buf[i] = static_cast<int16_t>(sum);
         }
     }

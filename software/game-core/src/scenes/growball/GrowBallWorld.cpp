@@ -1,5 +1,5 @@
 #include "scenes/growball/GrowBallWorld.h"
-#include <algorithm>
+#include "core/common/Algorithm.h"
 #include "core/math/LookupTable.h"
 #include <cmath>
 #include <cstdlib>
@@ -153,7 +153,7 @@ void GrowBallWorld::resolve_collisions(uint32_t now_ms, bool& victory, bool& gam
         float const dist = std::sqrt((dx * dx) + (dy * dy));
         if (dist < _player.radius + f.radius && _player.radius > f.radius * PLAYER_EAT_FOOD_MIN_RATIO) {
             _player.radius = add_area_growth(_player.radius, FOOD_MASS);
-            _player.radius = std::min(_player.radius, PLAYER_MAX_RADIUS);
+            _player.radius = handheld::min(_player.radius, PLAYER_MAX_RADIUS);
             spawn_food(static_cast<int>(&f - _foods));
         }
     }
@@ -210,7 +210,7 @@ void GrowBallWorld::resolve_collisions(uint32_t now_ms, bool& victory, bool& gam
         if (dist < (_player.radius + _ai[i].radius) * PLAYER_VS_AI_OVERLAP) {
             if (_player.radius > _ai[i].radius * PLAYER_EAT_AI_SIZE_RATIO) {
                 _player.radius = add_area_growth(_player.radius, _ai[i].radius * _ai[i].radius * PLAYER_EAT_AI_GROWTH);
-                _player.radius = std::min(_player.radius, PLAYER_MAX_RADIUS);
+                _player.radius = handheld::min(_player.radius, PLAYER_MAX_RADIUS);
                 spawn_ai(i, now_ms);
                 if (_player.radius >= PLAYER_MAX_RADIUS) {
                     victory = true;

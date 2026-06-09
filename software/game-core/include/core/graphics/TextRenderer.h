@@ -1,8 +1,7 @@
 #ifndef CORE_GRAPHICS_TEXT_RENDERER_H
 #define CORE_GRAPHICS_TEXT_RENDERER_H
 
-#include <algorithm>
-
+#include "core/common/Algorithm.h"
 #include "core/graphics/Color.h"
 #include "core/graphics/Font.h"
 #include "core/graphics/NumberRenderer.h"
@@ -25,7 +24,7 @@ public:
 
         for (const char* current = text; *current != '\0'; ++current) {
             if (*current == '\n') {
-                max_width = std::max(line_width, max_width);
+                max_width = handheld::max(line_width, max_width);
                 line_width = 0;
                 ++line_count;
                 continue;
@@ -39,7 +38,7 @@ public:
             }
         }
 
-        max_width = std::max(line_width, max_width);
+        max_width = handheld::max(line_width, max_width);
 
         if (!has_visible_glyph) {
             return {0, static_cast<int16_t>(font.glyph_size.height * scale)};

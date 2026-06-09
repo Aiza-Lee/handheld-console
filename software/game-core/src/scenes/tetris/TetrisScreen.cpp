@@ -1,14 +1,13 @@
 #include "scenes/tetris/TetrisScreen.h"
 
 #include "core/audio/Sounds.h"
+#include "core/common/Algorithm.h"
 #include "core/common/ButtonBits.h"
 #include "core/graphics/Font.h"
 #include "core/graphics/TextRenderer.h"
 #include "core/runtime/IScreenHost.h"
 #include "core/runtime/ScreenType.h"
 #include "core/math/Prng.h"
-
-#include <algorithm>
 
 namespace handheld {
 
@@ -176,7 +175,7 @@ void TetrisScreen::lock_piece(IScreenHost& host) {
         _level = static_cast<uint8_t>(1 + _lines / SPEED_STEP_LINES);
         uint32_t new_interval = INIT_INTERVAL -
                                 static_cast<uint32_t>(_lines / SPEED_STEP_LINES) * SPEED_DECREMENT;
-        new_interval = std::max(new_interval, MIN_INTERVAL);
+        new_interval = handheld::max(new_interval, MIN_INTERVAL);
         _gravity_interval = new_interval;
         host.audio().play_sfx(sounds::SFX_TETRIS_CLEAR, sounds::SFX_TETRIS_CLEAR_COUNT);
     }

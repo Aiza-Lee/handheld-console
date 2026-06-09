@@ -1,12 +1,12 @@
 #include "scenes/settings/SettingsScreen.h"
 
+#include "core/common/Algorithm.h"
 #include "core/common/ButtonBits.h"
 #include "core/graphics/Color.h"
 #include "core/graphics/TextRenderer.h"
 #include "core/runtime/IScreenHost.h"
 #include "core/runtime/ScreenType.h"
 #include "core/audio/Sounds.h"
-#include <algorithm>
 #include <stdint.h>
 
 namespace handheld {
@@ -85,7 +85,7 @@ void SettingsScreen::update(IPlatform& platform, IScreenHost& host) {
 
     if (act && dir != 0) {
         uint8_t vol = (_selected_row == 0) ? audio.bgm_volume() : audio.sfx_volume();
-        int16_t new_vol = std::min(std::max(static_cast<int16_t>(vol) + dir * VOLUME_STEP, 0), 100);
+        int16_t new_vol = handheld::min(handheld::max(static_cast<int16_t>(vol) + dir * VOLUME_STEP, 0), 100);
         if (_selected_row == 0) {
             audio.set_bgm_volume(static_cast<uint8_t>(new_vol));
         } else {
@@ -97,7 +97,7 @@ void SettingsScreen::update(IPlatform& platform, IScreenHost& host) {
     // A = 调整值（增量），同 RIGHT 方向（BUTTONS.md § 2）
     if (input.was_pressed(ButtonBits::A)) {
         uint8_t vol = (_selected_row == 0) ? audio.bgm_volume() : audio.sfx_volume();
-        int16_t new_vol = std::min(std::max(static_cast<int16_t>(vol) + VOLUME_STEP, 0), 100);
+        int16_t new_vol = handheld::min(handheld::max(static_cast<int16_t>(vol) + VOLUME_STEP, 0), 100);
         if (_selected_row == 0) {
             audio.set_bgm_volume(static_cast<uint8_t>(new_vol));
         } else {

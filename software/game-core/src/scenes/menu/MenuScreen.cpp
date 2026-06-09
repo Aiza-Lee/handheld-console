@@ -11,7 +11,6 @@
 // #include "scenes/playground/PlaygroundScreen.h"
 // #include "scenes/mp3/Mp3PlayerScreen.h"
 
-#include <algorithm>
 #include "core/common/ButtonBits.h"
 #include "core/graphics/Color.h"
 #include "core/graphics/TextRenderer.h"

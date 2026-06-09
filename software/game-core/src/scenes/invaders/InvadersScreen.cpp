@@ -1,11 +1,11 @@
 #include "scenes/invaders/InvadersScreen.h"
 
+#include "core/common/Algorithm.h"
 #include "core/common/ButtonBits.h"
 #include "core/graphics/Color.h"
 #include "core/graphics/TextRenderer.h"
 #include "core/runtime/IScreenHost.h"
 #include "core/runtime/ScreenType.h"
-#include <algorithm>
 #include "core/audio/Sounds.h"
 
 namespace handheld {
@@ -56,7 +56,7 @@ void InvadersScreen::reset_game() {
     _frame = 0;
     _move_timer = 0;
     int16_t interval = static_cast<int16_t>(INIT_MOVE_INTERVAL - (_level - 1) * LEVEL_SPEED_STEP);
-    interval = std::max(interval, static_cast<int16_t>(MIN_MOVE_INTERVAL));
+    interval = handheld::max(interval, static_cast<int16_t>(MIN_MOVE_INTERVAL));
     _move_interval = static_cast<uint32_t>(interval);
     _shoot_timer = 0;
     _dying_timer = 0;
@@ -214,7 +214,7 @@ void InvadersScreen::move_bullets(IScreenHost& host) {
                     host.audio().play_sfx(sounds::SFX_EXPLOSION, sounds::SFX_EXPLOSION_COUNT);
                     _move_interval =
                         INIT_MOVE_INTERVAL - static_cast<uint32_t>((TOTAL_ENEMIES - _enemies_alive_count) / 4);
-                    _move_interval = std::max(_move_interval, MIN_MOVE_INTERVAL);
+                    _move_interval = handheld::max(_move_interval, MIN_MOVE_INTERVAL);
                     break;
                 }
             }
@@ -327,8 +327,8 @@ void InvadersScreen::update_saucer(IScreenHost& host) {
             _saucer.points = SAUCER_SCORES[next_rng() % 5];
             uint32_t saucer_min = SAUCER_MIN_INTERVAL - static_cast<uint32_t>(_level * 8);
             uint32_t saucer_max = SAUCER_MAX_INTERVAL - static_cast<uint32_t>(_level * 20);
-            saucer_min = std::max<uint32_t>(saucer_min, 90);
-            saucer_max = std::max(saucer_max, saucer_min + 60);
+            saucer_min = handheld::max<uint32_t>(saucer_min, 90);
+            saucer_max = handheld::max(saucer_max, saucer_min + 60);
             _saucer_timer = saucer_min + (next_rng() % (saucer_max - saucer_min));
         }
     }
@@ -443,11 +443,11 @@ void InvadersScreen::update(IPlatform& platform, IScreenHost& host) {
         case State::PLAYING: {
             if (input.is_down(ButtonBits::LEFT)) {
                 _player_x -= PLAYER_SPEED;
-                _player_x = std::max(_player_x, PLAY_AREA_LEFT);
+                _player_x = handheld::max(_player_x, PLAY_AREA_LEFT);
             }
             if (input.is_down(ButtonBits::RIGHT)) {
                 _player_x += PLAYER_SPEED;
-                _player_x = std::min(_player_x, PLAY_AREA_RIGHT);
+                _player_x = handheld::min(_player_x, PLAY_AREA_RIGHT);
             }
             if (input.was_pressed(ButtonBits::A)) player_shoot(host);
             if (input.was_pressed(ButtonBits::START)) {
@@ -462,7 +462,7 @@ void InvadersScreen::update(IPlatform& platform, IScreenHost& host) {
             ++_shoot_timer;
             int16_t shoot_base =
                 static_cast<int16_t>(SHOOT_INTERVAL_BASE - (_level - 1) * SHOOT_INTERVAL_STEP_PER_LEVEL);
-            shoot_base = std::max<uint32_t>(shoot_base, MIN_SHOOT_BASE);
+            shoot_base = handheld::max<uint32_t>(shoot_base, MIN_SHOOT_BASE);
             uint32_t shoot_threshold =
                 static_cast<uint32_t>(shoot_base + _enemies_alive_count * SHOOT_INTERVAL_PER_ENEMY);
             if (_shoot_timer >= shoot_threshold) {

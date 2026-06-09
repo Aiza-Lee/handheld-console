@@ -1,6 +1,7 @@
 #include "scenes/breakout/BreakoutScreen.h"
 
 #include "core/audio/Sounds.h"
+#include "core/common/Algorithm.h"
 #include "core/common/ButtonBits.h"
 #include "core/graphics/Color.h"
 #include "core/graphics/Font.h"
@@ -8,7 +9,6 @@
 #include "core/runtime/IScreenHost.h"
 #include "core/runtime/ScreenType.h"
 #include "core/math/Prng.h"
-#include <algorithm>
 
 namespace handheld {
 
@@ -348,7 +348,7 @@ void BreakoutScreen::update(IPlatform& platform, IScreenHost& host) {
     // 挡板移动
     if (input.is_down(ButtonBits::LEFT)) _paddle_x -= PADDLE_SPEED;
     if (input.is_down(ButtonBits::RIGHT)) _paddle_x += PADDLE_SPEED;
-    _paddle_x = std::max<int16_t>(_paddle_x, 0);
+    _paddle_x = handheld::max<int16_t>(_paddle_x, 0);
     if (_paddle_x + PADDLE_W > 80) _paddle_x = static_cast<int16_t>(80 - PADDLE_W);
 
     if (_state == State::ATTACHED) {
