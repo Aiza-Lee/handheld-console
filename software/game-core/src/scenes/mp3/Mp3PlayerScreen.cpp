@@ -3,6 +3,7 @@
 #include "scenes/mp3/Mp3Tracks.h"
 
 #include "core/audio/Sounds.h"
+#include "core/common/Algorithm.h"
 #include "core/common/ButtonBits.h"
 #include "core/graphics/Font.h"
 #include "core/graphics/TextRenderer.h"
@@ -13,11 +14,36 @@ namespace handheld {
 
 using namespace mp3::cfg;
 
+namespace {
+
+// 把毫秒格式化成 "M:SS\0"（最长 6 字节：4 字符 + \0 + 1 安全位）
+void format_mmss(uint16_t ms, char* out) {
+    uint16_t const total_s = static_cast<uint16_t>(ms / 1000U);
+    uint16_t const m = static_cast<uint16_t>(total_s / 60U);
+    uint16_t const s = static_cast<uint16_t>(total_s % 60U);
+    out[0] = static_cast<char>('0' + (m > 9 ? 9 : m)); // 单数字位上限 9 分钟
+    out[1] = ':';
+    out[2] = static_cast<char>('0' + (s / 10U));
+    out[3] = static_cast<char>('0' + (s % 10U));
+    out[4] = '\0';
+}
+
+// 计算 track 的总时长（ms）。切歌时调用一次并缓存。
+uint16_t compute_track_duration_ms(const Tone* tones, size_t count) {
+    uint32_t total = 0;
+    for (size_t i = 0; i < count; ++i) total += tones[i].durationMs;
+    return static_cast<uint16_t>(total > 0xFFFFU ? 0xFFFFU : total);
+}
+
+} // namespace
+
 void Mp3PlayerScreen::enter(IPlatform& platform, IScreenHost& host) {
     platform.display().clear(BG_COLOR);
     _track_idx = 0;
     _playing = false;
     _track_frame = 0;
+    _volume_pct = 50;
+    host.audio().set_bgm_volume(_volume_pct);
     play_current_track(host);
 }
 
@@ -25,6 +51,7 @@ void Mp3PlayerScreen::play_current_track(IScreenHost& host) {
     if (mp3::TRACK_COUNT == 0) return;
     const auto& tr = mp3::TRACKS[_track_idx];
     host.audio().set_bgm(tr.tones, tr.count);
+    _track_duration_ms = compute_track_duration_ms(tr.tones, tr.count);
     _playing = true;
     _track_frame = 0;  // 切歌时进度从 0 开始
 }
@@ -63,6 +90,18 @@ void Mp3PlayerScreen::update(IPlatform& platform, IScreenHost& host) {
         return;
     }
 
+    // UP / DOWN：音量 ±5%
+    if (input.was_pressed(ButtonBits::UP)) {
+        _volume_pct = handheld::clamp(static_cast<uint8_t>(_volume_pct + 5), uint8_t{0}, uint8_t{100});
+        host.audio().set_bgm_volume(_volume_pct);
+        return;
+    }
+    if (input.was_pressed(ButtonBits::DOWN)) {
+        _volume_pct = handheld::clamp(static_cast<uint8_t>(_volume_pct - 5), uint8_t{0}, uint8_t{100});
+        host.audio().set_bgm_volume(_volume_pct);
+        return;
+    }
+
     // A：播放 / 暂停
     if (input.was_pressed(ButtonBits::A)) {
         if (_playing) pause_track(host);
@@ -90,57 +129,95 @@ void Mp3PlayerScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
                        static_cast<int16_t>(SCREEN_W - 2), static_cast<int16_t>(SCREEN_H - 2)},
                       SCREEN_BG);
 
-    // 3. 屏幕内文字
+    // 3. 屏幕内文字 — 新布局：曲名用 5×7 大字（原来"TRACK 1/N"位置）
     if (mp3::TRACK_COUNT > 0) {
-        TextRenderer::draw_text(display, {static_cast<int16_t>(SCREEN_X + 3),
-                                          static_cast<int16_t>(SCREEN_Y + 2)},
-                                "TRACK", SCREEN_FG, 1, BASIC_FONT_5X7);
-        TextRenderer::draw_uint(display, static_cast<int16_t>(SCREEN_X + 28),
-                                static_cast<int16_t>(SCREEN_Y + 2),
-                                static_cast<uint32_t>(_track_idx + 1), SCREEN_FG, BASIC_FONT_5X7);
-        TextRenderer::draw_text(display, {static_cast<int16_t>(SCREEN_X + 38),
-                                          static_cast<int16_t>(SCREEN_Y + 2)},
-                                "/", SCREEN_FG, 1, BASIC_FONT_5X7);
-        TextRenderer::draw_uint(display, static_cast<int16_t>(SCREEN_X + 44),
-                                static_cast<int16_t>(SCREEN_Y + 2),
-                                static_cast<uint32_t>(mp3::TRACK_COUNT), SCREEN_FG, BASIC_FONT_5X7);
-        TextRenderer::draw_text(display, {static_cast<int16_t>(SCREEN_X + 3),
-                                          static_cast<int16_t>(SCREEN_Y + 12)},
-                                mp3::TRACKS[_track_idx].name, SCREEN_FG, 1, COMPACT_FONT_3X5);
-    }
+        // Row 0-7: track NAME in 5x7
+        TextRenderer::draw_text_centered(display,
+            {static_cast<int16_t>(SCREEN_X + SCREEN_W / 2),
+             static_cast<int16_t>(SCREEN_Y + 2)},
+            mp3::TRACKS[_track_idx].name, SCREEN_FG, 1, BASIC_FONT_5X7);
 
-    // 4. 进度条
-    display.draw_rect({static_cast<int16_t>(PROGRESS_X - 1), static_cast<int16_t>(PROGRESS_Y - 1),
-                       static_cast<int16_t>(PROGRESS_W + 2), static_cast<int16_t>(PROGRESS_H + 2)},
-                      PROGRESS_FRAME);
-    display.fill_rect({PROGRESS_X, PROGRESS_Y, PROGRESS_W, PROGRESS_H}, PROGRESS_BG);
-    if (mp3::TRACK_COUNT > 0) {
-        const auto& tr = mp3::TRACKS[_track_idx];
-        uint32_t total_ms = 0;
-        for (size_t i = 0; i < tr.count; ++i) total_ms += tr.tones[i].durationMs;
-        const uint32_t current_ms = (_track_frame * 50) % (total_ms > 0 ? total_ms : 1);
-        const int16_t fill_w = (total_ms > 0)
-            ? static_cast<int16_t>((static_cast<uint32_t>(PROGRESS_W) * current_ms) / total_ms)
-            : 0;
-        if (fill_w > 0) {
-            display.fill_rect({PROGRESS_X, PROGRESS_Y, fill_w, PROGRESS_H}, PROGRESS_FG);
+        // Row 9-13: "1/16" 左 + "M:SS/M:SS" 右
+        char idx_buf[8];
+        idx_buf[0] = static_cast<char>('0' + ((_track_idx + 1) / 10));
+        idx_buf[1] = static_cast<char>('0' + ((_track_idx + 1) % 10));
+        idx_buf[2] = '/';
+        idx_buf[3] = static_cast<char>('0' + (mp3::TRACK_COUNT / 10));
+        idx_buf[4] = static_cast<char>('0' + (mp3::TRACK_COUNT % 10));
+        idx_buf[5] = '\0';
+        TextRenderer::draw_text(display,
+            {static_cast<int16_t>(SCREEN_X + 3), static_cast<int16_t>(SCREEN_Y + 12)},
+            idx_buf, HINT_COLOR, 1, COMPACT_FONT_3X5);
+
+        const uint32_t current_ms = (_track_frame * 50U) % (_track_duration_ms > 0 ? _track_duration_ms : 1U);
+        char cur[5], tot[5];
+        format_mmss(static_cast<uint16_t>(current_ms), cur);
+        format_mmss(_track_duration_ms, tot);
+        // "M:SS/M:SS" = 8 chars + NUL = 9 bytes
+        char time_buf[10];
+        time_buf[0] = cur[0]; time_buf[1] = cur[1];
+        time_buf[2] = cur[2]; time_buf[3] = cur[3];
+        time_buf[4] = '/';
+        time_buf[5] = tot[0]; time_buf[6] = tot[1];
+        time_buf[7] = tot[2]; time_buf[8] = tot[3];
+        time_buf[9] = '\0';
+        // 8 chars × 4 px = 32 px；从右侧 SCREEN_X + SCREEN_W - 3 - 32 起画
+        TextRenderer::draw_text(display,
+            {static_cast<int16_t>(SCREEN_X + SCREEN_W - 3 - 32), static_cast<int16_t>(SCREEN_Y + 12)},
+            time_buf, HINT_COLOR, 1, COMPACT_FONT_3X5);
+
+        // Row 15-19: 进度条
+        display.draw_rect({static_cast<int16_t>(PROGRESS_X - 1), static_cast<int16_t>(PROGRESS_Y - 1),
+                           static_cast<int16_t>(PROGRESS_W + 2), static_cast<int16_t>(PROGRESS_H + 2)},
+                          PROGRESS_FRAME);
+        display.fill_rect({PROGRESS_X, PROGRESS_Y, PROGRESS_W, PROGRESS_H}, PROGRESS_BG);
+        if (_track_duration_ms > 0) {
+            const int16_t fill_w = static_cast<int16_t>(
+                (static_cast<uint32_t>(PROGRESS_W) * current_ms) / _track_duration_ms);
+            if (fill_w > 0) {
+                display.fill_rect({PROGRESS_X, PROGRESS_Y, fill_w, PROGRESS_H}, PROGRESS_FG);
+            }
+        }
+
+        // Row 22-26: 状态 + 音量
+        const char* status = _playing ? "PLAYING" : "PAUSED";
+        TextRenderer::draw_text(display,
+            {static_cast<int16_t>(SCREEN_X + 3), static_cast<int16_t>(SCREEN_Y + 22)},
+            status, STATUS_COLOR, 1, COMPACT_FONT_3X5);
+
+        // 音量条：右边 "VOL 000%" 文字 + 5 个 fill_rect 小方块（不用字符，
+        // 因 BASIC/COMPACT font 没有 ▓/░，glyph_for 会回退到空白）
+        char vol_buf[9];
+        vol_buf[0] = 'V'; vol_buf[1] = 'O'; vol_buf[2] = 'L';
+        vol_buf[3] = ' ';
+        vol_buf[4] = static_cast<char>('0' + (_volume_pct / 100));
+        vol_buf[5] = static_cast<char>('0' + ((_volume_pct / 10) % 10));
+        vol_buf[6] = static_cast<char>('0' + (_volume_pct % 10));
+        vol_buf[7] = '%';
+        vol_buf[8] = '\0';
+        TextRenderer::draw_text(display,
+            {static_cast<int16_t>(SCREEN_X + SCREEN_W - 3 - 32), static_cast<int16_t>(SCREEN_Y + 22)},
+            vol_buf, STATUS_COLOR, 1, COMPACT_FONT_3X5);
+        // 5 个 bar：2px 宽 + 1px gap；5×2 + 4×1 = 14 px；贴在文字左侧 2 px
+        const uint8_t filled = static_cast<uint8_t>((_volume_pct + 10) / 20); // 0-5 整数
+        const int16_t bar_y = static_cast<int16_t>(SCREEN_Y + 23);
+        const int16_t bar_h = 4;
+        const int16_t bar_w = 2;
+        const int16_t bars_right = SCREEN_X + SCREEN_W - 3 - 34; // 文字左侧 2 px
+        for (uint8_t i = 0; i < 5; ++i) {
+            const int16_t bx = static_cast<int16_t>(bars_right - 14 + (i * 3));
+            display.fill_rect(Rect{bx, bar_y, bar_w, bar_h},
+                              (i < filled) ? PROGRESS_FG : PROGRESS_BG);
         }
     }
 
-    // 5. 屏幕内状态行
-    const char* status = _playing ? "PLAYING" : "PAUSED";
-    TextRenderer::draw_text(display, {static_cast<int16_t>(SCREEN_X + 3),
-                                      static_cast<int16_t>(SCREEN_Y + 36)},
-                            status, STATUS_COLOR, 1, COMPACT_FONT_3X5);
-
-    // 6. 按钮行：4 个方框 + 直接画出来的图标（不用 TextRenderer）
-    enum class BtnKind { PREV, PLAY_PAUSE, NEXT, MODE };
+    // 4. 按钮行：3 个方框（去掉 MODE，UP/DOWN 改成音量键）
+    enum class BtnKind { PREV, PLAY_PAUSE, NEXT };
     struct Btn { int16_t x; BtnKind kind; };
     const Btn btns[] = {
         {BTN_X_PREV, BtnKind::PREV},
         {BTN_X_PLAY, BtnKind::PLAY_PAUSE},
         {BTN_X_NEXT, BtnKind::NEXT},
-        {BTN_X_MODE, BtnKind::MODE},
     };
     for (const auto& b : btns) {
         const bool is_play = (b.kind == BtnKind::PLAY_PAUSE);
@@ -205,19 +282,11 @@ void Mp3PlayerScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
                 display.fill_rect({static_cast<int16_t>(cx + 2),
                                    static_cast<int16_t>(cy - 4), 2, 8}, icon_color);
                 break;
-            case BtnKind::MODE:
-                // 三条横线（菜单图标）
-                display.fill_rect({static_cast<int16_t>(cx - 4),
-                                   static_cast<int16_t>(cy - 3), 8, 1}, icon_color);
-                display.fill_rect({static_cast<int16_t>(cx - 4), cy, 8, 1}, icon_color);
-                display.fill_rect({static_cast<int16_t>(cx - 4),
-                                   static_cast<int16_t>(cy + 3), 8, 1}, icon_color);
-                break;
         }
     }
 
-    // 7. 底部操作提示（缩短到 17 字符，居中后 68px 宽，刚好放下）
-    TextRenderer::draw_text_centered(display, {40, HINT_Y}, "L/R A:PLAY B:EXIT",
+    // 5. 底部操作提示（19 字符，居中后 68px 宽，刚好放下）
+    TextRenderer::draw_text_centered(display, {40, HINT_Y}, "L/R:T A:PLY U/D:VOL B:EXIT",
                                      HINT_COLOR, 1, COMPACT_FONT_3X5);
 }
 

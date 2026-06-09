@@ -54,6 +54,8 @@ private:
     uint8_t _track_idx = 0;        // 当前曲目索引
     bool _playing = false;          // 是否正在播放
     uint32_t _track_frame = 0;      // 自当前 track 开始以来的帧计数（用于进度）
+    uint16_t _track_duration_ms = 0; // 当前曲目总时长（ms），play_current_track 时缓存
+    uint8_t _volume_pct = 50;       // 0-100；UP/DOWN 调整
 };
 
 } // namespace handheld
