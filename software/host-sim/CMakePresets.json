@@ -17,6 +17,18 @@
 				"CMAKE_CXX_COMPILER": "clang++",
 				"CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
 			}
+		},
+		{
+			"name": "clang-release",
+			"displayName": "Clang Release (size)",
+			"description": "Size-optimized build: -Os, LTO, --gc-sections, no RTTI, no exceptions. Used to measure game-core flash budget. The size flags are applied to the game_core target only (in game-core/CMakeLists.txt) so host-sim SDL code (which uses exceptions) still builds.",
+			"generator": "Ninja",
+			"binaryDir": "${sourceDir}/build/clang-release",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "MinSizeRel",
+				"CMAKE_CXX_COMPILER": "clang++",
+				"CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+			}
 		}
 	],
 	"buildPresets": [
@@ -24,12 +36,24 @@
 			"name": "clang-debug-build",
 			"configurePreset": "clang-debug",
 			"jobs": 0
+		},
+		{
+			"name": "clang-release-build",
+			"configurePreset": "clang-release",
+			"jobs": 0
 		}
 	],
 	"testPresets": [
 		{
 			"name": "clang-debug-test",
 			"configurePreset": "clang-debug",
+			"output": {
+				"outputOnFailure": true
+			}
+		},
+		{
+			"name": "clang-release-test",
+			"configurePreset": "clang-release",
 			"output": {
 				"outputOnFailure": true
 			}
