@@ -4,7 +4,6 @@
 #include "core/runtime/IScreenHost.h"
 #include "platform/interfaces/IPlatform.h"
 #include "platform/interfaces/IInput.h"
-#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include "core/audio/Sounds.h"
@@ -83,23 +82,14 @@ void GrowBallScreen::enter(IPlatform& platform, IScreenHost& host) {
 void GrowBallScreen::update(IPlatform& platform, IScreenHost& host) {
     auto& input = platform.input();
 
-    if (_paused) {
+    // 任意结束态：A/START 恢复或重开，B 回菜单
+    if (_paused || _victory || _game_over) {
         if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
-            _paused = false;
-        }
-        if (input.was_pressed(ButtonBits::B)) host.switch_to(ScreenType::MENU);
-        return;
-    }
-    if (_victory) {
-        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
-            enter(platform, host);
-        }
-        if (input.was_pressed(ButtonBits::B)) host.switch_to(ScreenType::MENU);
-        return;
-    }
-    if (_game_over) {
-        if (input.was_pressed(ButtonBits::A) || input.was_pressed(ButtonBits::START)) {
-            enter(platform, host);
+            if (_paused) {
+                _paused = false;
+            } else {
+                enter(platform, host);
+            }
         }
         if (input.was_pressed(ButtonBits::B)) host.switch_to(ScreenType::MENU);
         return;
@@ -148,8 +138,14 @@ void GrowBallScreen::update(IPlatform& platform, IScreenHost& host) {
         }
     }
 
-    // camera
-    _zoom = std::clamp(ZOOM_BASE / (_world.player().radius * ZOOM_DIVISOR), ZOOM_MIN, ZOOM_MAX);
+    // camera zoom — manual clamp, 避免引入 <algorithm>
+    float z = ZOOM_BASE / (_world.player().radius * ZOOM_DIVISOR);
+    if (z < ZOOM_MIN) {
+        z = ZOOM_MIN;
+    } else if (z > ZOOM_MAX) {
+        z = ZOOM_MAX;
+    }
+    _zoom = z;
     _camera_x = _world.player().x;
     _camera_y = _world.player().y;
 }
@@ -158,12 +154,13 @@ void GrowBallScreen::render(IPlatform& platform, IScreenHost& host) {
     auto& display = platform.display();
     display.clear(BG_COLOR);
 
-    // grid
+    // 视野四角
     float const wx_start = _camera_x - (CAMERA_OFFSET_X / _zoom);
     float const wy_start = _camera_y - (CAMERA_OFFSET_Y / _zoom);
     float const wx_end = _camera_x + (CAMERA_OFFSET_X / _zoom);
     float const wy_end = _camera_y + (CAMERA_OFFSET_Y / _zoom);
 
+    // grid
     for (float wx = std::floor(wx_start / GRID_SPACING) * GRID_SPACING; wx <= wx_end; wx += GRID_SPACING) {
         int16_t sx = 0, sy0 = 0, sy1 = 0;
         world_to_screen(wx, wy_start, sx, sy0);
@@ -177,16 +174,17 @@ void GrowBallScreen::render(IPlatform& platform, IScreenHost& host) {
         if (sy >= 0 && sy < SCREEN_HEIGHT) display.draw_h_line(sx0, sy, sx1 - sx0, GRID_COLOR);
     }
 
-    // world boundary — 逐边绘制并裁剪到屏幕范围，避免越界写入
+    // 世界边界 — 逐边绘制并裁剪到屏幕范围，避免越界写入
     {
         int16_t sx0, sy0, sx1, sy1;
         world_to_screen(0, 0, sx0, sy0);
         world_to_screen(WORLD_W, WORLD_H, sx1, sy1);
 
-        int16_t const cy0 = std::max<int16_t>(sy0, 0);
-        int16_t const cy1 = std::min<int16_t>(sy1, SCREEN_HEIGHT);
-        int16_t const cx0 = std::max<int16_t>(sx0, 0);
-        int16_t const cx1 = std::min<int16_t>(sx1, SCREEN_WIDTH);
+        // manual min/max, 避免引入 <algorithm>
+        int16_t const cy0 = sy0 < 0 ? 0 : sy0;
+        int16_t const cy1 = sy1 > SCREEN_HEIGHT ? SCREEN_HEIGHT : sy1;
+        int16_t const cx0 = sx0 < 0 ? 0 : sx0;
+        int16_t const cx1 = sx1 > SCREEN_WIDTH ? SCREEN_WIDTH : sx1;
 
         if (sx0 >= 0 && sx0 < SCREEN_WIDTH && cy1 > cy0) display.draw_v_line(sx0, cy0, cy1 - cy0, BORDER_COLOR);
         if (sx1 >= 0 && sx1 < SCREEN_WIDTH && cy1 > cy0) display.draw_v_line(sx1, cy0, cy1 - cy0, BORDER_COLOR);
@@ -194,7 +192,7 @@ void GrowBallScreen::render(IPlatform& platform, IScreenHost& host) {
         if (sy1 >= 0 && sy1 < SCREEN_HEIGHT && cx1 > cx0) display.draw_h_line(cx0, sy1, cx1 - cx0, BORDER_COLOR);
     }
 
-    // 收集所有球体，按屏幕半径排序后绘制（小先大后，大的覆盖小的）
+    // 收集所有球体，按屏幕半径排序后绘制（painter's algorithm，小先大后）
     struct BallDrawInfo {
         int16_t sx, sy, sr;
         Color fill;
@@ -204,31 +202,39 @@ void GrowBallScreen::render(IPlatform& platform, IScreenHost& host) {
     BallDrawInfo draw_list[1 + AI_COUNT + FOOD_COUNT];
     int draw_count = 0;
 
+    auto append_ball = [&](float wx, float wy, float world_r, Color fill, bool has_outline, Color outline) {
+        int16_t sx = 0, sy = 0;
+        world_to_screen(wx, wy, sx, sy);
+        auto sr = static_cast<int16_t>(world_r * _zoom + 0.5f);
+        if (sr < 1) {
+            sr = 1;
+        }
+        draw_list[draw_count++] = {sx, sy, sr, fill, has_outline, outline};
+    };
+
     for (int i = 0; i < FOOD_COUNT; ++i) {
         const auto& f = _world.foods()[i];
-        int16_t sx = 0, sy = 0;
-        world_to_screen(f.x, f.y, sx, sy);
-        auto sr = static_cast<int16_t>(f.radius * _zoom + 0.5f);
-        draw_list[draw_count++] = {sx, sy, static_cast<int16_t>(std::max<int>(sr, 1)), f.color, false, Color::BLACK};
+        append_ball(f.x, f.y, f.radius, f.color, false, Color::BLACK);
     }
     for (int i = 0; i < AI_COUNT; ++i) {
         const auto& ai = _world.ai()[i];
-        int16_t sx = 0, sy = 0;
-        world_to_screen(ai.x, ai.y, sx, sy);
-        auto sr = static_cast<int16_t>(ai.radius * _zoom + 0.5f);
-        draw_list[draw_count++] = {sx, sy, static_cast<int16_t>(std::max<int>(sr, 1)), ai.color, true, Color::BLACK};
+        append_ball(ai.x, ai.y, ai.radius, ai.color, true, Color::BLACK);
     }
     {
-        const auto& player = _world.player();
-        int16_t sx = 0, sy = 0;
-        world_to_screen(player.x, player.y, sx, sy);
-        auto sr = static_cast<int16_t>(player.radius * _zoom + 0.5f);
-        draw_list[draw_count++] = {sx,           sy,   static_cast<int16_t>(std::max<int>(sr, 1)),
-                                   player.color, true, Color::WHITE};
+        const auto& p = _world.player();
+        append_ball(p.x, p.y, p.radius, p.color, true, Color::WHITE);
     }
 
-    std::sort(draw_list, draw_list + draw_count,
-              [](const BallDrawInfo& a, const BallDrawInfo& b) { return a.sr < b.sr; });
+    // 插入排序：球体半径帧间变化缓慢，O(n+d) 实际比 O(n log n) 更快；避免 <algorithm>
+    for (int i = 1; i < draw_count; ++i) {
+        auto cur = draw_list[i];
+        int j = i - 1;
+        while (j >= 0 && draw_list[j].sr > cur.sr) {
+            draw_list[j + 1] = draw_list[j];
+            --j;
+        }
+        draw_list[j + 1] = cur;
+    }
 
     for (int i = 0; i < draw_count; ++i) {
         const auto& b = draw_list[i];
@@ -245,24 +251,27 @@ void GrowBallScreen::render(IPlatform& platform, IScreenHost& host) {
     TextRenderer::draw_text(display, {4, 0}, "/", Color::WHITE, 1, COMPACT_FONT_3X5);
     TextRenderer::draw_int(display, 8, 0, target, Color::WHITE, COMPACT_FONT_3X5);
 
+    // 通用结束/暂停覆盖层：3 行文字（标题 + 2 行操作提示）
+    auto draw_modal = [&](const Rect& rect, Color bg, Color border,
+                          const char* title, const char* hint1, const char* hint2) {
+        display.fill_rect(rect, bg);
+        display.draw_rect(rect, border);
+        TextRenderer::draw_text_centered(display, {40, 28}, title, border, 1, BASIC_FONT_5X7);
+        TextRenderer::draw_text_centered(display, {40, 42}, hint1, Color::WHITE, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text_centered(display, {40, 52}, hint2, Color::WHITE, 1, COMPACT_FONT_3X5);
+    };
     if (_paused) {
         display.fill_rect({PAUSE_RECT_X, PAUSE_RECT_Y, PAUSE_RECT_W, PAUSE_RECT_H}, PAUSE_BG);
         display.draw_rect({PAUSE_RECT_X, PAUSE_RECT_Y, PAUSE_RECT_W, PAUSE_RECT_H}, PAUSE_TEXT);
         TextRenderer::draw_pause_overlay(display, 40, 28, PAUSE_TEXT, PAUSE_TEXT);
     }
     if (_victory) {
-        display.fill_rect({WIN_RECT_X, WIN_RECT_Y, WIN_RECT_W, WIN_RECT_H}, VICTORY_BG);
-        display.draw_rect({WIN_RECT_X, WIN_RECT_Y, WIN_RECT_W, WIN_RECT_H}, VICTORY_TEXT);
-        TextRenderer::draw_text_centered(display, {40, 28}, "YOU WIN!", VICTORY_TEXT, 1, BASIC_FONT_5X7);
-        TextRenderer::draw_text_centered(display, {40, 42}, "A/START: Again", Color::WHITE, 1, COMPACT_FONT_3X5);
-        TextRenderer::draw_text_centered(display, {40, 52}, "B: Menu", Color::WHITE, 1, COMPACT_FONT_3X5);
+        draw_modal({WIN_RECT_X, WIN_RECT_Y, WIN_RECT_W, WIN_RECT_H}, VICTORY_BG, VICTORY_TEXT,
+                   "YOU WIN!", "A/START: Again", "B: Menu");
     }
     if (_game_over) {
-        display.fill_rect({END_RECT_X, END_RECT_Y, END_RECT_W, END_RECT_H}, GAME_OVER_BG);
-        display.draw_rect({END_RECT_X, END_RECT_Y, END_RECT_W, END_RECT_H}, GAME_OVER_TEXT);
-        TextRenderer::draw_text_centered(display, {40, 28}, "GAME OVER", GAME_OVER_TEXT, 1, BASIC_FONT_5X7);
-        TextRenderer::draw_text_centered(display, {40, 42}, "A/START: Retry", Color::WHITE, 1, COMPACT_FONT_3X5);
-        TextRenderer::draw_text_centered(display, {40, 52}, "B: Menu", Color::WHITE, 1, COMPACT_FONT_3X5);
+        draw_modal({END_RECT_X, END_RECT_Y, END_RECT_W, END_RECT_H}, GAME_OVER_BG, GAME_OVER_TEXT,
+                   "GAME OVER", "A/START: Retry", "B: Menu");
     }
 }
 
