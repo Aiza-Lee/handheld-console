@@ -12,21 +12,15 @@ static float rand_float(float min, float max) {
     return min + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * (max - min);
 }
 
-static float clamp_f(float v, float lo, float hi) {
-    if (v < lo) return lo;
-    if (v > hi) return hi;
-    return v;
-}
-
 // --- helpers ---
 
 float GrowBallWorld::speed_limit(float radius) {
-    return PLAYER_MAX_SPEED * (1.0F - clamp_f(radius / PLAYER_MAX_RADIUS, 0.0F, 0.8F));
+    return PLAYER_MAX_SPEED * (1.0F - handheld::clamp(radius / PLAYER_MAX_RADIUS, 0.0F, 0.8F));
 }
 
 void GrowBallWorld::clamp_to_world(Ball& ball) {
-    ball.x = clamp_f(ball.x, ball.radius, WORLD_W - ball.radius);
-    ball.y = clamp_f(ball.y, ball.radius, WORLD_H - ball.radius);
+    ball.x = handheld::clamp(ball.x, ball.radius, WORLD_W - ball.radius);
+    ball.y = handheld::clamp(ball.y, ball.radius, WORLD_H - ball.radius);
 }
 
 static float add_area_growth(float radius, float added_area) { return std::sqrt((radius * radius) + added_area); }
@@ -138,8 +132,8 @@ void GrowBallWorld::update_ai(uint32_t now_ms) {
         }
         ai.x += ai.vx;
         ai.y += ai.vy;
-        ai.x = clamp_f(ai.x, ai.radius, WORLD_W - ai.radius);
-        ai.y = clamp_f(ai.y, ai.radius, WORLD_H - ai.radius);
+        ai.x = handheld::clamp(ai.x, ai.radius, WORLD_W - ai.radius);
+        ai.y = handheld::clamp(ai.y, ai.radius, WORLD_H - ai.radius);
     }
 }
 

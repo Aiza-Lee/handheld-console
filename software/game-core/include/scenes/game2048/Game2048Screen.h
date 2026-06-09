@@ -80,6 +80,7 @@ private:
     uint32_t _score = 0;
     uint32_t _rng = game2048::cfg::RNG_SEED;
     uint32_t _frame = 0;
+    uint16_t _best = 0; // 最高 tile 值；slide() 中增量更新，避免 render() 每帧 16 次扫描
 
     bool _game_over = false;
     bool _won = false;

@@ -52,7 +52,6 @@ constexpr Color COLOR_HINT = rgb565(80, 100, 120);
 constexpr Color COLOR_GAMEOVER = rgb565(255, 145, 190);
 constexpr Color COLOR_PAUSE = rgb565(100, 200, 140);
 constexpr Color COLOR_OVERLAY = rgb565(8, 12, 16);
-constexpr Color COLOR_HEIGHT_LIMIT = rgb565(255, 80, 80); // 高度限制线（危险警告）
 
 // ── 覆盖层尺寸 ────────────────────────────────────────────
 constexpr int16_t PAUSE_RECT_X = 10;

@@ -42,7 +42,7 @@ void TetrisScreen::try_rotate() {
     uint8_t new_rot = static_cast<uint8_t>((_current_rot + 1U) & 0x3U);
     // 简化 SRS-style kick 列表：水平偏移 + 垂直偏移组合
     // 7 个候选：center / ±1 / ±2 / up1 / up1+right1（I-piece 视觉居中提示）
-    const int8_t kicks[7][2] = {
+    constexpr int8_t kicks[7][2] = {
         { 0,  0},
         {-1,  0},
         { 1,  0},
@@ -314,9 +314,6 @@ void TetrisScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
             }
         }
     }
-
-    // ── 高度限制线（row 2 上沿，y=14，红色 1px 横线） ────────────
-    d.draw_h_line(AREA_X, static_cast<int16_t>(AREA_Y + 2 * CELL), AREA_W, COLOR_HEIGHT_LIMIT);
 
     // ── NEXT 预览（左侧 8×8 区） ───────────────────
     TextRenderer::draw_text(d, {4, 12}, "NEXT", COLOR_HINT, 1, COMPACT_FONT_3X5);

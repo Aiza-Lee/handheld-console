@@ -74,22 +74,6 @@ public:
         draw_v_line(rect.x, rect.y, rect.height, color);
         draw_v_line(static_cast<int16_t>(rect.x + rect.width - 1), rect.y, rect.height, color);
     }
-
-    void draw_bitmap(Point origin, const Color* pixels, int16_t bitmap_width, int16_t bitmap_height,
-                     uint16_t stride_pixels = 0) {
-        if (pixels == nullptr || bitmap_width <= 0 || bitmap_height <= 0) {
-            return;
-        }
-
-        const uint16_t stride = (stride_pixels == 0) ? static_cast<uint16_t>(bitmap_width) : stride_pixels;
-        for (int16_t row = 0; row < bitmap_height; ++row) {
-            for (int16_t column = 0; column < bitmap_width; ++column) {
-                const uint16_t index = (static_cast<uint16_t>(row) * stride) + static_cast<uint16_t>(column);
-                draw_pixel(static_cast<int16_t>(origin.x + column), static_cast<int16_t>(origin.y + row),
-                           pixels[index]);
-            }
-        }
-    }
 };
 
 } // namespace handheld

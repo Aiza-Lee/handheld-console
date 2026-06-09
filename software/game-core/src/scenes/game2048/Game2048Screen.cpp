@@ -107,6 +107,7 @@ void Game2048Screen::reset_game() {
         for (int8_t c = 0; c < GRID; ++c) _board[r][c] = 0;
     _score = 0;
     _rng = RNG_SEED;
+    _best = 0;
     _game_over = false;
     _won = false;
     _paused = false;
@@ -154,7 +155,10 @@ bool Game2048Screen::slide(int8_t dir) {
         for (int8_t r = 0; r < GRID; ++r) {
             for (int8_t c = 0; c < GRID; ++c) line[c] = _board[r][c];
             SlideResult sr = slide_line(line, reverse);
-            for (int8_t c = 0; c < GRID; ++c) _board[r][c] = line[c];
+            for (int8_t c = 0; c < GRID; ++c) {
+                _board[r][c] = line[c];
+                if (line[c] > _best) _best = line[c];
+            }
             res.changed = res.changed || sr.changed;
             res.gained += sr.gained;
         }
@@ -163,7 +167,10 @@ bool Game2048Screen::slide(int8_t dir) {
         for (int8_t c = 0; c < GRID; ++c) {
             for (int8_t r = 0; r < GRID; ++r) line[r] = _board[r][c];
             SlideResult sr = slide_line(line, reverse);
-            for (int8_t r = 0; r < GRID; ++r) _board[r][c] = line[r];
+            for (int8_t r = 0; r < GRID; ++r) {
+                _board[r][c] = line[r];
+                if (line[r] > _best) _best = line[r];
+            }
             res.changed = res.changed || sr.changed;
             res.gained += sr.gained;
         }
@@ -315,16 +322,12 @@ void Game2048Screen::render(IPlatform& platform, IScreenHost& /*host*/) {
     itoa_dec(static_cast<uint16_t>(_score > 9999 ? 9999 : _score), buf + 3);
     TextRenderer::draw_text(d, {4, 4}, buf, HUD_TEXT, 1, COMPACT_FONT_3X5);
 
-    // 顶部右侧显示最高 tile 值
-    uint16_t best = 0;
-    for (int8_t r = 0; r < GRID; ++r)
-        for (int8_t c = 0; c < GRID; ++c)
-            best = handheld::max(_board[r][c], best);
+    // 顶部右侧显示最高 tile 值（由 slide() 增量更新，不再每帧扫描）
     buf[0] = 'B';
     buf[1] = 'S';
     buf[2] = 'T';
     buf[3] = ':';
-    itoa_dec(best, buf + 4);
+    itoa_dec(_best, buf + 4);
     Size bsz = TextRenderer::measure_text(buf, 1, COMPACT_FONT_3X5);
     TextRenderer::draw_text(d,
                             Point{static_cast<int16_t>(76 - bsz.width), 4},
