@@ -42,9 +42,9 @@ constexpr MenuEntry ENTRIES[] = {
     {   "Tetris",     ScreenType::TETRIS},
     {    "2048",   ScreenType::GAME_2048},
     {     "Pong",       ScreenType::PONG},
-    // {"MP3 Player",    ScreenType::MP3},
+    {"MP3 Player",    ScreenType::MP3},
 };
-constexpr std::size_t ENTRY_COUNT = 9;
+constexpr std::size_t ENTRY_COUNT = 10;
 
 // 布局
 constexpr int16_t BOX_X = 5;

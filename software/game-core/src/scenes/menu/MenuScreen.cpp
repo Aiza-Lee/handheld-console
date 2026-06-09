@@ -9,7 +9,7 @@
 #include "scenes/game2048/Game2048Screen.h"
 #include "scenes/pong/PongScreen.h"
 // #include "scenes/playground/PlaygroundScreen.h"
-// #include "scenes/mp3/Mp3PlayerScreen.h"
+#include "scenes/mp3/Mp3PlayerScreen.h"
 
 #include "core/common/ButtonBits.h"
 #include "core/graphics/Color.h"
@@ -50,7 +50,7 @@ menu::cfg::MenuPreviewFn render_menu_preview_for(ScreenType type) {
         case ScreenType::TETRIS: return TetrisScreen::render_menu_preview;
         case ScreenType::GAME_2048: return Game2048Screen::render_menu_preview;
         case ScreenType::PONG: return PongScreen::render_menu_preview;
-        // case ScreenType::MP3: return Mp3PlayerScreen::render_menu_preview;
+        case ScreenType::MP3: return Mp3PlayerScreen::render_menu_preview;
         default: return nullptr;
     }
 }

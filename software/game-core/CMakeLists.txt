@@ -15,7 +15,7 @@ set(GAME_CORE_SOURCES
 	src/scenes/tetris/TetrisScreen.cpp
 	src/scenes/game2048/Game2048Screen.cpp
 	src/scenes/pong/PongScreen.cpp
-	#	src/scenes/mp3/Mp3PlayerScreen.cpp
+		src/scenes/mp3/Mp3PlayerScreen.cpp
 	src/scenes/developer/DeveloperScreen.cpp
 )
 
