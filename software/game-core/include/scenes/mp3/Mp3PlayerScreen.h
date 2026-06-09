@@ -14,7 +14,7 @@ constexpr int16_t BODY_X = 2, BODY_Y = 2, BODY_W = 76, BODY_H = 76;
 // 屏幕凹陷区
 constexpr int16_t SCREEN_X = 6, SCREEN_Y = 8, SCREEN_W = 68, SCREEN_H = 42;
 // 屏幕内进度条
-constexpr int16_t PROGRESS_X = 9, PROGRESS_Y = 30, PROGRESS_W = 62, PROGRESS_H = 4;
+constexpr int16_t PROGRESS_X = 9, PROGRESS_Y = 26, PROGRESS_W = 62, PROGRESS_H = 4;
 // 4 个按钮
 constexpr int16_t BTN_Y = 56, BTN_H = 14, BTN_W = 14;
 constexpr int16_t BTN_X_PREV = 8, BTN_X_PLAY = 26, BTN_X_NEXT = 44, BTN_X_MODE = 62;
@@ -55,7 +55,6 @@ private:
     bool _playing = false;          // 是否正在播放
     uint32_t _track_frame = 0;      // 自当前 track 开始以来的帧计数（用于进度）
     uint16_t _track_duration_ms = 0; // 当前曲目总时长（ms），play_current_track 时缓存
-    uint8_t _volume_pct = 50;       // 0-100；UP/DOWN 调整
 };
 
 } // namespace handheld

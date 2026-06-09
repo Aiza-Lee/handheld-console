@@ -42,8 +42,7 @@ void Mp3PlayerScreen::enter(IPlatform& platform, IScreenHost& host) {
     _track_idx = 0;
     _playing = false;
     _track_frame = 0;
-    _volume_pct = 50;
-    host.audio().set_bgm_volume(_volume_pct);
+    // 音量与全局 AudioEngine 共享（Settings 屏的修改在此自然生效，无需本地字段）
     play_current_track(host);
 }
 
@@ -90,15 +89,15 @@ void Mp3PlayerScreen::update(IPlatform& platform, IScreenHost& host) {
         return;
     }
 
-    // UP / DOWN：音量 ±5%
+    // UP / DOWN：调整全局 BGM 音量 ±5%（写入共享 AudioEngine，Settings 屏立即看到）
     if (input.was_pressed(ButtonBits::UP)) {
-        _volume_pct = handheld::clamp(static_cast<uint8_t>(_volume_pct + 5), uint8_t{0}, uint8_t{100});
-        host.audio().set_bgm_volume(_volume_pct);
+        host.audio().set_bgm_volume(handheld::clamp(
+            static_cast<uint8_t>(host.audio().bgm_volume() + 5), uint8_t{0}, uint8_t{100}));
         return;
     }
     if (input.was_pressed(ButtonBits::DOWN)) {
-        _volume_pct = handheld::clamp(static_cast<uint8_t>(_volume_pct - 5), uint8_t{0}, uint8_t{100});
-        host.audio().set_bgm_volume(_volume_pct);
+        host.audio().set_bgm_volume(handheld::clamp(
+            static_cast<uint8_t>(host.audio().bgm_volume() - 5), uint8_t{0}, uint8_t{100}));
         return;
     }
 
@@ -116,7 +115,7 @@ void Mp3PlayerScreen::update(IPlatform& platform, IScreenHost& host) {
     }
 }
 
-void Mp3PlayerScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
+void Mp3PlayerScreen::render(IPlatform& platform, IScreenHost& host) {
     IDisplay& display = platform.display();
     display.clear(BG_COLOR);
 
@@ -129,12 +128,12 @@ void Mp3PlayerScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
                        static_cast<int16_t>(SCREEN_W - 2), static_cast<int16_t>(SCREEN_H - 2)},
                       SCREEN_BG);
 
-    // 3. 屏幕内文字 — 新布局：曲名用 5×7 大字（原来"TRACK 1/N"位置）
+    // 3. 屏幕内文字
     if (mp3::TRACK_COUNT > 0) {
-        // Row 0-7: track NAME in 5x7
+        // Row 0-7: track NAME in 5x7（center.y=13 → origin.y=10，完全在屏幕凹陷区内）
         TextRenderer::draw_text_centered(display,
             {static_cast<int16_t>(SCREEN_X + SCREEN_W / 2),
-             static_cast<int16_t>(SCREEN_Y + 2)},
+             static_cast<int16_t>(SCREEN_Y + 5)},
             mp3::TRACKS[_track_idx].name, SCREEN_FG, 1, BASIC_FONT_5X7);
 
         // Row 9-13: "1/16" 左 + "M:SS/M:SS" 右
@@ -179,36 +178,30 @@ void Mp3PlayerScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
             }
         }
 
-        // Row 22-26: 状态 + 音量
+        // Row 22-26: 状态 + 5 个 bar + "50%" 数字（全部从共享 AudioEngine 读取音量）
+        const uint8_t volume_pct = host.audio().bgm_volume();
         const char* status = _playing ? "PLAYING" : "PAUSED";
         TextRenderer::draw_text(display,
-            {static_cast<int16_t>(SCREEN_X + 3), static_cast<int16_t>(SCREEN_Y + 22)},
+            {static_cast<int16_t>(SCREEN_X + 3), static_cast<int16_t>(SCREEN_Y + 24)},
             status, STATUS_COLOR, 1, COMPACT_FONT_3X5);
 
-        // 音量条：右边 "VOL 000%" 文字 + 5 个 fill_rect 小方块（不用字符，
-        // 因 BASIC/COMPACT font 没有 ▓/░，glyph_for 会回退到空白）
-        char vol_buf[9];
-        vol_buf[0] = 'V'; vol_buf[1] = 'O'; vol_buf[2] = 'L';
-        vol_buf[3] = ' ';
-        vol_buf[4] = static_cast<char>('0' + (_volume_pct / 100));
-        vol_buf[5] = static_cast<char>('0' + ((_volume_pct / 10) % 10));
-        vol_buf[6] = static_cast<char>('0' + (_volume_pct % 10));
-        vol_buf[7] = '%';
-        vol_buf[8] = '\0';
-        TextRenderer::draw_text(display,
-            {static_cast<int16_t>(SCREEN_X + SCREEN_W - 3 - 32), static_cast<int16_t>(SCREEN_Y + 22)},
-            vol_buf, STATUS_COLOR, 1, COMPACT_FONT_3X5);
-        // 5 个 bar：2px 宽 + 1px gap；5×2 + 4×1 = 14 px；贴在文字左侧 2 px
-        const uint8_t filled = static_cast<uint8_t>((_volume_pct + 10) / 20); // 0-5 整数
-        const int16_t bar_y = static_cast<int16_t>(SCREEN_Y + 23);
-        const int16_t bar_h = 4;
-        const int16_t bar_w = 2;
-        const int16_t bars_right = SCREEN_X + SCREEN_W - 3 - 34; // 文字左侧 2 px
+        // 5 个 fill_rect bar：2px 宽 + 1px gap；5×2 + 4×1 = 14 px；x=37..50
+        const uint8_t filled = static_cast<uint8_t>((volume_pct + 10) / 20); // 0-5 整数
+        const int16_t bar_y = static_cast<int16_t>(SCREEN_Y + 25);
+        constexpr int16_t bars_left = SCREEN_X + 31; // = 37
         for (uint8_t i = 0; i < 5; ++i) {
-            const int16_t bx = static_cast<int16_t>(bars_right - 14 + (i * 3));
-            display.fill_rect(Rect{bx, bar_y, bar_w, bar_h},
-                              (i < filled) ? PROGRESS_FG : PROGRESS_BG);
+            const int16_t bx = static_cast<int16_t>(bars_left + (i * 3));
+            display.fill_rect(Rect{bx, bar_y, 2, 4}, (i < filled) ? PROGRESS_FG : PROGRESS_BG);
         }
+        // 音量数字（3 字符 "50%"，11 px 宽）在 x=52 起，正好在 bar 之后
+        char vol_buf[4];
+        vol_buf[0] = (volume_pct >= 100) ? '1' : static_cast<char>('0' + ((volume_pct / 10) % 10));
+        vol_buf[1] = (volume_pct >= 100) ? '0' : static_cast<char>('0' + (volume_pct % 10));
+        vol_buf[2] = '%';
+        vol_buf[3] = '\0';
+        TextRenderer::draw_text(display,
+            {static_cast<int16_t>(SCREEN_X + 46), static_cast<int16_t>(SCREEN_Y + 24)},
+            vol_buf, STATUS_COLOR, 1, COMPACT_FONT_3X5);
     }
 
     // 4. 按钮行：3 个方框（去掉 MODE，UP/DOWN 改成音量键）
@@ -285,8 +278,8 @@ void Mp3PlayerScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
         }
     }
 
-    // 5. 底部操作提示（19 字符，居中后 68px 宽，刚好放下）
-    TextRenderer::draw_text_centered(display, {40, HINT_Y}, "L/R:T A:PLY U/D:VOL B:EXIT",
+    // 5. 底部操作提示（19 字符 × 4 px = 76 px，居中后 x=2..78，80 px 显示内安全）
+    TextRenderer::draw_text_centered(display, {40, HINT_Y}, "L/R:T A:PLY B:EXIT",
                                      HINT_COLOR, 1, COMPACT_FONT_3X5);
 }
 
