@@ -29,10 +29,10 @@ int16_t ai_step(int16_t ball_center_y, int16_t paddle_y) {
         step = -AI_BASE_SPEED;
     }
     // 抖动：~25% 概率添加 ±1 像素噪声
-    uint32_t r = random::next();
-    if ((r & 3U) == 0U) {
-        step += (r & 1U) ? 1 : -1;
-    }
+    // uint32_t r = random::next();
+    // if ((r & 3U) == 0U) {
+    //     step += (r & 1U) ? 1 : -1;
+    // }
     return step;
 }
 

@@ -28,10 +28,8 @@ constexpr int16_t PADDLE_SPEED = 2;
 
 // 球：1×1 像素
 constexpr int16_t BALL_SIZE = 1;
-constexpr int16_t BALL_VX_MAX = 4;
-constexpr int16_t P2_STEP = 1;          // 2P 模式下 P2 每次按 A/B 步进的像素数
+constexpr int16_t BALL_VX_MAX = 6;
 constexpr int16_t AI_BASE_SPEED = 1;    // 1P 模式下 AI 基础速度（像素/帧）
-constexpr int16_t AI_JITTER = 1;        // AI 抖动幅度（像素）
 constexpr int16_t SERVE_FRAMES = 30;    // 得分后到自动发球的等待帧数
 
 // 模式

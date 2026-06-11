@@ -344,10 +344,10 @@ void TetrisScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
         d.fill_rect(Rect{END_RECT_X, END_RECT_Y, END_RECT_W, END_RECT_H}, COLOR_OVERLAY);
         d.draw_rect(Rect{END_RECT_X, END_RECT_Y, END_RECT_W, END_RECT_H}, COLOR_GAMEOVER);
         TextRenderer::draw_text_centered(d, {40, 22}, "GAME OVER", COLOR_GAMEOVER, 1, BASIC_FONT_5X7);
-        TextRenderer::draw_text(d, {10, 34}, "SCORE ", COLOR_HUD, 1, COMPACT_FONT_3X5);
-        TextRenderer::draw_uint(d, 34, 34, _score, COLOR_HUD, COMPACT_FONT_3X5);
-        TextRenderer::draw_text(d, {10, 42}, "LV ", COLOR_HUD, 1, COMPACT_FONT_3X5);
-        TextRenderer::draw_uint(d, 22, 42, _level, COLOR_HUD, COMPACT_FONT_3X5);
+        TextRenderer::draw_text(d, {12, 34}, "SCORE ", COLOR_HUD, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_uint(d, 36, 34, _score, COLOR_HUD, COMPACT_FONT_3X5);
+        TextRenderer::draw_text(d, {12, 42}, "LV ", COLOR_HUD, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_uint(d, 24, 42, _level, COLOR_HUD, COMPACT_FONT_3X5);
         TextRenderer::draw_text(d, {34, 42}, "  N ", COLOR_HUD, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_uint(d, 52, 42, _lines, COLOR_HUD, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(d, {40, 50}, "A/START: Again", COLOR_HINT, 1, COMPACT_FONT_3X5);

@@ -97,7 +97,7 @@ void Mp3PlayerScreen::update(IPlatform& platform, IScreenHost& host) {
     }
     if (input.was_pressed(ButtonBits::DOWN)) {
         host.audio().set_bgm_volume(handheld::clamp(
-            static_cast<uint8_t>(host.audio().bgm_volume() - 5), uint8_t{0}, uint8_t{100}));
+            static_cast<uint8_t>(host.audio().bgm_volume() >= 5 ? host.audio().bgm_volume() - 5 : 0), uint8_t{0}, uint8_t{100}));
         return;
     }
 
@@ -160,9 +160,8 @@ void Mp3PlayerScreen::render(IPlatform& platform, IScreenHost& host) {
         time_buf[5] = tot[0]; time_buf[6] = tot[1];
         time_buf[7] = tot[2]; time_buf[8] = tot[3];
         time_buf[9] = '\0';
-        // 8 chars × 4 px = 32 px；从右侧 SCREEN_X + SCREEN_W - 3 - 32 起画
         TextRenderer::draw_text(display,
-            {static_cast<int16_t>(SCREEN_X + SCREEN_W - 3 - 32), static_cast<int16_t>(SCREEN_Y + 12)},
+            {static_cast<int16_t>(SCREEN_X + SCREEN_W - 3 - 34), static_cast<int16_t>(SCREEN_Y + 12)},
             time_buf, HINT_COLOR, 1, COMPACT_FONT_3X5);
 
         // Row 15-19: 进度条

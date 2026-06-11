@@ -14,16 +14,14 @@ namespace handheld::mp3::bgm {
 
 enum class BgmId : uint8_t {
     GUIDE,
-    SETTINGS,
     PLAYGROUND,
-    SNAKE,
     PACMAN,
     BREAKOUT,
-    INVADERS,
     GROWBALL,
     TETRIS,
     GAME_2048,
     PONG,
+    NO11,
     _count,
 };
 
@@ -51,21 +49,6 @@ inline constexpr Tone BGM_GUIDE[] = {
     {REST, 700},
 };
 inline constexpr size_t BGM_GUIDE_COUNT = 19;
-
-// 设置界面低频环境音
-inline constexpr Tone BGM_SETTINGS[] = {
-    {  C3,  600},
-    {REST,  900},
-    {  G3,  600},
-    {REST,  900},
-    {  E3,  600},
-    {REST,  900},
-    {  D3,  600},
-    {REST,  900},
-    {  C3,  600},
-    {REST, 1200},
-};
-inline constexpr size_t BGM_SETTINGS_COUNT = 10;
 
 inline constexpr Tone BGM_PLAYGROUND[] = {
     {  C4, 350},
@@ -102,42 +85,6 @@ inline constexpr Tone BGM_PLAYGROUND[] = {
     {REST, 600},
 };
 inline constexpr size_t BGM_PLAYGROUND_COUNT = 32;
-
-inline constexpr Tone BGM_SNAKE[] = {
-    {  B3, 250},
-    {  D4, 200},
-    {  E4, 300},
-    {  D4, 200},
-    {  G4, 350},
-    {  E4, 250},
-    {  D4, 300},
-    {REST, 300},
-    {  B3, 250},
-    {  D4, 200},
-    {  E4, 300},
-    {  G4, 250},
-    {  A4, 300},
-    {  G4, 250},
-    {  E4, 350},
-    {REST, 300},
-    {  B2, 350},
-    {  D3, 250},
-    {  G3, 400},
-    {  A3, 250},
-    {  B3, 350},
-    {  D4, 300},
-    {  G4, 400},
-    {REST, 350},
-    {  D4, 250},
-    {  B3, 200},
-    {  G4, 300},
-    {  E4, 250},
-    {  D4, 300},
-    {  B3, 350},
-    {  G4, 500},
-    {REST, 500},
-};
-inline constexpr size_t BGM_SNAKE_COUNT = 32;
 
 inline constexpr Tone BGM_PACMAN[] = {
     {  C5, 300},
@@ -210,18 +157,6 @@ inline constexpr Tone BGM_BREAKOUT[] = {
 };
 inline constexpr size_t BGM_BREAKOUT_COUNT = 31;
 
-inline constexpr Tone BGM_INVADERS[] = {
-    {  C2, 200},
-    {REST, 250},
-    { Cs2, 200},
-    {REST, 250},
-    {  D2, 200},
-    {REST, 250},
-    { Ds2, 200},
-    {REST, 250},
-};
-inline constexpr size_t BGM_INVADERS_COUNT = 8;
-
 inline constexpr Tone BGM_GROWBALL[] = {
     {  C4, 150},
     {  E4, 150},
@@ -241,50 +176,51 @@ inline constexpr Tone BGM_GROWBALL[] = {
 };
 inline constexpr size_t BGM_GROWBALL_COUNT = 15;
 
-// 经典 Korobeiniki 旋律（Tetris A 主题）简化循环，**整体下移一个八度**
+// 经典 Korobeiniki 旋律（Tetris A 主题）简化循环
+// 整体上移一个八度，使所有音 ≥E3 (165 Hz)，硬件 PWM 蜂鸣器能正常发声
 inline constexpr Tone BGM_TETRIS[] = {
-    {  E4, 400}, {  B3, 200}, {  A3, 200}, {  D4, 400},
-    {  C4, 200}, {  B3, 200}, {  A3, 200}, {  G3, 200},
+    {  E5, 400}, {  B4, 200}, {  A4, 200}, {  D5, 400},
+    {  C5, 200}, {  B4, 200}, {  A4, 200}, {  G4, 200},
+    {REST, 200},
+    {  E5, 400}, {  C5, 200}, {  D5, 200}, {  E5, 400},
+    {  B4, 200}, {  A4, 200}, {  G4, 200}, {  A4, 200},
+    {REST, 200},
+    {  D5, 400}, {  A4, 200}, {  G4, 200}, {  E4, 400},
+    {  D4, 200}, {  C4, 200}, {  B3, 200}, {  C4, 200},
     {REST, 200},
     {  E4, 400}, {  C4, 200}, {  D4, 200}, {  E4, 400},
-    {  B3, 200}, {  A3, 200}, {  G3, 200}, {  A3, 200},
-    {REST, 200},
-    {  D4, 400}, {  A3, 200}, {  G3, 200}, {  E3, 400},
-    {  D3, 200}, {  C3, 200}, {  B2, 200}, {  C3, 200},
-    {REST, 200},
-    {  E3, 400}, {  C3, 200}, {  D3, 200}, {  E3, 400},
-    {  A2, 200}, {  G2, 200}, {  E2, 200}, {  G2, 200},
+    {  A3, 200}, {  G3, 200}, {  E3, 200}, {  G3, 200},
     {REST, 400},
 };
 inline constexpr size_t BGM_TETRIS_COUNT = 33;
 
 inline constexpr Tone BGM_2048[] = {
-    // 上行：C3 → D3 → E3 → F3
-    {  C3, 500},
-    {  D3, 400},
-    {  E3, 500},
-    {  F3, 600},
+    // 上行：G3 → A3 → B3 → C4
+    {  G3, 500},
+    {  A3, 400},
+    {  B3, 500},
+    {  C4, 600},
     {REST, 400},
 
-    // 下行：E3 → D3 → C3
-    {  E3, 400},
-    {  D3, 500},
-    {  C3, 700},
+    // 下行：B3 → A3 → G3
+    {  B3, 400},
+    {  A3, 500},
+    {  G3, 700},
     {REST, 500},
 
-    // 中段：D3 → E3 → F3
-    {  D3, 500},
-    {  E3, 500},
-    {  F3, 500},
+    // 中段：A3 → B3 → C4
+    {  A3, 500},
+    {  B3, 500},
+    {  C4, 500},
     {REST, 600},
 
-    // 高点：G3
-    {  G3, 600},
+    // 高点：D4
+    {  D4, 600},
     {REST, 600},
 
-    // 收束：F3 → C3
-    {  F3, 500},
-    {  C3, 700},
+    // 收束：C4 → G3
+    {  C4, 500},
+    {  G3, 700},
     {REST, 800},
 };
 inline constexpr size_t BGM_2048_COUNT = 18;
@@ -326,6 +262,23 @@ inline constexpr Tone BGM_PONG[] = {
 };
 inline constexpr size_t BGM_PONG_COUNT = 32;
 
+// no11（Yu Kaihao's）— 3 小节共 24 音 + 1 小节全休止 = 32 个 Tone
+inline constexpr Tone BGM_NO11[] = {
+    // 小节 1: F#3 F#3 B2 G3 G3 F#3 D3 C#3
+    { Fs4, 300}, { Fs4, 300}, { B3, 300}, { G4, 300},
+    { G4, 300},  { Fs4, 300}, { D4, 300}, { Cs4, 300},
+    // 小节 2: A3 A3 C#3 A3 A3 C#3 R R
+    { A4, 300},  { A4, 300},  { Cs4, 300}, { A4, 300},
+    { A4, 300},  { Cs4, 300}, {REST, 300}, {REST, 300},
+    // 小节 3: F#3 F#3 B2 G3 G3 F#3 R D3
+    { Fs4, 300}, { Fs4, 300}, { B3, 300}, { G4, 300},
+    { G4, 300},  { Fs4, 300}, {REST, 300}, { D4, 300},
+    // 小节 4: 全休止
+    {REST, 300}, {REST, 300}, {REST, 300}, {REST, 300},
+    {REST, 300}, {REST, 300}, {REST, 300}, {REST, 300},
+};
+inline constexpr size_t BGM_NO11_COUNT = 32;
+
 // ── 目录表 ──────────────────────────────────────────────────────────
 
 struct BgmDef {
@@ -335,16 +288,14 @@ struct BgmDef {
 
 inline constexpr BgmDef BGM_CATALOG[] = {
     {BGM_GUIDE,      BGM_GUIDE_COUNT},
-    {BGM_SETTINGS,   BGM_SETTINGS_COUNT},
     {BGM_PLAYGROUND, BGM_PLAYGROUND_COUNT},
-    {BGM_SNAKE,      BGM_SNAKE_COUNT},
     {BGM_PACMAN,     BGM_PACMAN_COUNT},
     {BGM_BREAKOUT,   BGM_BREAKOUT_COUNT},
-    {BGM_INVADERS,   BGM_INVADERS_COUNT},
     {BGM_GROWBALL,   BGM_GROWBALL_COUNT},
     {BGM_TETRIS,     BGM_TETRIS_COUNT},
     {BGM_2048,       BGM_2048_COUNT},
     {BGM_PONG,       BGM_PONG_COUNT},
+    {BGM_NO11,       BGM_NO11_COUNT},
 };
 
 inline constexpr std::size_t BGM_CATALOG_COUNT =

@@ -560,9 +560,9 @@ void PacmanScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
         display.fill_rect(Rect{END_RECT_X, END_RECT_Y, END_RECT_W, END_RECT_H}, BG_COLOR);
         display.draw_rect(Rect{END_RECT_X, END_RECT_Y, END_RECT_W, END_RECT_H}, GHOST1_COL);
         TextRenderer::draw_text_centered(display, {40, 28}, "GAME OVER", GHOST1_COL, 1, BASIC_FONT_5X7);
-        TextRenderer::draw_text(display, {10, 42}, "SCORE:", Color::WHITE, 1, COMPACT_FONT_3X5);
+        TextRenderer::draw_text(display, {12, 42}, "SCORE:", Color::WHITE, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_int(display,
-                               static_cast<int16_t>(10 + TextRenderer::measure_text("SCORE:", 1, COMPACT_FONT_3X5).width),
+                               static_cast<int16_t>(12 + TextRenderer::measure_text("SCORE:", 1, COMPACT_FONT_3X5).width),
                                42, _score, Color::WHITE);
         TextRenderer::draw_text_centered(display, {40, 50}, "A/START: Again", HINT_COLOR, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(display, {40, 58}, "B: Menu", HINT_COLOR, 1, COMPACT_FONT_3X5);
