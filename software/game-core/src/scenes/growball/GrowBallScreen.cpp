@@ -109,18 +109,6 @@ void GrowBallScreen::update(IPlatform& platform, IScreenHost& host) {
     if (input.is_down(ButtonBits::LEFT)) input_vx -= thrust;
     if (input.is_down(ButtonBits::RIGHT)) input_vx += thrust;
 
-    // 推进器音效：方向键按住时每 8 帧播放一次
-    bool const thrusting = (input_vx != 0.0f || input_vy != 0.0f);
-    if (thrusting) {
-        ++_thrust_timer;
-        if (_thrust_timer >= 8) {
-            _thrust_timer = 0;
-            host.audio().play_sfx(sounds::SFX_THRUST, sounds::SFX_THRUST_COUNT);
-        }
-    } else {
-        _thrust_timer = 0;
-    }
-
     uint32_t const now_ms = platform.time().ticks_ms();
     float const radius_before = _world.player().radius;
     _world.simulate(input_vx, input_vy, now_ms, _victory, _game_over);

@@ -1,4 +1,5 @@
 #include "sdl/SdlPlatform.h"
+#include "core/random/Random.h"
 #include "core/runtime/ScreenRunner.h"
 #include "core/runtime/ScreenType.h"
 
@@ -8,6 +9,7 @@
 int main() {
     try {
         handheld::SdlPlatform platform;
+        handheld::random::seed(platform.time().ticks_ms());
         constexpr uint32_t FRAME_TIME_MS = 50;
         handheld::ScreenRunner runner(platform, handheld::ScreenType::BOOT, FRAME_TIME_MS);
 

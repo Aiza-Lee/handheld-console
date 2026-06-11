@@ -9,7 +9,7 @@
 #include "core/runtime/IScreenHost.h"
 #include "core/runtime/ScreenType.h"
 #include "core/math/LookupTable.h"
-#include "core/math/Prng.h"
+#include "core/random/Random.h"
 
 namespace handheld {
 
@@ -71,12 +71,7 @@ void SnakeScreen::reset_game() {
     _speed = 0;
     _move_ctr = 0;
     _interval = C::INITIAL_INTERVAL;
-    _rng = 12345;
     spawn_food();
-}
-
-uint32_t SnakeScreen::next_rng() {
-    return xorshift32(_rng);
 }
 
 bool SnakeScreen::occupied(int8_t x, int8_t y) const {
@@ -88,8 +83,8 @@ bool SnakeScreen::occupied(int8_t x, int8_t y) const {
 void SnakeScreen::spawn_food() {
     int16_t n = 0;
     do {
-        _food_x = static_cast<int8_t>(next_rng() % C::GRID_W);
-        _food_y = static_cast<int8_t>(next_rng() % C::GRID_H);
+        _food_x = static_cast<int8_t>(random::next() % C::GRID_W);
+        _food_y = static_cast<int8_t>(random::next() % C::GRID_H);
     } while (occupied(_food_x, _food_y) && ++n < C::MAX_LENGTH);
 }
 

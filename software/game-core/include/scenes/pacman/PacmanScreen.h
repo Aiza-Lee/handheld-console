@@ -153,7 +153,6 @@ private:
     uint32_t _ghost_move_counter;
     uint32_t _dying_timer;
     uint32_t _frame;
-    uint32_t _rng;
 
     // 动画状态
     struct DeathParticle {
@@ -178,7 +177,6 @@ private:
     void check_ghost_collision(IScreenHost& host);
     void die(IScreenHost& host);
     void update_particles();
-    uint32_t next_rng();
 };
 
 } // namespace handheld

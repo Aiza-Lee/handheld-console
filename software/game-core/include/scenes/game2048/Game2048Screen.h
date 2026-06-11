@@ -60,7 +60,6 @@ constexpr Color PAUSE_BORDER = rgb565(120, 140, 200);
 constexpr Color PAUSE_TEXT = rgb565(180, 200, 255);
 
 // ── 游戏参数 ───────────────────────────────────────
-constexpr uint32_t RNG_SEED = 12345;
 constexpr uint16_t WIN_VALUE = 2048;
 constexpr int8_t MAX_LOG10 = 4; // 最大 4 位数 (2048)
 
@@ -78,7 +77,6 @@ public:
 private:
     uint16_t _board[game2048::cfg::GRID][game2048::cfg::GRID]{};
     uint32_t _score = 0;
-    uint32_t _rng = game2048::cfg::RNG_SEED;
     uint32_t _frame = 0;
     uint16_t _best = 0; // 最高 tile 值；slide() 中增量更新，避免 render() 每帧 16 次扫描
 
@@ -87,7 +85,6 @@ private:
     bool _paused = false;
     bool _keep_playing = false; // 胜利后继续玩
 
-    uint32_t next_rng();
     void reset_game();
     void spawn_tile();
     bool slide(int8_t dir);

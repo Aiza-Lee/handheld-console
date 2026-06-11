@@ -9,7 +9,7 @@
 #include "core/graphics/TextRenderer.h"
 #include "core/runtime/IScreenHost.h"
 #include "core/runtime/ScreenType.h"
-#include "core/math/Prng.h"
+#include "core/random/Random.h"
 
 namespace handheld {
 
@@ -106,7 +106,6 @@ void Game2048Screen::reset_game() {
     for (int8_t r = 0; r < GRID; ++r)
         for (int8_t c = 0; c < GRID; ++c) _board[r][c] = 0;
     _score = 0;
-    _rng = RNG_SEED;
     _best = 0;
     _game_over = false;
     _won = false;
@@ -115,10 +114,6 @@ void Game2048Screen::reset_game() {
     // 开局放 2 个 tile
     spawn_tile();
     spawn_tile();
-}
-
-uint32_t Game2048Screen::next_rng() {
-    return xorshift32(_rng);
 }
 
 void Game2048Screen::spawn_tile() {
@@ -136,11 +131,11 @@ void Game2048Screen::spawn_tile() {
     }
     if (count == 0) return;
 
-    uint8_t pick = static_cast<uint8_t>(next_rng() % count);
+    uint8_t pick = static_cast<uint8_t>(random::next() % count);
     int8_t rr = static_cast<int8_t>(empties[pick][0]);
     int8_t cc = static_cast<int8_t>(empties[pick][1]);
     // 90% 出 2，10% 出 4
-    uint16_t val = (next_rng() % 10 == 0) ? 4 : 2;
+    uint16_t val = (random::next() % 10 == 0) ? 4 : 2;
     _board[rr][cc] = val;
 }
 

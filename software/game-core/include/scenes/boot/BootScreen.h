@@ -23,13 +23,11 @@ private:
     Star _stars[STAR_COUNT];
     uint32_t _frame;
     bool _stars_ready;
-    uint32_t _rng_state;
     uint8_t _b_press_count;       // dev 触发计数器
     uint32_t _last_b_ms;          // 上次按 B 的时间戳
 
     void init_stars();
     void update_stars();
-    uint32_t next_rng();
 };
 
 } // namespace handheld

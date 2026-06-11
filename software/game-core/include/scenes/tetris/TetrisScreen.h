@@ -52,6 +52,7 @@ constexpr Color COLOR_HINT = rgb565(80, 100, 120);
 constexpr Color COLOR_GAMEOVER = rgb565(255, 145, 190);
 constexpr Color COLOR_PAUSE = rgb565(100, 200, 140);
 constexpr Color COLOR_OVERLAY = rgb565(8, 12, 16);
+constexpr Color COLOR_HEIGHT_LIMIT = rgb565(255, 80, 80); // 高度限制线（危险警告）
 
 // ── 覆盖层尺寸 ────────────────────────────────────────────
 constexpr int16_t PAUSE_RECT_X = 10;
@@ -146,7 +147,6 @@ private:
     uint8_t _lines = 0;
     uint32_t _gravity_counter = 0;
     uint32_t _gravity_interval = tetris::cfg::INIT_INTERVAL;
-    uint32_t _rng = 12345;
     uint32_t _frame = 0;
     bool _paused = false;
     bool _game_over = false;
@@ -160,7 +160,6 @@ private:
     [[nodiscard]] bool piece_cell(uint8_t piece, uint8_t rot, int row, int col) const;
     [[nodiscard]] bool collides(int8_t x, int8_t y, uint8_t piece, uint8_t rot) const;
     void try_rotate();
-    uint32_t next_rng();
 
     void draw_cell(IDisplay& d, int col, int row, Color color) const;
 };

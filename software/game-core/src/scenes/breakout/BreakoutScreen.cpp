@@ -8,18 +8,12 @@
 #include "core/graphics/TextRenderer.h"
 #include "core/runtime/IScreenHost.h"
 #include "core/runtime/ScreenType.h"
-#include "core/math/Prng.h"
+#include "core/random/Random.h"
 
 namespace handheld {
 
 using namespace breakout::cfg;
 namespace bg = breakout;
-
-// ── RNG ─────────────────────────────────────────
-
-uint32_t BreakoutScreen::next_rng() {
-    return xorshift32(_rng);
-}
 
 // ── 生命周期 ────────────────────────────────────
 
@@ -33,7 +27,6 @@ void BreakoutScreen::reset_game() {
     _paddle_x = 32;
     _score = 0;
     _frame = 0;
-    _rng = 12345;
     _celebration = 0;
     _paused = false;
     for (auto& b : _balls) b.active = false;
@@ -60,7 +53,7 @@ void BreakoutScreen::load_level(uint8_t level) {
 
 void BreakoutScreen::launch_ball() {
     auto& b = _balls[0];
-    b.vx = (next_rng() & 1U) ? static_cast<int8_t>(1) : static_cast<int8_t>(-1);
+    b.vx = (random::next() & 1U) ? static_cast<int8_t>(1) : static_cast<int8_t>(-1);
     b.vy = -2;
     _state = State::ACTIVE;
 }
@@ -155,7 +148,6 @@ bool BreakoutScreen::step_ball(Ball& b, IScreenHost& host) {
         }
         if (ny >= 80) {
             b.active = false;
-            host.audio().play_sfx(sounds::SFX_BALL_LOST, sounds::SFX_BALL_LOST_COUNT);
             return true;
         } // 掉出屏幕
 
@@ -209,12 +201,12 @@ void BreakoutScreen::move_balls(IScreenHost& host) {
 // ── 道具 ────────────────────────────────────────
 
 void BreakoutScreen::spawn_powerup(int16_t row, int16_t col) {
-    if ((next_rng() & 0xFF) >= POWERUP_DROP_CHANCE) return;
+    if ((random::next() & 0xFF) >= POWERUP_DROP_CHANCE) return;
     for (auto& p : _powerups) {
         if (!p.active) {
             p.x = static_cast<int8_t>(bg::BrickGrid::OX + col * bg::BrickGrid::CELL + bg::BrickGrid::SIZE / 2);
             p.y = static_cast<int8_t>(bg::BrickGrid::OY + row * bg::BrickGrid::CELL + bg::BrickGrid::SIZE / 2);
-            p.type = (next_rng() & 1U) ? POWERUP_TYPE_SPLIT : POWERUP_TYPE_TRIPLE;
+            p.type = (random::next() & 1U) ? POWERUP_TYPE_SPLIT : POWERUP_TYPE_TRIPLE;
             p.active = true;
             return;
         }
@@ -251,8 +243,8 @@ void BreakoutScreen::spawn_particles(int16_t row, int16_t col, uint8_t brick_typ
     int16_t cy = bg::BrickGrid::OY + row * bg::BrickGrid::CELL + bg::BrickGrid::SIZE / 2;
     Color color = BRICK_COLORS[brick_type - 1];
     for (int16_t i = 0; i < 3; ++i) {
-        int8_t vx = static_cast<int8_t>((next_rng() % 3) - 1);
-        int8_t vy = static_cast<int8_t>(-1 - static_cast<int16_t>(next_rng() % 2));
+        int8_t vx = static_cast<int8_t>((random::next() % 3) - 1);
+        int8_t vy = static_cast<int8_t>(-1 - static_cast<int16_t>(random::next() % 2));
         _particles.emit(static_cast<int8_t>(cx), static_cast<int8_t>(cy), vx, vy, 6, color);
     }
 }
@@ -422,15 +414,15 @@ void BreakoutScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
     // 庆祝粒子
     if (_celebration > 0) {
         for (uint8_t i = 0; i < 8; ++i)
-            display.draw_pixel(static_cast<int16_t>(next_rng() % 80), static_cast<int16_t>(next_rng() % 80),
-                               BRICK_COLORS[next_rng() % 5]);
+            display.draw_pixel(static_cast<int16_t>(random::next() % 80), static_cast<int16_t>(random::next() % 80),
+                               BRICK_COLORS[random::next() % 5]);
     }
 
     // 覆盖层（最后绘制，盖住所有游戏元素）
     draw_overlay(display);
 }
 
-void BreakoutScreen::render_menu_preview(IDisplay& display, const Rect& box, uint32_t /*frame*/) {
+void BreakoutScreen::render_menu_preview(IDisplay& display, const Rect& box, uint32_t frame) {
     const auto bx = static_cast<int16_t>(box.x + 2);
     const auto by = static_cast<int16_t>(box.y + 1);
     const Color colors[2] = {rgb565(200, 60, 60), rgb565(190, 180, 40)};
@@ -439,6 +431,8 @@ void BreakoutScreen::render_menu_preview(IDisplay& display, const Rect& box, uin
             for (int px = 0; px < 2; ++px)
                 display.draw_pixel(static_cast<int16_t>(bx + col * 2 + px), static_cast<int16_t>(by + row * 3),
                                    colors[row]);
-    display.draw_pixel(static_cast<int16_t>(bx + 4), static_cast<int16_t>(by + 6), rgb565(220, 240, 255));
+    int const march_raw = (frame / 4) % 10;
+    int const ball_x = static_cast<int16_t>(bx + (march_raw > 5 ? 10 - march_raw : march_raw));
+    display.draw_pixel(ball_x, static_cast<int16_t>(by + 6), rgb565(220, 240, 255));
 }
 } // namespace handheld

@@ -228,7 +228,6 @@ private:
     uint32_t _move_interval;
     uint32_t _shoot_timer;
     uint32_t _dying_timer;
-    uint32_t _rng;
 
     void reset_game();
     void start_next_level();
@@ -246,7 +245,6 @@ private:
     void draw_player(IDisplay& display, int16_t x, uint32_t frame) const;
     void draw_shields(IDisplay& display) const;
     void draw_saucer(IDisplay& display) const;
-    uint32_t next_rng();
 };
 
 } // namespace handheld

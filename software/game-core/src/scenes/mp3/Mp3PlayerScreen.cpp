@@ -188,19 +188,19 @@ void Mp3PlayerScreen::render(IPlatform& platform, IScreenHost& host) {
         // 5 个 fill_rect bar：2px 宽 + 1px gap；5×2 + 4×1 = 14 px；x=37..50
         const uint8_t filled = static_cast<uint8_t>((volume_pct + 10) / 20); // 0-5 整数
         const int16_t bar_y = static_cast<int16_t>(SCREEN_Y + 25);
-        constexpr int16_t bars_left = SCREEN_X + 31; // = 37
+        constexpr int16_t bars_left = SCREEN_X + 34; // = 40
         for (uint8_t i = 0; i < 5; ++i) {
             const int16_t bx = static_cast<int16_t>(bars_left + (i * 3));
             display.fill_rect(Rect{bx, bar_y, 2, 4}, (i < filled) ? PROGRESS_FG : PROGRESS_BG);
         }
-        // 音量数字（3 字符 "50%"，11 px 宽）在 x=52 起，正好在 bar 之后
+        // 音量数字（3 字符 "50%"，11 px 宽）在 x=55 起，正好在 bar 之后
         char vol_buf[4];
         vol_buf[0] = (volume_pct >= 100) ? '1' : static_cast<char>('0' + ((volume_pct / 10) % 10));
         vol_buf[1] = (volume_pct >= 100) ? '0' : static_cast<char>('0' + (volume_pct % 10));
         vol_buf[2] = '%';
         vol_buf[3] = '\0';
         TextRenderer::draw_text(display,
-            {static_cast<int16_t>(SCREEN_X + 46), static_cast<int16_t>(SCREEN_Y + 24)},
+            {static_cast<int16_t>(SCREEN_X + 49), static_cast<int16_t>(SCREEN_Y + 24)},
             vol_buf, STATUS_COLOR, 1, COMPACT_FONT_3X5);
     }
 

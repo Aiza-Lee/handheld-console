@@ -275,12 +275,6 @@ inline constexpr Tone SFX_WALL_BOUNCE[] = {
 };
 inline constexpr size_t SFX_WALL_BOUNCE_COUNT = 1;
 
-inline constexpr Tone SFX_BALL_LOST[] = {
-    {G3,  80},
-    {C3, 120},
-};
-inline constexpr size_t SFX_BALL_LOST_COUNT = 2;
-
 inline constexpr Tone SFX_POWERUP[] = {
     {C4, 30},
     {E4, 30},
@@ -408,11 +402,6 @@ inline constexpr Tone SFX_VICTORY_GROWBALL[] = {
     {  E5, 200},
 };
 inline constexpr size_t SFX_VICTORY_GROWBALL_COUNT = 7;
-
-inline constexpr Tone SFX_THRUST[] = {
-    {C3, 25},
-};
-inline constexpr size_t SFX_THRUST_COUNT = 1;
 
 inline constexpr Tone SFX_AI_GROW[] = {
     {G3, 25},

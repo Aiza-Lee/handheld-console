@@ -8,7 +8,7 @@
 #include "scenes/tetris/TetrisScreen.h"
 #include "scenes/game2048/Game2048Screen.h"
 #include "scenes/pong/PongScreen.h"
-// #include "scenes/playground/PlaygroundScreen.h"
+#include "scenes/playground/PlaygroundScreen.h"
 #include "scenes/mp3/Mp3PlayerScreen.h"
 
 #include "core/common/ButtonBits.h"
@@ -16,6 +16,7 @@
 #include "core/graphics/TextRenderer.h"
 #include "core/runtime/IScreenHost.h"
 #include "core/audio/Sounds.h"
+#include "core/random/Random.h"
 
 namespace handheld {
 
@@ -41,7 +42,7 @@ void draw_scroll_arrow(IDisplay& display, int16_t x, int16_t y, bool up, Color c
 menu::cfg::MenuPreviewFn render_menu_preview_for(ScreenType type) {
     switch (type) {
         case ScreenType::SETTINGS: return SettingsScreen::render_menu_preview;
-        // case ScreenType::PLAYGROUND: return PlaygroundScreen::render_menu_preview;
+        case ScreenType::PLAYGROUND: return PlaygroundScreen::render_menu_preview;
         case ScreenType::SNAKE: return SnakeScreen::render_menu_preview;
         case ScreenType::PACMAN: return PacmanScreen::render_menu_preview;
         case ScreenType::BREAKOUT: return BreakoutScreen::render_menu_preview;
@@ -62,20 +63,14 @@ void MenuScreen::enter(IPlatform& platform, IScreenHost& host) {
 }
 
 void MenuScreen::init_stars() {
-    _rng_state = 54321;
     for (auto& _star : _stars) {
-        _star.x = static_cast<int16_t>(next_rng() % 80);
-        _star.y = static_cast<int16_t>(next_rng() % 80);
-        _star.speed = static_cast<uint8_t>(1 + (next_rng() % 2));
-        _star.layer = static_cast<uint8_t>(next_rng() % 2);
+        _star.x = static_cast<int16_t>(random::next() % 80);
+        _star.y = static_cast<int16_t>(random::next() % 80);
+        _star.speed = static_cast<uint8_t>(1 + (random::next() % 2));
+        _star.layer = static_cast<uint8_t>(random::next() % 2);
     }
     _stars_ready = true;
     _frame = 0;
-}
-
-uint32_t MenuScreen::next_rng() {
-    _rng_state = _rng_state * 1103515245 + 12345;
-    return _rng_state;
 }
 
 void MenuScreen::update_stars() {
@@ -83,7 +78,7 @@ void MenuScreen::update_stars() {
         _star.y -= _star.speed;
         if (_star.y < 0) {
             _star.y = 79;
-            _star.x = static_cast<int16_t>(next_rng() % 80);
+            _star.x = static_cast<int16_t>(random::next() % 80);
         }
     }
 }

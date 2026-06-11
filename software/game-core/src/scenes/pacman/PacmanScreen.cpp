@@ -7,14 +7,13 @@
 #include "core/runtime/IScreenHost.h"
 #include "core/runtime/ScreenType.h"
 #include "core/audio/Sounds.h"
+#include "core/random/Random.h"
 
 namespace handheld {
 
 using namespace pacman::cfg;
 
 namespace {
-
-constexpr uint32_t RNG_SEED = 12345;
 
 constexpr int16_t S6 = 6;
 
@@ -98,13 +97,6 @@ void PacmanScreen::enter(IPlatform& platform, IScreenHost& host) {
     platform.display().clear(BG_COLOR);
 }
 
-uint32_t PacmanScreen::next_rng() {
-    _rng ^= _rng << 13U;
-    _rng ^= _rng >> 17U;
-    _rng ^= _rng << 5U;
-    return _rng;
-}
-
 void PacmanScreen::update_particles() {
     for (uint8_t i = 0; i < _death_particle_count;) {
         _death_particles[i].x += _death_particles[i].vx;
@@ -159,7 +151,6 @@ int8_t PacmanScreen::ghost_target_y(const Ghost& g) const {
 void PacmanScreen::reset_game() {
     _score = 0;
     _lives = INIT_LIVES;
-    _rng = RNG_SEED;
     _frame = 0;
     _paused = false;
     _death_particle_count = 0;
@@ -268,7 +259,7 @@ void PacmanScreen::move_ghosts() { /* unchanged logic */
         Dir best = valid[0];
         if (vcount > 1) {
             if (g.state == GhostState::VULNERABLE) {
-                best = valid[next_rng() % vcount];
+                best = valid[random::next() % vcount];
             } else {
                 int8_t tx = ghost_target_x(g);
                 int8_t ty = ghost_target_y(g);
@@ -283,7 +274,7 @@ void PacmanScreen::move_ghosts() { /* unchanged logic */
                         best = valid[i];
                     }
                 }
-                if ((next_rng() % 2) == 0) best = valid[next_rng() % vcount];
+                if ((random::next() % 2) == 0) best = valid[random::next() % vcount];
             }
         }
         g.dir = best;
@@ -327,9 +318,9 @@ void PacmanScreen::die(IScreenHost& host) {
         uint8_t idx = _death_particle_count++;
         _death_particles[idx].x = static_cast<int8_t>(px);
         _death_particles[idx].y = static_cast<int8_t>(py);
-        _death_particles[idx].vx = static_cast<int8_t>((next_rng() % 5) - 2);
-        _death_particles[idx].vy = static_cast<int8_t>((next_rng() % 5) - 2);
-        _death_particles[idx].life = static_cast<uint8_t>(5 + (next_rng() % 6));
+        _death_particles[idx].vx = static_cast<int8_t>((random::next() % 5) - 2);
+        _death_particles[idx].vy = static_cast<int8_t>((random::next() % 5) - 2);
+        _death_particles[idx].life = static_cast<uint8_t>(5 + (random::next() % 6));
     }
 }
 
@@ -549,8 +540,8 @@ void PacmanScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
     // ── 庆祝粒子 ──────────────────────────────────────────
     if (_celebration_timer > 0) {
         for (uint8_t i = 0; i < 5; ++i) {
-            auto sx = static_cast<int16_t>(next_rng() % 80);
-            auto sy = static_cast<int16_t>(next_rng() % 80);
+            auto sx = static_cast<int16_t>(random::next() % 80);
+            auto sy = static_cast<int16_t>(random::next() % 80);
             display.draw_pixel(sx, sy, ((_frame + i) % 3 == 0) ? WIN_COLOR : PAC_COLOR);
         }
     }

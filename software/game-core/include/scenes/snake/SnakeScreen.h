@@ -84,7 +84,6 @@ private:
     uint8_t _speed = 0;
     uint32_t _move_ctr = 0;
     uint32_t _interval = snake::cfg::INITIAL_INTERVAL;
-    uint32_t _rng = 12345;
     uint32_t _frame = 0;
 
     // 方向队列
@@ -95,7 +94,6 @@ private:
     void reset_game();
     void spawn_food();
     [[nodiscard]] bool occupied(int8_t x, int8_t y) const;
-    uint32_t next_rng();
     void move_snake(IScreenHost& host);
     Direction dequeue_dir();
     void enqueue_dir(Direction d);

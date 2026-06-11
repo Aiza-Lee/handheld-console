@@ -7,24 +7,19 @@
 #include "core/runtime/IScreenHost.h"
 #include "core/runtime/ScreenType.h"
 #include "core/audio/Sounds.h"
+#include "core/random/Random.h"
 
 namespace handheld {
 
 using namespace boot::cfg;
 
 void BootScreen::init_stars() {
-    _rng_state = 99999;
     for (auto& s : _stars) {
-        s.x = static_cast<int16_t>(next_rng() % 80);
-        s.y = static_cast<int16_t>(next_rng() % 80);
-        s.speed = static_cast<uint8_t>(1 + (next_rng() % 3));
-        s.layer = static_cast<uint8_t>(next_rng() % 3);
+        s.x = static_cast<int16_t>(random::next() % 80);
+        s.y = static_cast<int16_t>(random::next() % 80);
+        s.speed = static_cast<uint8_t>(1 + (random::next() % 3));
+        s.layer = static_cast<uint8_t>(random::next() % 3);
     }
-}
-
-uint32_t BootScreen::next_rng() {
-    _rng_state = _rng_state * 1103515245 + 12345;
-    return _rng_state;
 }
 
 void BootScreen::update_stars() {
@@ -32,7 +27,7 @@ void BootScreen::update_stars() {
         s.y += s.speed;
         if (s.y >= 80) {
             s.y = 0;
-            s.x = static_cast<int16_t>(next_rng() % 80);
+            s.x = static_cast<int16_t>(random::next() % 80);
         }
     }
 }

@@ -13,9 +13,8 @@
 #include "scenes/game2048/Game2048Screen.h"
 #include "scenes/pong/PongScreen.h"
 #include "scenes/developer/DeveloperScreen.h"
-// Temporarily disabled to reduce firmware size:
-// #include "scenes/playground/PlaygroundGuideScreen.h"
-// #include "scenes/playground/PlaygroundScreen.h"
+#include "scenes/playground/PlaygroundGuideScreen.h"
+#include "scenes/playground/PlaygroundScreen.h"
 #include "scenes/mp3/Mp3PlayerScreen.h"
 
 namespace handheld {
@@ -39,7 +38,8 @@ std::unique_ptr<GameScreen> make_screen(ScreenType type) {
         case ScreenType::PONG: return std::make_unique<PongScreen>();
         case ScreenType::DEVELOPER: return std::make_unique<DeveloperScreen>();
         case ScreenType::MP3: return std::make_unique<Mp3PlayerScreen>();
-        // Disabled: GUIDE, PLAYGROUND (kept in enum for binary compat)
+        case ScreenType::GUIDE: return std::make_unique<PlaygroundGuideScreen>();
+        case ScreenType::PLAYGROUND: return std::make_unique<PlaygroundScreen>();
         default: return nullptr;
     }
 }

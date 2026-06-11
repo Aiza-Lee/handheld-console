@@ -9,7 +9,7 @@
 #include "core/graphics/TextRenderer.h"
 #include "core/runtime/IScreenHost.h"
 #include "core/runtime/ScreenType.h"
-#include "core/math/Prng.h"
+#include "core/random/Random.h"
 
 namespace handheld {
 
@@ -20,7 +20,7 @@ namespace {
 // 1P 模式右侧 AI：根据球 y 方向推进挡板，慢于球速以保持可玩
 // 输入：球中心 y，挡板当前 y 坐标
 // 输出：建议的 y 移动量（已含抖动，每帧最多 ±AI_BASE_SPEED）
-int16_t ai_step(int16_t ball_center_y, int16_t paddle_y, uint32_t& rng) {
+int16_t ai_step(int16_t ball_center_y, int16_t paddle_y) {
     int16_t dy = static_cast<int16_t>(ball_center_y - (paddle_y + PADDLE_H / 2));
     int16_t step = 0;
     if (dy > 0) {
@@ -29,11 +29,9 @@ int16_t ai_step(int16_t ball_center_y, int16_t paddle_y, uint32_t& rng) {
         step = -AI_BASE_SPEED;
     }
     // 抖动：~25% 概率添加 ±1 像素噪声
-    rng ^= rng << 13U;
-    rng ^= rng >> 17U;
-    rng ^= rng << 5U;
-    if ((rng & 3U) == 0U) {
-        step += (rng & 1U) ? 1 : -1;
+    uint32_t r = random::next();
+    if ((r & 3U) == 0U) {
+        step += (r & 1U) ? 1 : -1;
     }
     return step;
 }
@@ -79,7 +77,6 @@ void PongScreen::reset_game() {
     _ball_x = static_cast<int16_t>(PADDLE_X_LEFT + PADDLE_W);
     _ball_y = static_cast<int16_t>(_left_paddle_y + PADDLE_H / 2);
     _serve_timer = SERVE_FRAMES;
-    _rng = 12345;
     _frame = 0;
 }
 
@@ -94,7 +91,7 @@ void PongScreen::start_serve() {
         _ball_y = static_cast<int16_t>(_right_paddle_y + PADDLE_H / 2);
         _ball_vx = -1;
     }
-    _ball_vy = (next_rng() & 1U) ? static_cast<int16_t>(-1) : static_cast<int16_t>(1);
+    _ball_vy = (random::next() & 1U) ? static_cast<int16_t>(-1) : static_cast<int16_t>(1);
     _phase = Phase::PLAY;
     _serve_timer = 0;
     _rally_count = 0;
@@ -226,7 +223,7 @@ void PongScreen::update_p2_input(IInput& input) {
 
 void PongScreen::update_ai() {
     int16_t ball_center_y = static_cast<int16_t>(_ball_y + BALL_SIZE / 2);
-    int16_t step = ai_step(ball_center_y, _right_paddle_y, _rng);
+    int16_t step = ai_step(ball_center_y, _right_paddle_y);
     _right_paddle_y = static_cast<int16_t>(_right_paddle_y + step);
     _right_paddle_y = handheld::max(_right_paddle_y, PADDLE_Y_MIN);
     _right_paddle_y = handheld::min(_right_paddle_y, PADDLE_Y_MAX);
@@ -328,10 +325,6 @@ void PongScreen::move_ball(IScreenHost& host) {
         _ball_vx = 0;
         _ball_vy = 0;
     }
-}
-
-uint32_t PongScreen::next_rng() {
-    return xorshift32(_rng);
 }
 
 // ── 渲染 ────────────────────────────────────────────

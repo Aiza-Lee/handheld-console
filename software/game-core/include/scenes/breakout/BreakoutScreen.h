@@ -192,7 +192,6 @@ private:
     int16_t _score = 0;
     uint8_t _level = 0;
     uint32_t _frame = 0;
-    uint32_t _rng = 12345;
     uint8_t _celebration = 0;
 
     Ball _balls[MAX_BALLS]{};
@@ -202,7 +201,6 @@ private:
 
     void reset_game();
     void load_level(uint8_t level);
-    uint32_t next_rng();
     void launch_ball();
     void spawn_triple(int8_t x, int8_t y);
     void move_balls(IScreenHost& host);

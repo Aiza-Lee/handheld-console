@@ -24,7 +24,7 @@ enum class BgmId : uint8_t {
     TETRIS,
     GAME_2048,
     PONG,
-    _COUNT,
+    _count,
 };
 
 // ── Tone 数组（从 Sounds.h 原样迁移）─────────────────────────────────
@@ -350,7 +350,7 @@ inline constexpr BgmDef BGM_CATALOG[] = {
 inline constexpr std::size_t BGM_CATALOG_COUNT =
     sizeof(BGM_CATALOG) / sizeof(BGM_CATALOG[0]);
 
-static_assert(BGM_CATALOG_COUNT == static_cast<std::size_t>(BgmId::_COUNT),
+static_assert(BGM_CATALOG_COUNT == static_cast<std::size_t>(BgmId::_count),
               "BGM_CATALOG 与 BgmId 枚举长度不一致");
 
 [[nodiscard]] constexpr const BgmDef& get(BgmId id) {

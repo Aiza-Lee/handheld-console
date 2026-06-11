@@ -125,7 +125,6 @@ private:
     int16_t _serve_timer = pong::cfg::SERVE_FRAMES;
 
     // RNG
-    uint32_t _rng = 12345;
     uint32_t _frame = 0;
 
     void reset_game();
@@ -135,7 +134,6 @@ private:
     void update_ai();
     void update_p2_input(IInput& input);
     void update_p1_input(IInput& input);
-    [[nodiscard]] uint32_t next_rng();
 };
 
 } // namespace handheld

@@ -7,6 +7,7 @@
 #include "core/runtime/IScreenHost.h"
 #include "core/runtime/ScreenType.h"
 #include "core/audio/Sounds.h"
+#include "core/random/Random.h"
 
 namespace handheld {
 
@@ -49,7 +50,7 @@ void InvadersScreen::reset_game() {
     for (auto& eb : _ebullets) eb.active = false;
     _saucer.alive = false;
     _saucer_score_display = 0;
-    _saucer_timer = SAUCER_MIN_INTERVAL + (next_rng() % (SAUCER_MAX_INTERVAL - SAUCER_MIN_INTERVAL));
+    _saucer_timer = SAUCER_MIN_INTERVAL + (random::next() % (SAUCER_MAX_INTERVAL - SAUCER_MIN_INTERVAL));
     _particle_count = 0;
     _lives = INIT_LIVES;
     _level_clear_timer = 0;
@@ -60,7 +61,6 @@ void InvadersScreen::reset_game() {
     _move_interval = static_cast<uint32_t>(interval);
     _shoot_timer = 0;
     _dying_timer = 0;
-    _rng = 12345;
     init_shields();
 }
 
@@ -83,11 +83,6 @@ void InvadersScreen::respawn_player() {
 }
 
 // ── 工具 ──────────────────────────────────────────────────────────
-
-uint32_t InvadersScreen::next_rng() {
-    _rng = _rng * 1103515245 + 12345;
-    return _rng;
-}
 
 // ── 射击 ──────────────────────────────────────────────────────────
 
@@ -129,7 +124,7 @@ void InvadersScreen::enemy_shoot(IScreenHost& host) {
     }
     if (alive_count == 0) return;
 
-    int16_t col = alive_cols[next_rng() % alive_count];
+    int16_t col = alive_cols[random::next() % alive_count];
     _ebullets[slot].x = static_cast<int16_t>(_enemy_base_x + col * CELL_W + ENEMY_W / 2);
     _ebullets[slot].y = static_cast<int16_t>(_enemy_base_y + bottom_row * CELL_H + ENEMY_H);
     _ebullets[slot].active = true;
@@ -321,15 +316,15 @@ void InvadersScreen::update_saucer(IScreenHost& host) {
         if (_saucer_timer == 0) {
             host.audio().play_sfx(sounds::SFX_SAUCER_APPEAR, sounds::SFX_SAUCER_APPEAR_COUNT);
             _saucer.alive = true;
-            _saucer.dir = (next_rng() % 2 == 0) ? static_cast<int8_t>(1) : static_cast<int8_t>(-1);
+            _saucer.dir = (random::next() % 2 == 0) ? static_cast<int8_t>(1) : static_cast<int8_t>(-1);
             _saucer.y = SAUCER_Y;
             _saucer.x = (_saucer.dir > 0) ? PLAY_AREA_LEFT : SCREEN_WIDTH;
-            _saucer.points = SAUCER_SCORES[next_rng() % 5];
+            _saucer.points = SAUCER_SCORES[random::next() % 5];
             uint32_t saucer_min = SAUCER_MIN_INTERVAL - static_cast<uint32_t>(_level * 8);
             uint32_t saucer_max = SAUCER_MAX_INTERVAL - static_cast<uint32_t>(_level * 20);
             saucer_min = handheld::max<uint32_t>(saucer_min, 90);
             saucer_max = handheld::max(saucer_max, saucer_min + 60);
-            _saucer_timer = saucer_min + (next_rng() % (saucer_max - saucer_min));
+            _saucer_timer = saucer_min + (random::next() % (saucer_max - saucer_min));
         }
     }
 }
@@ -341,9 +336,9 @@ void InvadersScreen::spawn_particles(int16_t x, int16_t y) {
         int16_t idx = _particle_count++;
         _particles[idx].x = static_cast<int8_t>(x);
         _particles[idx].y = static_cast<int8_t>(y);
-        _particles[idx].vx = static_cast<int8_t>((next_rng() % 5) - 2);
-        _particles[idx].vy = static_cast<int8_t>((next_rng() % 5) - 2);
-        _particles[idx].life = static_cast<uint8_t>(6 + (next_rng() % 6));
+        _particles[idx].vx = static_cast<int8_t>((random::next() % 5) - 2);
+        _particles[idx].vy = static_cast<int8_t>((random::next() % 5) - 2);
+        _particles[idx].life = static_cast<uint8_t>(6 + (random::next() % 6));
     }
 }
 
@@ -598,10 +593,14 @@ void InvadersScreen::render(IPlatform& platform, IScreenHost& /*host*/) {
     }
 }
 
-void InvadersScreen::render_menu_preview(IDisplay& display, const Rect& box, uint32_t  /*frame*/) {
-    const auto cx = static_cast<int16_t>(box.x + box.width / 2 - ENEMY_W / 2);
+void InvadersScreen::render_menu_preview(IDisplay& display, const Rect& box, uint32_t frame) {
+    int const march_raw = (frame / 6) % 8;
+    int const march = march_raw > 3 ? 7 - march_raw : march_raw; // 0..4 中心对称序列
+    // 居中: march=2 → 偏移 0；march=0 → 偏移 -2（外星人贴 box 左）；march=4 → 偏移 +2（贴右）
+    const auto cx = static_cast<int16_t>(box.x + box.width / 2 - ENEMY_W / 2 + (march - 2));
     const auto cy = static_cast<int16_t>(box.y + box.height / 2 - ENEMY_H / 2);
-    const char* shape = ENEMY_SHAPES[0][0];
+    uint8_t const anim = (frame / 12) & 1;
+    const char* shape = ENEMY_SHAPES[0][anim];
     Color color = enemy_row_color(0);
     for (int16_t dy = 0; dy < ENEMY_H; ++dy)
         for (int16_t dx = 0; dx < ENEMY_W; ++dx)
