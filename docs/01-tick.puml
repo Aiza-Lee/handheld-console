@@ -1,0 +1,71 @@
+@startuml 01-tick
+' ============================================================
+' 01-tick.puml  ——  单帧 tick() 6 阶段展开
+' 00-flow.puml 流程图里把 tick() 压成一个 group，
+' 这里把 6 个阶段拆开，并强调「双 _apply_pending」延迟分发。
+'
+' 源码依据：software/game-core/src/core/runtime/ScreenRunner.cpp:138-167
+' ============================================================
+
+title 单帧 tick() 的 6 个阶段
+
+participant "ScreenRunner"    as Runner
+participant "GameScreen (T)"  as Screen
+participant "IPlatform"       as Platform
+participant "AudioEngine"     as Audio
+
+note over Runner
+  一帧 tick() 由 6 个有序阶段组成；
+  阶段 1 与阶段 6 是同一份 _apply_pending()，
+  分别排空**上一帧**和**本帧**屏幕发起的切换——
+  这就是「延迟分发」的核心。
+end note
+
+== 1. 首端排空（消费上一帧的请求） ==
+Runner -> Runner : _apply_pending()
+note right
+  排空上一帧 update() 中
+  switch_to / push_screen / pop_screen
+  设置的 _pending_op。
+end note
+
+== 2. enter（首帧或新 push/switch 后） ==
+alt !_entered
+  Runner -> Screen : enter(platform, *this)
+  Runner -> Runner : _entered = true
+end
+
+== 3. 输入 + 逻辑 + 渲染 ==
+Runner -> Platform : input().poll()
+Runner -> Screen : update(platform, *this)
+note right of Screen
+  屏幕可在此发起：
+  switch_to / push_screen / pop_screen。
+  仅设 _pending_op，**本帧末**才生效。
+end note
+Runner -> Screen : render(platform, *this)
+
+== 4. 音频派发 ==
+Runner -> Audio : is_playing() ?
+alt 任一通道 active
+  Runner -> Audio : fill_buffer(buf, count)\ncount = 44100 * frame_time_ms / 1000
+  Audio --> Runner : S16LE 单声道方波 PCM
+  Runner -> Platform : write_audio_samples(buf, count)
+else 全部通道空闲
+  note over Runner
+    整段跳过——节省 CPU。
+  end note
+end
+
+== 5. 呈现帧 ==
+Runner -> Platform : display().present()
+
+== 6. 末端排空（消费本帧的请求） ==
+Runner -> Runner : _apply_pending()
+note right
+  这是「双 _apply_pending」中的第二次。
+  真正改栈发生在本帧末；新屏的 enter()
+  留到**下一帧**的阶段 2 才会触发。
+end note
+
+@enduml

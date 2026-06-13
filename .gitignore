@@ -15,6 +15,7 @@ Thumbs.db
 compile_commands.json
 .cache/
 /software/host-sim/build/
+/.tools/
 
 # Code Composer Studio / TI generated build output
 /handheld-console/Debug/

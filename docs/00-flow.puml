@@ -1,0 +1,50 @@
+@startuml 00-flow
+' ============================================================
+' 00-flow.puml  ——  整体大致流程
+' 范围：启动 → 主循环 → 单帧 tick → 退出
+' 不画：屏幕栈状态机、AudioEngine 通道、屏幕目录、IPlatform 适配细节
+' ============================================================
+
+title 整体运行时流程
+
+participant "host main"         as Main
+participant "ScreenRunner"      as Runner
+participant "GameScreen (T)"    as Screen
+participant "IPlatform"         as Platform
+
+== 启动 ==
+
+Main -> Runner : 构造(platform, BOOT, 50ms)
+note right of Runner
+  ctor 只设 _pending = SWITCH(BOOT)；
+  首次 tick() 排空后真正 new BootScreen + enter()。
+end note
+
+== 主循环 ==
+
+loop 直至窗口关闭
+  Main -> Platform : process_events()
+  Main -> Runner    : tick()
+  Main -> Platform : delay_to_next_frame(50ms)
+end
+
+== 单帧 tick() ==
+
+group tick()
+  Runner -> Platform : input().poll()
+  Runner -> Screen   : update(platform, *this)
+  Runner -> Screen   : render(platform, *this)
+  note right of Screen
+    屏幕可在 update 内发起：
+    switch_to / push_screen / pop_screen。
+    三者延迟到本帧末 _apply_pending() 才改栈。
+  end note
+  Runner -> Platform : audio.fill_buffer() + write_audio_samples()
+  Runner -> Platform : display().present()
+end
+
+== 退出 ==
+
+Main --> Main : return 0
+
+@enduml

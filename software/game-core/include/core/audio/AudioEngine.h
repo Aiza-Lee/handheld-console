@@ -111,11 +111,15 @@ public:
     [[nodiscard]] uint16_t active_frequency() const {
         for (int i = CHANNEL_COUNT - 1; i >= SFX_CHANNEL_START; --i) {
             if (_channels[i].active) {
-                return _channels[i].tones[_channels[i].tone_index].frequencyHz;
+                return _channels[i]
+					.tones[_channels[i].tone_index]
+					.frequencyHz;
             }
         }
         if (_channels[BGM_CHANNEL].active) {
-            return _channels[BGM_CHANNEL].tones[_channels[BGM_CHANNEL].tone_index].frequencyHz;
+            return _channels[BGM_CHANNEL]
+				.tones[_channels[BGM_CHANNEL].tone_index]
+				.frequencyHz;
         }
         return 0;
     }

@@ -33,15 +33,15 @@ struct MenuEntry {
 };
 constexpr MenuEntry ENTRIES[] = {
     {  "Settings",   ScreenType::SETTINGS},
-    { "Playground", ScreenType::PLAYGROUND},
-    {     "Snake",      ScreenType::SNAKE},
-    {   "Pac-Man",     ScreenType::PACMAN},
     {  "Breakout",   ScreenType::BREAKOUT},
     {  "Invaders",   ScreenType::INVADERS},
     { "Grow Ball",  ScreenType::GROW_BALL},
     {   "Tetris",     ScreenType::TETRIS},
     {    "2048",   ScreenType::GAME_2048},
     {     "Pong",       ScreenType::PONG},
+    {     "Snake",      ScreenType::SNAKE},
+    {   "Pac-Man",     ScreenType::PACMAN},
+    { "Playground", ScreenType::PLAYGROUND},
     {"MP3 Player",    ScreenType::MP3},
 };
 constexpr std::size_t ENTRY_COUNT = 11;

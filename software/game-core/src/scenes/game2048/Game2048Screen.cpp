@@ -314,7 +314,7 @@ void Game2048Screen::render(IPlatform& platform, IScreenHost& /*host*/) {
     buf[0] = 'S';
     buf[1] = 'C';
     buf[2] = ':';
-    itoa_dec(static_cast<uint16_t>(_score > 9999 ? 9999 : _score), buf + 3);
+    itoa_dec(static_cast<uint16_t>(_score > 999999 ? 999999 : _score), buf + 3);
     TextRenderer::draw_text(d, {4, 4}, buf, HUD_TEXT, 1, COMPACT_FONT_3X5);
 
     // 顶部右侧显示最高 tile 值（由 slide() 增量更新，不再每帧扫描）
@@ -367,7 +367,7 @@ void Game2048Screen::render(IPlatform& platform, IScreenHost& /*host*/) {
         buf[4] = 'E';
         buf[5] = ':';
         buf[6] = ' ';
-        itoa_dec(static_cast<uint16_t>(_score > 9999 ? 9999 : _score), buf + 7);
+        itoa_dec(static_cast<uint16_t>(_score > 999999 ? 999999 : _score), buf + 7);
         TextRenderer::draw_text_centered(d, {40, 42}, buf, Color::WHITE, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(d, {40, 52}, "A/START: New Game", HINT_COLOR, 1, COMPACT_FONT_3X5);
         TextRenderer::draw_text_centered(d, {40, 58}, "B: Menu", HINT_COLOR, 1, COMPACT_FONT_3X5);
