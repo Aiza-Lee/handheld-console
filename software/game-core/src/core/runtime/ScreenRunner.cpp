@@ -153,7 +153,10 @@ void ScreenRunner::tick() {
     // 驱动音频引擎
     if (_audio_engine.is_playing()) {
         // 直接频率通道：PWM 蜂鸣器平台通过此路径设置频率，避免 PCM 检测开销
-        _platform.set_buzzer_frequency(_audio_engine.active_frequency(), _audio_engine.active_volume_pct());
+        _platform.set_buzzer_frequency(
+			_audio_engine.active_frequency(), 
+			_audio_engine.active_volume_pct()
+		);
 
         // PCM 通道：为 SDL/DAC 平台生成方波 PCM 采样
         const size_t count = (AudioEngine::SAMPLE_RATE * _frame_time_ms) / 1000;
