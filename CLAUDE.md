@@ -38,7 +38,7 @@ ctest -R game-core-smoke
 
 ### Platform Abstraction
 
-All hardware services are behind interfaces in `include/platform/interfaces/`. `IPlatform` is the composed facade that provides `IDisplay`, `IInput`, `IPower`, `ITime`, `IStorage`, and `write_audio_samples()`. Three platform implementations exist:
+All hardware services are behind interfaces in `include/platform/interfaces/`. `IPlatform` is the composed facade that provides `IDisplay`, `IInput`, `IPower`, `ITime`, plus two audio outlets (`write_audio_samples()` for PCM, `set_buzzer_frequency()` for PWM buzzer bypass). Three platform implementations exist:
 
 | Implementation | Location | Use |
 |---|---|---|
@@ -59,7 +59,7 @@ Screens request transitions via `IScreenHost`:
 - `push_screen(ScreenType)` — push overlay, lower screen receives `suspend()`
 - `pop_screen()` — remove overlay, lower screen receives `resume()`
 
-`ScreenType` is an enum (`MENU`, `PLAYGROUND`). `DefaultScreenFactory` maps types to concrete screen classes.
+`ScreenType` is an enum (`BOOT`, `MENU`, `SETTINGS`, `PLAYGROUND`, `SNAKE`, `PACMAN`, `BREAKOUT`, `INVADERS`, `GROW_BALL`, `TETRIS`, `GAME_2048`, `PONG`, `MP3`, `DEVELOPER`, `GUIDE`). `make_screen()` (free function in `ScreenRunner.cpp`) maps types to concrete screen classes.
 
 ### Input Model
 
@@ -71,7 +71,7 @@ Screens request transitions via `IScreenHost`:
 - `Geometry` — `Point`, `Size`, `Rect` value types
 - `Font` — `BitmapFont` struct with `glyph_for()` lookup. Two constexpr instances: `BASIC_FONT_5X7` (5x7 glyphs) and `COMPACT_FONT_3X5` (3x5 glyphs, packed into `uint16_t` for size)
 - `TextRenderer` — static methods only: `measure_text()`, `draw_text()`, `draw_glyph()`. Supports multi-line via `\n` and integer scaling
-- `IDisplay` has non-virtual drawing helpers in the header: `draw_h_line`, `draw_v_line`, `draw_line` (Bresenham), `draw_rect`, `fill_rect`, `draw_bitmap`
+- `IDisplay` has non-virtual drawing helpers in the header: `draw_h_line`, `draw_v_line`, `draw_rect`, `fill_rect`, `draw_bitmap`
 
 ## Style
 
@@ -92,7 +92,10 @@ Smoke tests are standalone executables (no test framework), each with its own `m
 
 `AudioEngine`（`core/audio/AudioEngine.h`）是一个 4 通道软件正弦波合成器：通道 0 用于 BGM（循环），通道 1-3 用于一次性 SFX。输出 44100Hz S16LE 单声道 PCM。
 
-平台只需实现 `IPlatform::write_audio_samples(const int16_t* data, size_t count)` 将 PCM 数据送入硬件。
+平台实现两个音频出口之一即可：
+
+- `write_audio_samples(const int16_t* data, size_t count)` —— PCM 路径（SDL / DAC），由 `ScreenRunner::tick()` 每帧调用
+- `set_buzzer_frequency(uint16_t freq_hz, uint8_t volume_pct)` —— PWM 蜂鸣器直驱旁路，每帧同样被调用，由 `AudioEngine::active_frequency()` 驱动
 
 ### 在游戏中使用
 

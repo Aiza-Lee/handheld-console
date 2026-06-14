@@ -1,6 +1,6 @@
 # host-sim
 
-`host-sim` 保留为无图形 smoke target，用来快速验证 `game-core` 的单帧 scene runtime。
+`host-sim` 是无图形 smoke target，用来快速验证 `game-core` 的单帧 screen runtime。
 
 `host-sim-sdl` 是可选的 SDL3 宿主模拟器，只有在仓库根目录存在 `third_party/SDL` 子模块时才会构建。
 

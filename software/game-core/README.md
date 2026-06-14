@@ -1,6 +1,6 @@
 # Game Core
 
-This directory contains the portable scene runtime, platform interfaces, shared scene logic, and test-only fake support used by the firmware target and host-side tools.
+This directory contains the portable screen runtime, platform interfaces, shared screen logic, and test-only fake support used by the firmware target and host-side tools.
 
 ## Layout
 
